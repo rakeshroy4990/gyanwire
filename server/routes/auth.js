@@ -51,7 +51,7 @@ function handleAuthError(res, err) {
   );
 }
 
-// Simple per-IP login rate limit (hospital uses Bucket4j; keep lightweight here).
+// Simple per-IP login rate limit.
 const loginAttempts = new Map();
 function rateLimitLogin(req, res, next) {
   const ip = req.ip || req.socket.remoteAddress || 'unknown';
@@ -100,7 +100,7 @@ authRouter.post('/google-login', rateLimitLogin, async (req, res) => {
         }),
       );
     }
-    // Hospital supports idToken or accessToken; GIS token client uses accessToken.
+    // GIS token client uses accessToken.
     if (!accessToken) {
       return res.status(400).json(
         envelope(false, {

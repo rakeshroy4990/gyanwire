@@ -24,7 +24,7 @@ function emptySession() {
 }
 
 /**
- * Hospital-style AuthSession: profile in Pinia + sessionStorage.
+ * AuthSession: profile in Pinia + sessionStorage.
  * Access/refresh JWTs stay in httpOnly cookies — never localStorage.
  */
 export const useAuthSessionStore = defineStore('authSession', {
@@ -95,8 +95,8 @@ export const useAuthSessionStore = defineStore('authSession', {
       this.fullName = fullFromNames || displayName;
       this.userDisplayName = displayName;
       this.loginDisplayName = displayName || 'Account';
-      this.role = toStringSafe(userData.role || userData.Role || 'PATIENT').toUpperCase();
-      this.roleStatus = toStringSafe(userData.roleStatus || userData.RoleStatus || 'ACTIVE').toUpperCase();
+      this.role = toStringSafe(userData.role || userData.Role || 'user').toLowerCase();
+      this.roleStatus = toStringSafe(userData.roleStatus || userData.RoleStatus || 'active').toLowerCase();
       this.profilePic = toStringSafe(userData.profilePic || userData.ProfilePic);
       this.preferredLocale = toStringSafe(userData.preferredLocale || userData.PreferredLocale);
       if (authMethod) this.authMethod = authMethod;

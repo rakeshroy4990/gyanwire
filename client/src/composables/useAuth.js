@@ -12,7 +12,7 @@ import {
 } from '../services/auth.service.js';
 
 /**
- * Single auth surface for components — hospital pattern of composable over Pinia + services.
+ * Single auth surface for components — composable over Pinia + services.
  */
 export function useAuth() {
   const authSession = useAuthSessionStore();

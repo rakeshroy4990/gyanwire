@@ -4,7 +4,7 @@
 
 **Gyanwire** is an India-first R&D research workbench. Visitors pick a research industry (and optional sub-topic), write messy thoughts or a question, and get a short ranked list of useful web pages — with a plain “why this matched” line for each result.
 
-It is a **live product surface**, not a marketing site: the page *is* the tool (compose → search → findings). Optional sign-in ties the session to a real user account (shared with the hospital platform’s Supabase `users` table).
+It is a **live product surface**, not a marketing site: the page *is* the tool (compose → search → findings). Optional sign-in ties the session to a **Gyanwire-owned** Postgres `users` table (separate from any patient-platform database).
 
 **Tell-someone sentence:**  
 It’s the site where you dump messy research thoughts and get the best pages from the web, ranked for what you meant.
@@ -47,7 +47,7 @@ It’s the site where you dump messy research thoughts and get the best pages fr
 3. **Session** — Access + refresh JWTs in **httpOnly cookies**; profile in **Pinia** + `sessionStorage` (no JWT in `localStorage`).  
 4. **Header chrome** — Signed-out: Sign in. Signed-in: avatar/name/role + Sign out.  
 5. **Personalized copy** — Welcome greeting uses `authSession` when authenticated.  
-6. **Shared identity** — Reads/writes hospital Supabase `users` / `refresh_tokens` via Spring-style datasource env vars.
+6. **Own identity store** — Reads/writes Gyanwire Postgres `users` / `refresh_tokens` via `GYANWIRE_DATABASE_URL` (UUID ids, `role` default `user`, soft delete via `deleted_at`).
 
 ### 3.3 Auth API (functional contracts)
 
@@ -55,7 +55,7 @@ It’s the site where you dump messy research thoughts and get the best pages fr
 |---|---|---|
 | `POST` | `/api/auth/login` | Email/password login (`EmailId`, `Password`) |
 | `POST` | `/api/auth/google-login` | Google access token → userinfo → session |
-| `POST` | `/api/auth/register` | Create patient/user row |
+| `POST` | `/api/auth/register` | Create Gyanwire user row |
 | `POST` | `/api/auth/refresh` | Rotate tokens (refresh cookie scoped to `/api/auth`) |
 | `POST` | `/api/auth/logout` | Revoke refresh + clear cookies |
 | `GET` | `/api/auth/me` | Current user profile |
@@ -96,13 +96,13 @@ It’s the site where you dump messy research thoughts and get the best pages fr
 └───────────────┬─────────────────────────────┬───────────────┘
                 │                             │
                 ▼                             ▼
-     Supabase Postgres                 Live web sources
-     (shared hospital DB)              DuckDuckGo · Wikipedia
+     Gyanwire Postgres                 Live web sources
+     (own DB / Supabase or Neon)       DuckDuckGo · Wikipedia
      users / refresh_tokens            · optional SearXNG · scrape
-     SPRING_DATASOURCE_*               · optional LLM refine
+     GYANWIRE_DATABASE_URL             · optional LLM refine
 ```
 
-### 4.2 Frontend architecture (hospital-aligned)
+### 4.2 Frontend architecture
 
 ```text
 client/src/
@@ -125,7 +125,7 @@ client/src/
     research/*
 ```
 
-**Rules mirrored from hospital auth:**
+**Auth rules:**
 
 - JWT access/refresh → httpOnly cookies only  
 - Profile → Pinia `authSession` (shown everywhere via `useAuth`)  
@@ -138,16 +138,19 @@ client/src/
 server/
   index.js                # Express app, CORS+credentials, cookie-parser
   db/
-    pool.js               # SPRING_DATASOURCE_* → pg Pool (JDBC→postgres URL)
-    migrate.js / schema.sql  # optional local schema (AUTH_AUTO_MIGRATE)
+    pool.js               # GYANWIRE_DATABASE_URL → pg Pool
+    migrate.js            # numbered migrations in db/migrations/
+    migrations/001_init.sql
   routes/
     auth.js               # /api/auth/*
     search.js             # /api/search, news, industries
   services/auth/
     authService.js        # login, google, register, refresh, logout, me
-    userRepository.js     # shared `users` table
+    userRepository.js     # Gyanwire-owned `users` table
     refreshTokenRepository.js
     jwt.js · cookies.js · password.js · google.js
+  scripts/
+    export-gyanwire-users.js  # one-off copy from a legacy shared DB
   engine/
     discover.js → scrape.js → pointers.js → search.js
   services/
@@ -179,9 +182,9 @@ Thoughts + industry
 
 | Concern | Approach |
 |---|---|
-| Persistence | `APP_PERSISTENCE_PROVIDER=postgres` + `SPRING_DATASOURCE_URL/USERNAME/PASSWORD` |
-| Users | Shared Supabase `users` (`external_id`, soft `deleted`, roles) |
-| Sessions | JWT access + refresh; refresh cookie path `/api/auth` |
+| Persistence | `APP_PERSISTENCE_PROVIDER=postgres` + `GYANWIRE_DATABASE_URL` (fallback: `DATABASE_URL`) |
+| Users | Own `users` table (UUID `id`, unique email, `role` default `user`, soft delete via `deleted_at`) — never shared with patient-platform data |
+| Sessions | JWT access + refresh; refresh cookie path `/api/auth`; `refresh_tokens` soft-deleted via `deleted_at` |
 | Google | GIS access token → Google userinfo → find/create user → cookies |
 | Secrets | Root `.env` only; Vite `envDir` = project root for `VITE_*` |
 | CORS | Dev: permissive + credentials; Prod: `UI_ORIGIN` |
@@ -207,8 +210,8 @@ npm start       # Express serves API + static dist
 
 1. **Own ranking pointers** over opaque third-party “search APIs as product.”  
 2. **Live surface UI** — one composition: chrome + compose + findings.  
-3. **Hospital auth architecture on Vue/Pinia** — same session/form mental model, shared DB.  
-4. **Spring datasource env names** — one credential story with the hospital backend.  
+3. **Separate auth database** — Gyanwire users live in a product-owned Postgres; never share tables with a hospital/patient platform.  
+4. **Single connection string** — `GYANWIRE_DATABASE_URL` is the primary credential; numbered SQL migrations own schema changes.  
 5. **Cookies for tokens** — browser JS never stores JWTs in `localStorage`.  
 
 ---

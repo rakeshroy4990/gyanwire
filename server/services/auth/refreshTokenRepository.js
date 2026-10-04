@@ -1,16 +1,10 @@
-import { randomUUID } from 'node:crypto';
 import { query } from '../../db/pool.js';
 
-/**
- * Uses shared Supabase `refresh_tokens` table (same as hospital backend).
- * Hospital hard-deletes on rotation; we match that to respect the unique(token) constraint.
- */
 export async function saveRefreshToken({ token, userId, expiry, deviceId = 'browser' }) {
-  const id = randomUUID();
   await query(
-    `INSERT INTO refresh_tokens (id, token, user_id, expiry, device_id, created_at, deleted)
-     VALUES ($1, $2, $3, $4, $5, NOW(), false)`,
-    [id, token, userId, expiry, deviceId],
+    `INSERT INTO refresh_tokens (token, user_id, expiry, device_id, created_at)
+     VALUES ($1, $2, $3, $4, NOW())`,
+    [token, userId, expiry, deviceId],
   );
 }
 
@@ -18,7 +12,7 @@ export async function findByToken(token) {
   const result = await query(
     `SELECT id, token, user_id, expiry, device_id
      FROM refresh_tokens
-     WHERE token = $1 AND deleted = false
+     WHERE token = $1 AND deleted_at IS NULL
      LIMIT 1`,
     [String(token)],
   );
@@ -35,16 +29,18 @@ export async function findByToken(token) {
 
 export async function softDeleteByToken(token) {
   await query(
-    `DELETE FROM refresh_tokens
-     WHERE token = $1`,
+    `UPDATE refresh_tokens
+     SET deleted_at = NOW()
+     WHERE token = $1 AND deleted_at IS NULL`,
     [String(token)],
   );
 }
 
 export async function softDeleteByUserId(userId) {
   await query(
-    `DELETE FROM refresh_tokens
-     WHERE user_id = $1`,
+    `UPDATE refresh_tokens
+     SET deleted_at = NOW()
+     WHERE user_id = $1 AND deleted_at IS NULL`,
     [String(userId)],
   );
 }

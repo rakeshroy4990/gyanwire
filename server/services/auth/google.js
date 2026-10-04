@@ -1,5 +1,5 @@
 /**
- * Verifies a Google OAuth access token via userinfo (same path as hospital AuthService).
+ * Verifies a Google OAuth access token via the Google userinfo endpoint.
  */
 export async function fetchVerifiedGoogleProfile(accessToken) {
   const token = String(accessToken || '').trim();

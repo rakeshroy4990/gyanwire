@@ -21,7 +21,7 @@ export function generateAccessToken({ userId, role, tokenVersion }) {
   return jwt.sign(
     {
       tokenType: 'access',
-      role: role || 'PATIENT',
+      role: role || 'user',
       tokenVersion: Number(tokenVersion || 1),
       aud: 'web',
     },
