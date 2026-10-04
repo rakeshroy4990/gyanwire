@@ -1,5 +1,8 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import { optionalAuth } from '../middleware/optionalAuth.js';
+import { requirePlanLimit } from '../middleware/requirePlanLimit.js';
+import { recordSearchUsage } from '../services/billing/usageService.js';
 import { findBestResults } from '../services/find.js';
 import {
   getDefaultProductNews,
@@ -89,7 +92,7 @@ searchRouter.get('/news/:industry', async (req, res, next) => {
   }
 });
 
-searchRouter.post('/search', async (req, res, next) => {
+searchRouter.post('/search', optionalAuth, requirePlanLimit('search'), async (req, res, next) => {
   try {
     const parsed = bodySchema.safeParse(req.body);
     if (!parsed.success) {
@@ -102,9 +105,27 @@ searchRouter.post('/search', async (req, res, next) => {
     }
 
     const result = await findBestResults(parsed.data);
+    const ctx = req.usageContext || {};
+    await recordSearchUsage({
+      userId: ctx.userId || null,
+      ipHash: ctx.ipHash || null,
+      costInrEstimate: 0,
+    });
+
+    const evaluation = ctx.evaluation || { used: 0, limit: 0, remaining: 0 };
     return res.json({
       success: true,
-      data: result,
+      data: {
+        ...result,
+        usage: {
+          searchesToday: evaluation.used + 1,
+          searchLimit: evaluation.limit,
+          searchesRemaining: Math.max(0, evaluation.remaining - 1),
+          plan: ctx.plan
+            ? { id: ctx.plan.id, name: ctx.plan.name }
+            : null,
+        },
+      },
       message: 'Here are the best matches we found.',
       timestamp: new Date().toISOString(),
     });

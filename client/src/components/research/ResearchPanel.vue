@@ -9,6 +9,10 @@ defineProps({
   queryPreview: { type: String, default: '' },
   formError: { type: String, default: '' },
   isLoading: { type: Boolean, default: false },
+  searchesLeftLabel: { type: String, default: '' },
+  limitReached: { type: Boolean, default: false },
+  limitMessage: { type: String, default: '' },
+  upgradeUrl: { type: String, default: '/pricing' },
 });
 
 const emit = defineEmits([
@@ -106,6 +110,11 @@ function onThoughtsKeydown(event) {
     </div>
 
     <p class="query-hint">{{ queryPreview }}</p>
+    <p v-if="searchesLeftLabel" class="usage-meter" aria-live="polite">{{ searchesLeftLabel }}</p>
+    <div v-if="limitReached" class="upgrade-prompt" role="alert">
+      <p>{{ limitMessage || 'Daily search limit reached.' }}</p>
+      <a class="btn btn--primary upgrade-prompt__cta" :href="upgradeUrl">Upgrade</a>
+    </div>
     <p v-if="formError" class="form-error" role="alert">{{ formError }}</p>
   </section>
 </template>

@@ -24,6 +24,10 @@ const {
   selectSub,
   runSearch,
   clearForm,
+  searchesLeftLabel,
+  limitReached,
+  limitMessage,
+  upgradeUrl,
 } = useResearch();
 </script>
 
@@ -39,6 +43,10 @@ const {
       :query-preview="queryPreview"
       :form-error="formError"
       :is-loading="isLoading"
+      :searches-left-label="searchesLeftLabel"
+      :limit-reached="limitReached"
+      :limit-message="limitMessage"
+      :upgrade-url="upgradeUrl"
       @update:thoughts="thoughts = $event"
       @select-industry="selectIndustry"
       @select-sub="selectSub"
