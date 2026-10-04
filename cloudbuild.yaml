@@ -1,0 +1,106 @@
+# Build and deploy Gyanwire to Cloud Run (project: gyanwire).
+#
+# One-time setup (Artifact Registry + secrets):
+#   gcloud artifacts repositories create gyanwire \
+#     --repository-format=docker --location=asia-south1 --project=gyanwire
+#
+#   printf %s 'jdbc:postgresql://...' | gcloud secrets create gyanwire-spring-datasource-url --data-file=- --project=gyanwire
+#   printf %s 'postgres.<ref>' | gcloud secrets create gyanwire-spring-datasource-username --data-file=- --project=gyanwire
+#   printf %s 'db-password' | gcloud secrets create gyanwire-spring-datasource-password --data-file=- --project=gyanwire
+#   printf %s 'long-random-jwt-secret' | gcloud secrets create gyanwire-jwt-secret --data-file=- --project=gyanwire
+#   printf %s 'sk-...' | gcloud secrets create gyanwire-llm-api-key --data-file=- --project=gyanwire
+#
+# Grant the Cloud Run runtime SA secretAccessor on those secrets, and Cloud Build
+# roles/run.admin + roles/iam.serviceAccountUser.
+#
+# Deploy:
+#   gcloud builds submit --project=gyanwire --config=cloudbuild.yaml .
+#
+# Optional substitutions:
+#   --substitutions=_VITE_GOOGLE_OAUTH_CLIENT_ID=xxxxx.apps.googleusercontent.com,_UI_ORIGIN=https://gyanwire-xxxxx.run.app
+
+substitutions:
+  _LOCATION: asia-south1
+  _REGION: asia-south1
+  _REPOSITORY: gyanwire
+  _IMAGE: gyanwire
+  _SERVICE: gyanwire
+  _MEMORY: 2Gi
+  _CPU: "1"
+  _MIN_INSTANCES: "0"
+  _MAX_INSTANCES: "3"
+  _VITE_GOOGLE_OAUTH_CLIENT_ID: ""
+  _UI_ORIGIN: ""
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
+  diskSizeGb: 40
+  env:
+    - DOCKER_BUILDKIT=1
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --platform=linux/amd64
+      - --file=Dockerfile
+      - --build-arg=VITE_GOOGLE_OAUTH_CLIENT_ID=${_VITE_GOOGLE_OAUTH_CLIENT_ID}
+      - --tag=${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${BUILD_ID}
+      - --tag=${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:latest
+      - .
+
+  - id: push-build
+    name: gcr.io/cloud-builders/docker
+    waitFor: [build]
+    args:
+      - push
+      - ${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${BUILD_ID}
+
+  - id: push-latest
+    name: gcr.io/cloud-builders/docker
+    waitFor: [build]
+    args:
+      - push
+      - ${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:latest
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    waitFor: [push-build, push-latest]
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -eo pipefail
+
+        DEPLOY_ARGS=(
+          run deploy "${_SERVICE}"
+          --project="${PROJECT_ID}"
+          --region="${_REGION}"
+          --platform=managed
+          --image="${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${BUILD_ID}"
+          --allow-unauthenticated
+          --memory="${_MEMORY}"
+          --cpu="${_CPU}"
+          --min-instances="${_MIN_INSTANCES}"
+          --max-instances="${_MAX_INSTANCES}"
+          --port=8080
+          --timeout=300
+          --cpu-boost
+          --no-cpu-throttling
+          --startup-probe=httpGet.path=/api/health,httpGet.port=8080,periodSeconds=5,timeoutSeconds=3,failureThreshold=36
+          --env-vars-file=cloudrun-env.yaml
+          --set-secrets=SPRING_DATASOURCE_URL=gyanwire-spring-datasource-url:latest,SPRING_DATASOURCE_USERNAME=gyanwire-spring-datasource-username:latest,SPRING_DATASOURCE_PASSWORD=gyanwire-spring-datasource-password:latest,JWT_SECRET=gyanwire-jwt-secret:latest,LLM_API_KEY=gyanwire-llm-api-key:latest
+          --quiet
+        )
+
+        if [ -n "${_UI_ORIGIN}" ]; then
+          DEPLOY_ARGS+=(--update-env-vars="UI_ORIGIN=${_UI_ORIGIN}")
+        fi
+
+        gcloud "$${DEPLOY_ARGS[@]}"
+
+images:
+  - ${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${BUILD_ID}
+  - ${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:latest

@@ -1,0 +1,38 @@
+{
+  "name": "gyanwire",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Turn categories and thoughts into the best web results with a custom Gyanwire search engine",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "node --watch server/index.js",
+    "dev:client": "vite",
+    "build": "vite build",
+    "start": "NODE_ENV=production node server/index.js",
+    "preview": "vite preview",
+    "ui": "bash scripts/start-ui.sh",
+    "db:up": "docker-compose up -d postgres",
+    "db:down": "docker-compose down",
+    "db:migrate": "node server/db/migrate.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cheerio": "^1.2.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.23.1",
+    "pinia": "^4.0.3",
+    "vue": "^3.5.43",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
+    "@vitejs/plugin-vue": "^6.0.9",
+    "concurrently": "^9.1.2",
+    "vite": "^6.2.0"
+  }
+}

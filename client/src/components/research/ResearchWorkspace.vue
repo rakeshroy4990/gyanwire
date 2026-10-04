@@ -1,0 +1,57 @@
+<script setup>
+import { useAuth } from '../../composables/useAuth.js';
+import { useResearch } from '../../composables/useResearch.js';
+import ResearchPanel from './ResearchPanel.vue';
+import ResultsPanel from './ResultsPanel.vue';
+
+const { isAuthenticated, greetingName } = useAuth();
+
+const {
+  catalog,
+  industry,
+  subcategory,
+  thoughts,
+  formError,
+  isLoading,
+  results,
+  resultsSub,
+  emptyMessage,
+  showEmpty,
+  showResults,
+  subs,
+  queryPreview,
+  selectIndustry,
+  selectSub,
+  runSearch,
+  clearForm,
+} = useResearch();
+</script>
+
+<template>
+  <main class="page">
+    <ResearchPanel
+      :greeting-name="isAuthenticated ? greetingName : ''"
+      :catalog="catalog"
+      :industry="industry"
+      :subcategory="subcategory"
+      :subs="subs"
+      :thoughts="thoughts"
+      :query-preview="queryPreview"
+      :form-error="formError"
+      :is-loading="isLoading"
+      @update:thoughts="thoughts = $event"
+      @select-industry="selectIndustry"
+      @select-sub="selectSub"
+      @search="runSearch"
+      @clear="clearForm"
+    />
+    <ResultsPanel
+      :results="results"
+      :results-sub="resultsSub"
+      :empty-message="emptyMessage"
+      :show-empty="showEmpty"
+      :show-results="showResults"
+      :is-loading="isLoading"
+    />
+  </main>
+</template>
