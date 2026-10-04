@@ -967,6 +967,143 @@ textarea::placeholder {
   }
 }
 
+.account-menu {
+  position: relative;
+}
+
+.account-menu__panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.4rem);
+  min-width: 14rem;
+  padding: 0.75rem;
+  background: var(--surface, #fff);
+  border: 1px solid color-mix(in srgb, var(--ink, #122) 12%, transparent);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 8%);
+  display: grid;
+  gap: 0.45rem;
+  z-index: 40;
+}
+
+.account-menu__line {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted, #5c6570);
+}
+
+.account-menu__link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 0.35rem 0.15rem;
+  font: inherit;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.account-menu__link:hover {
+  color: var(--accent, #0f6b5c);
+}
+
+.pricing-page,
+.billing-success {
+  width: var(--page, min(100% - 2rem, 960px));
+  margin: 0 auto;
+  padding: 2.5rem 0 4rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.pricing-page__hero {
+  text-align: center;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.pricing-page__hero h1,
+.billing-success h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+}
+
+.pricing-page__hero p,
+.billing-success p {
+  margin: 0;
+  color: var(--muted, #5c6570);
+}
+
+.pricing-toggle {
+  justify-self: center;
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border: 1px solid color-mix(in srgb, var(--ink, #122) 12%, transparent);
+}
+
+.pricing-toggle__btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0.45rem 0.9rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pricing-toggle__btn.is-active {
+  background: var(--accent-soft, #d9efe9);
+  color: var(--accent, #0f6b5c);
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.pricing-card {
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+  padding: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--ink, #122) 12%, transparent);
+  background: color-mix(in srgb, var(--surface, #fff) 92%, transparent);
+}
+
+.pricing-card--featured {
+  border-color: color-mix(in srgb, var(--accent, #0f6b5c) 45%, transparent);
+}
+
+.pricing-card h2,
+.pricing-card__price,
+.pricing-card__blurb {
+  margin: 0;
+}
+
+.pricing-card__price {
+  font-size: 1.45rem;
+  font-weight: 600;
+}
+
+.pricing-card ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.35rem;
+  color: var(--muted, #5c6570);
+}
+
+.billing-success__meta {
+  font-size: 0.95rem;
+}
+
+@media (max-width: 860px) {
+  .pricing-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

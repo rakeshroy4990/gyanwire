@@ -69,6 +69,10 @@ It’s the site where you dump messy research thoughts and get the best pages fr
 | `GET` | `/api/news/default` / `/api/news/:industry` | Product news feed |
 | `POST` | `/api/search` | Deep research pipeline (plan-limited; logs `usage_events`) |
 | `GET` | `/api/me/usage` | Current plan + remaining daily searches |
+| `POST` | `/api/billing/checkout` | Create Razorpay subscription + return Checkout key |
+| `POST` | `/api/billing/webhook` | Razorpay signed webhooks (idempotent) |
+| `POST` | `/api/billing/cancel` | Cancel at period end |
+| `GET` | `/api/billing/status` | Current subscription status |
 
 ---
 

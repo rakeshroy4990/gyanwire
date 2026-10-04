@@ -9,6 +9,8 @@
     "dev:server": "node --watch server/index.js",
     "dev:client": "vite",
     "build": "vite build",
+    "deploy:ui": "bash scripts/deploy-ui.sh",
+    "deploy:cloud": "bash scripts/deploy-cloud.sh",
     "start": "NODE_ENV=production node server/index.js",
     "preview": "vite preview",
     "ui": "bash scripts/start-ui.sh",
@@ -29,11 +31,14 @@
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.23.1",
     "pinia": "^4.0.3",
+    "razorpay": "^2.9.8",
     "vue": "^3.5.43",
+    "vue-router": "^4.6.4",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
+    "@types/express": "^5.0.6",
     "@vitejs/plugin-vue": "^6.0.9",
     "concurrently": "^9.1.2",
     "vite": "^6.2.0",
