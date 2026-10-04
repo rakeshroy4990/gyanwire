@@ -67,7 +67,8 @@ It’s the site where you dump messy research thoughts and get the best pages fr
 | `GET` | `/api/health` | Engine + auth readiness |
 | `GET` | `/api/industries` | Industry catalog |
 | `GET` | `/api/news/default` / `/api/news/:industry` | Product news feed |
-| `POST` | `/api/search` | Deep research pipeline |
+| `POST` | `/api/search` | Deep research pipeline (plan-limited; logs `usage_events`) |
+| `GET` | `/api/me/usage` | Current plan + remaining daily searches |
 
 ---
 

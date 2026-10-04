@@ -1,5 +1,6 @@
 import { computed, onMounted, ref } from 'vue';
 import { useUiStore } from '../stores/ui.store.js';
+import { useUsage } from './useUsage.js';
 
 const FALLBACK_CATALOG = [
   {
@@ -34,6 +35,7 @@ function hostname(url) {
 
 export function useResearch() {
   const ui = useUiStore();
+  const usage = useUsage();
   const catalog = ref(FALLBACK_CATALOG);
   const industry = ref('Share Market');
   const subcategory = ref(null);
@@ -177,9 +179,11 @@ export function useResearch() {
     }
 
     setLoading(true, 'Researching…');
+    usage.clearLimitPrompt();
     try {
       const res = await fetch('/api/search', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           categories: [industry.value],
@@ -189,9 +193,14 @@ export function useResearch() {
         }),
       });
       const payload = await res.json();
+      if (res.status === 402 || payload?.errorCode === 'LIMIT_REACHED') {
+        usage.handleLimitError(payload);
+        throw new Error(payload?.message || 'Daily search limit reached.');
+      }
       if (!res.ok || !payload.success) {
         throw new Error(payload.message || 'Research failed.');
       }
+      usage.applySearchUsage(payload.data?.usage);
       const scope = subcategory.value
         ? `${industry.value} · ${subcategory.value}`
         : industry.value;
@@ -252,5 +261,9 @@ export function useResearch() {
     selectSub,
     runSearch,
     clearForm,
+    searchesLeftLabel: usage.searchesLeftLabel,
+    limitReached: usage.limitReached,
+    limitMessage: usage.limitMessage,
+    upgradeUrl: usage.upgradeUrl,
   };
 }

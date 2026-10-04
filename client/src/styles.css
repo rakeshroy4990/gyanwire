@@ -743,6 +743,33 @@ textarea::placeholder {
   text-align: center;
 }
 
+.usage-meter {
+  margin: 0.35rem 0 0;
+  color: var(--muted, #5c6570);
+  font-size: 0.86rem;
+  text-align: center;
+}
+
+.upgrade-prompt {
+  margin-top: 0.75rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--accent, #0f766e) 35%, transparent);
+  background: color-mix(in srgb, var(--accent, #0f766e) 8%, transparent);
+  text-align: center;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.upgrade-prompt p {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.upgrade-prompt__cta {
+  justify-self: center;
+  text-decoration: none;
+}
+
 /* ----- Results (below search) ----- */
 
 .results-section {

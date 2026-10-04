@@ -7,6 +7,7 @@ import express from 'express';
 import { isPostgresPersistenceEnabled } from './db/pool.js';
 import { migrate } from './db/migrate.js';
 import { authRouter } from './routes/auth.js';
+import { meRouter } from './routes/me.js';
 import { searchRouter } from './routes/search.js';
 
 dotenv.config();
@@ -40,6 +41,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api/auth', authRouter);
+app.use('/api/me', meRouter);
 app.use('/api', searchRouter);
 
 if (isProd) {
