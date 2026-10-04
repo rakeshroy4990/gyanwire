@@ -44,7 +44,7 @@ export function useResearch() {
   const isLoading = ref(false);
   const results = ref([]);
   const resultsSub = ref('');
-  const emptyMessage = ref('Product news will appear here.');
+  const emptyMessage = ref('Pick an industry for product news, or research a question.');
   const showEmpty = ref(true);
   const showResults = ref(false);
   let newsRequestId = 0;
@@ -88,7 +88,9 @@ export function useResearch() {
       || (list.length ? `${list.length} findings` : 'No strong findings');
     showEmpty.value = list.length === 0;
     showResults.value = list.length > 0;
-    emptyMessage.value = list.length ? 'Product news will appear here.' : 'No strong findings yet.';
+    emptyMessage.value = list.length
+      ? 'Pick an industry for product news, or research a question.'
+      : 'No strong findings yet. Try a clearer question or another industry.';
     ui.setStatus('');
     if (scroll && list.length) {
       document.getElementById('resultsTitle')?.scrollIntoView({ behavior: 'smooth', block: 'start' });

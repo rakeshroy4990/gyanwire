@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue';
+import { RouterLink } from 'vue-router';
 import { useBilling } from '../composables/useBilling.js';
 import { useAuth } from '../composables/useAuth.js';
 
@@ -13,8 +14,8 @@ const plans = [
     name: 'Free',
     monthly: 0,
     annual: 0,
-    blurb: 'Try Gyanwire on a daily search allowance.',
-    features: ['5 searches / day', 'Markdown export later', 'Community support'],
+    blurb: 'Try the workbench with a daily search allowance.',
+    features: ['5 searches per day', 'Live query preview', 'India-first ranking'],
   },
   {
     id: 'pro',
@@ -22,7 +23,7 @@ const plans = [
     monthly: 999,
     annual: 9990,
     blurb: 'For solo researchers who need depth every day.',
-    features: ['100 searches / day', 'Save projects', 'Export DOCX/PDF', 'Alerts'],
+    features: ['100 searches per day', 'Saved projects', 'Export DOCX and PDF', 'Watch alerts'],
   },
   {
     id: 'team',
@@ -30,14 +31,16 @@ const plans = [
     monthly: 2999,
     annual: 29990,
     blurb: 'Shared seats for small R&D and product teams.',
-    features: ['500 searches / day', '5 seats', 'Everything in Pro', 'Priority support'],
+    features: ['500 searches per day', '5 seats', 'Everything in Pro', 'Priority support'],
   },
 ];
 
 function priceLabel(plan) {
   const amount = interval.value === 'annual' ? plan.annual : plan.monthly;
   if (!amount) return '₹0';
-  return interval.value === 'annual' ? `₹${amount.toLocaleString('en-IN')}/yr` : `₹${amount.toLocaleString('en-IN')}/mo`;
+  return interval.value === 'annual'
+    ? `₹${amount.toLocaleString('en-IN')}/yr`
+    : `₹${amount.toLocaleString('en-IN')}/mo`;
 }
 
 function onSelect(planId) {
@@ -53,8 +56,9 @@ function onSelect(planId) {
 <template>
   <main class="pricing-page">
     <header class="pricing-page__hero">
-      <h1>Pricing</h1>
-      <p>Start free. Upgrade when your research needs more room.</p>
+      <p class="pricing-page__brand">Gyanwire</p>
+      <h1>Simple plans for deeper research</h1>
+      <p>Start free. Upgrade when the daily limit gets in the way.</p>
       <div class="pricing-toggle" role="group" aria-label="Billing interval">
         <button
           type="button"
@@ -91,15 +95,17 @@ function onSelect(planId) {
           <li v-for="feature in plan.features" :key="feature">{{ feature }}</li>
         </ul>
         <button
+          v-if="plan.id !== 'free'"
           type="button"
-          class="btn"
-          :class="plan.id === 'free' ? 'btn--ghost' : 'btn--primary'"
-          :disabled="isBusy || plan.id === 'free'"
+          class="btn btn--primary"
+          :disabled="isBusy"
           @click="onSelect(plan.id)"
         >
-          <template v-if="plan.id === 'free'">Current free tier</template>
-          <template v-else>Choose {{ plan.name }}</template>
+          Choose {{ plan.name }}
         </button>
+        <RouterLink v-else class="btn btn--ghost" to="/">
+          Continue free
+        </RouterLink>
       </article>
     </div>
   </main>

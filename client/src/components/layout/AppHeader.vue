@@ -45,7 +45,7 @@ async function onCancel() {
         <span class="brand__mark" aria-hidden="true" />
         <span class="brand__text">
           <span class="brand__name">Gyanwire</span>
-          <span class="brand__tag">R&D Research</span>
+          <span class="brand__tag">Live research</span>
         </span>
       </RouterLink>
 

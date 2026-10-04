@@ -13,8 +13,8 @@ onMounted(async () => {
     await refreshUsage();
     const status = await fetchBillingStatus();
     statusLabel.value = status.status === 'active' || status.planId !== 'free'
-      ? `You're on ${status.planName}.`
-      : 'Payment received — plan will activate once Razorpay confirms the webhook.';
+      ? `You are on ${status.planName}.`
+      : 'Payment received. Your plan will activate once Razorpay confirms the webhook.';
   } catch (err) {
     error.value = err.message || 'Could not refresh plan status.';
   }
@@ -23,9 +23,12 @@ onMounted(async () => {
 
 <template>
   <main class="billing-success">
-    <h1>You're all set</h1>
+    <p class="pricing-page__brand">Gyanwire</p>
+    <h1>You are all set</h1>
     <p>{{ statusLabel }}</p>
-    <p v-if="planName" class="billing-success__meta">Plan: {{ planName }} · {{ searchesLeftLabel }}</p>
+    <p v-if="planName" class="billing-success__meta">
+      Plan: {{ planName }} · {{ searchesLeftLabel }}
+    </p>
     <p v-if="error" class="form-error" role="alert">{{ error }}</p>
     <RouterLink class="btn btn--primary" to="/">Back to research</RouterLink>
   </main>

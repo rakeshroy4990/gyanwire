@@ -32,16 +32,32 @@ function onThoughtsKeydown(event) {
 </script>
 
 <template>
-  <section class="search-section" aria-label="Research search">
-    <h1 class="search-section__title">What are you researching?</h1>
-    <p class="search-section__lede">
-      <template v-if="greetingName">
-        Welcome back, {{ greetingName }}. Click an industry for product news, or write a research question.
-      </template>
-      <template v-else>
-        Click an industry for product news. Or write a research question and dig deeper.
-      </template>
-    </p>
+  <section class="search-section" aria-label="Research workspace">
+    <header class="search-hero">
+      <p class="search-hero__brand">Gyanwire</p>
+      <h1 class="search-section__title">
+        <template v-if="greetingName">Welcome back, {{ greetingName }}.</template>
+        <template v-else>Messy notes in. Ranked findings out.</template>
+      </h1>
+      <p class="search-section__lede">
+        Pick an industry, dump what you are thinking, and get a short list of pages that match what you meant.
+      </p>
+    </header>
+
+    <ol class="guide-steps" aria-label="How to use Gyanwire">
+      <li class="guide-steps__item" :class="{ 'is-done': Boolean(industry) }">
+        <span class="guide-steps__num">1</span>
+        <span>Pick industry</span>
+      </li>
+      <li class="guide-steps__item" :class="{ 'is-done': thoughts.trim().length >= 8 }">
+        <span class="guide-steps__num">2</span>
+        <span>Write thoughts</span>
+      </li>
+      <li class="guide-steps__item">
+        <span class="guide-steps__num">3</span>
+        <span>Research</span>
+      </li>
+    </ol>
 
     <div class="industry-label">Research industries</div>
     <div class="topics topics--industries" role="group" aria-label="Research industries">
@@ -60,9 +76,9 @@ function onThoughtsKeydown(event) {
 
     <div v-if="industry" class="subpanel">
       <div class="industry-label">
-        Top searched in <span>{{ industry }}</span>
+        Narrow in <span>{{ industry }}</span>
       </div>
-      <div class="topics topics--subs" role="group" aria-label="Sub combinations">
+      <div class="topics topics--subs" role="group" aria-label="Sub topics">
         <button
           v-for="name in subs"
           :key="name"
@@ -78,19 +94,20 @@ function onThoughtsKeydown(event) {
     </div>
 
     <div class="composer">
+      <label class="composer__label" for="research-thoughts">Your research notes</label>
       <textarea
+        id="research-thoughts"
         :value="thoughts"
         rows="4"
         maxlength="2000"
-        placeholder="Example: NVIDIA inference chips for edge devices, or Instagram Reels ranking research…"
-        aria-label="Research notes"
+        placeholder="Example: CDSCO pathway for Class B SaMD, or NPCI UPI Lite merchant settlement research…"
         @input="emit('update:thoughts', $event.target.value)"
         @keydown="onThoughtsKeydown"
       />
 
       <div class="composer__footer">
         <p class="composer__note">
-          India-first results. News highlights real products. Research favors papers, trials, patents, and labs.
+          India-first sources. Product news for browsing. Research favors papers, trials, patents, and labs.
         </p>
         <div class="composer__actions">
           <button type="button" class="btn btn--ghost" @click="emit('clear')">Clear</button>
@@ -98,7 +115,7 @@ function onThoughtsKeydown(event) {
             type="button"
             class="btn btn--primary"
             :class="{ 'is-loading': isLoading }"
-            :disabled="isLoading"
+            :disabled="isLoading || limitReached"
             :aria-busy="isLoading"
             @click="emit('search')"
           >
@@ -109,12 +126,29 @@ function onThoughtsKeydown(event) {
       </div>
     </div>
 
-    <p class="query-hint">{{ queryPreview }}</p>
+    <p
+      class="query-hint"
+      :class="{ 'query-hint--live': Boolean(queryPreview) }"
+      aria-live="polite"
+    >
+      <template v-if="queryPreview">
+        <span class="query-hint__label">Likely search</span>
+        {{ queryPreview }}
+      </template>
+      <template v-else>
+        Start typing. A live search preview appears here before you commit.
+      </template>
+    </p>
+
     <p v-if="searchesLeftLabel" class="usage-meter" aria-live="polite">{{ searchesLeftLabel }}</p>
+
     <div v-if="limitReached" class="upgrade-prompt" role="alert">
       <p>{{ limitMessage || 'Daily search limit reached.' }}</p>
-      <a class="btn btn--primary upgrade-prompt__cta" :href="upgradeUrl">Upgrade</a>
+      <RouterLink class="btn btn--primary upgrade-prompt__cta" :to="upgradeUrl">
+        See plans
+      </RouterLink>
     </div>
+
     <p v-if="formError" class="form-error" role="alert">{{ formError }}</p>
   </section>
 </template>
