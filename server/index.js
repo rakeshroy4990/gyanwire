@@ -71,11 +71,11 @@ async function start() {
         console.error('PostgreSQL migration failed:', err.message);
       }
     } else {
-      console.log('Using existing PostgreSQL schema via SPRING_DATASOURCE_* (AUTH_AUTO_MIGRATE!=true).');
+      console.log('Using Gyanwire PostgreSQL (AUTH_AUTO_MIGRATE!=true; run npm run db:migrate).');
     }
   } else {
     console.warn(
-      'Postgres auth disabled — set APP_PERSISTENCE_PROVIDER=postgres and SPRING_DATASOURCE_URL / USERNAME / PASSWORD.',
+      'Postgres auth disabled — set APP_PERSISTENCE_PROVIDER=postgres and GYANWIRE_DATABASE_URL.',
     );
   }
 

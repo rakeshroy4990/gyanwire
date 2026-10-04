@@ -4,16 +4,18 @@
 # After first deploy, set UI_ORIGIN to the Cloud Run URL if cookies/CORS need it:
 #   gcloud run services update gyanwire --region=asia-south1 \
 #     --update-env-vars=UI_ORIGIN=https://YOUR-SERVICE.run.app
+#
+# Create Secret Manager secret `gyanwire-database-url` with GYANWIRE_DATABASE_URL.
 
 NODE_ENV: production
 HOST: "0.0.0.0"
 APP_PERSISTENCE_PROVIDER: postgres
 DATABASE_SSL: "true"
-AUTH_AUTO_MIGRATE: "false"
+DATABASE_POOL_MAX: "5"
+AUTH_AUTO_MIGRATE: "true"
 AUTH_COOKIE_SECURE: "true"
 AUTH_COOKIE_SAME_SITE: Lax
 JWT_ACCESS_TTL_SECONDS: "43200"
 JWT_REFRESH_TTL_SECONDS: "2592000"
 LLM_BASE_URL: https://api.openai.com/v1
 LLM_MODEL: gpt-4o-mini
-SPRING_DATASOURCE_MAX_POOL_SIZE: "5"

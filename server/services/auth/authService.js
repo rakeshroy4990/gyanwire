@@ -28,35 +28,23 @@ function displayName(user) {
 
 function toPublicUser(user) {
   return {
-    userId: user.externalId || user.id,
+    userId: user.id,
     email: user.email,
     firstName: user.firstName || '',
     lastName: user.lastName || '',
     username: displayName(user),
-    role: user.role || 'PATIENT',
-    roleStatus: user.roleStatus || 'ACTIVE',
-    active: Boolean(user.active),
+    role: user.role || 'user',
     profilePic: user.profilePic || '',
   };
 }
 
 function assertEligible(user) {
-  if (!user || !user.active || user.roleStatus === 'INACTIVE') {
+  if (!user) {
     throw new AuthError(
-      'Your account has been deactivated. You cannot sign in until an administrator reactivates your account.',
-      'AUTH_ACCOUNT_DEACTIVATED',
+      'Your account is unavailable. Please contact support if this persists.',
+      'AUTH_ACCOUNT_UNAVAILABLE',
       403,
     );
-  }
-  if (user.roleStatus === 'PENDING_APPROVAL') {
-    throw new AuthError(
-      'Your request is pending for approval. Please wait for an admin to approve your request.',
-      'AUTH_ROLE_PENDING_APPROVAL',
-      403,
-    );
-  }
-  if (user.roleStatus !== 'ACTIVE') {
-    throw new AuthError('Unable to sign in with this account.', 'AUTH_ROLE_BLOCKED', 403);
   }
 }
 
@@ -161,12 +149,11 @@ export async function register({ emailId, password, firstName, lastName }) {
   });
 
   return {
-    userId: user.externalId || user.id,
+    userId: user.id,
     email: user.email,
     firstName: user.firstName || '',
     lastName: user.lastName || '',
     role: user.role,
-    roleStatus: user.roleStatus,
   };
 }
 
@@ -198,7 +185,7 @@ export async function refreshSession(refreshTokenValue) {
   }
 
   const user = await users.findById(stored.userId);
-  if (!user || String(claims.sub) !== user.id) {
+  if (!user || String(claims.sub) !== String(user.id)) {
     throw new AuthError('Refresh token is invalid.', 'AUTH_REFRESH_INVALID');
   }
   if (Number(claims.tokenVersion || 0) !== Number(user.tokenVersion || 1)) {

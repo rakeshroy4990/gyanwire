@@ -38,32 +38,26 @@ Then open:
 | `UI_PORT` | No | Vite UI port (`5180` by default) |
 | `PORT` | No | API port (`3010` by default) |
 | `APP_PERSISTENCE_PROVIDER` | Yes for auth | Set to `postgres` |
-| `SPRING_DATASOURCE_URL` | Yes for auth | JDBC URL (`jdbc:postgresql://...`) |
-| `SPRING_DATASOURCE_USERNAME` | Yes for auth | Postgres username |
-| `SPRING_DATASOURCE_PASSWORD` | Yes for auth | Postgres password |
+| `GYANWIRE_DATABASE_URL` | Yes for auth | Postgres URL for the **Gyanwire-owned** DB |
 | `JWT_SECRET` | Yes for auth | Signing secret for access/refresh JWTs |
 | `VITE_GOOGLE_OAUTH_CLIENT_ID` | No | Google Sign-In (GIS) OAuth web client ID |
 
 ## Auth (Sign in + Google)
 
-Sign-in follows the hospital frontend architecture adapted to Gyanwire:
-
 - Vue 3 + Pinia (`authSession` / `authForm` stores) for user profile everywhere
 - Sign-in / register modals in the UI
 - Email/password + Google (Gmail) via Google Identity Services
 - Express `/api/auth/*` with httpOnly cookies
-- Shared Supabase `users` + `refresh_tokens` tables
-
-Auth uses the shared Supabase `users` / `refresh_tokens` tables (same DB as hospital).
-Configure the same Spring datasource variables:
+- **Own** Postgres `users` + `refresh_tokens` (not shared with any hospital DB)
 
 ```bash
 APP_PERSISTENCE_PROVIDER=postgres
-SPRING_DATASOURCE_URL=jdbc:postgresql://aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres
-SPRING_DATASOURCE_USERNAME=postgres.<project-ref>
-SPRING_DATASOURCE_PASSWORD=...
-AUTH_AUTO_MIGRATE=false
+GYANWIRE_DATABASE_URL=postgresql://gyanwire:gyanwire@localhost:5433/gyanwire
+AUTH_AUTO_MIGRATE=true
+# or: npm run db:migrate
 ```
+
+Create a dedicated Supabase/Neon project for Gyanwire and put its connection string in `GYANWIRE_DATABASE_URL`.
 
 ```bash
 npm run ui
