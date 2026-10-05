@@ -1,37 +1,28 @@
-# Multi-stage image: Vite client build + Express API (serves dist in production).
-FROM node:20-alpine AS build
-
+# Multi-stage: Vite UI build + Spring Boot gyanwire-server fat jar.
+FROM node:20-alpine AS ui-build
 WORKDIR /app
-
 COPY package.json package-lock.json ./
 RUN npm ci
-
 COPY client ./client
 COPY vite.config.js ./
-COPY server ./server
-
-# Public GIS client id — baked into the Vite bundle at build time.
 ARG VITE_GOOGLE_OAUTH_CLIENT_ID=
+ARG VITE_BACKEND_URL=https://gyanwire-r5eanyyt6a-el.a.run.app
 ENV VITE_GOOGLE_OAUTH_CLIENT_ID=$VITE_GOOGLE_OAUTH_CLIENT_ID
-
+ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
 RUN npm run build
 
-FROM node:20-alpine AS runtime
-
+FROM eclipse-temurin:21-jdk-alpine AS api-build
 WORKDIR /app
+COPY gyanwire-server ./gyanwire-server
+WORKDIR /app/gyanwire-server
+RUN chmod +x ./gradlew && ./gradlew bootJar --no-daemon
 
-ENV NODE_ENV=production
-ENV HOST=0.0.0.0
+FROM eclipse-temurin:21-jre-alpine AS runtime
+WORKDIR /app
 ENV PORT=8080
-
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev && npm cache clean --force
-
-COPY server ./server
-COPY --from=build /app/dist ./dist
-
+ENV HOST=0.0.0.0
+COPY --from=api-build /app/gyanwire-server/build/libs/*.jar /app/app.jar
+COPY --from=ui-build /app/dist /app/dist
 EXPOSE 8080
-
-USER node
-
-CMD ["node", "server/index.js"]
+USER nobody
+CMD ["java", "-jar", "/app/app.jar"]

@@ -1,3 +1,0 @@
--- Deprecated: schema is owned by numbered migrations in server/db/migrations/.
--- Run: npm run db:migrate
--- See: 001_init.sql

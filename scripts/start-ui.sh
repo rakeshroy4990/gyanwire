@@ -5,7 +5,6 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 if [[ -f .env ]]; then
-  # Load PORT / UI_PORT from .env without exporting unrelated values blindly.
   while IFS= read -r line || [[ -n "$line" ]]; do
     case "$line" in
       ''|\#*) continue ;;
@@ -13,7 +12,7 @@ if [[ -f .env ]]; then
     key="${line%%=*}"
     value="${line#*=}"
     case "$key" in
-      UI_PORT|PORT|HOST)
+      UI_PORT|GYANWIRE_SERVER_PORT|PORT)
         # shellcheck disable=SC2163
         export "$key=$value"
         ;;
@@ -22,7 +21,7 @@ if [[ -f .env ]]; then
 fi
 
 UI_PORT="${UI_PORT:-5180}"
-API_PORT="${PORT:-3010}"
+API_PORT="${GYANWIRE_SERVER_PORT:-${PORT:-8080}}"
 
 kill_port() {
   local port="$1"
@@ -57,19 +56,15 @@ kill_port() {
   echo "Port $port is free."
 }
 
-echo "Gyanwire → UI :$UI_PORT  API :$API_PORT"
+echo "Gyanwire UI → :$UI_PORT"
 kill_port "$UI_PORT"
-kill_port "$API_PORT"
-
-export PORT="$API_PORT"
-export HOST="${HOST:-0.0.0.0}"
 
 if [[ ! -d node_modules ]]; then
   echo "Installing dependencies..."
   npm install
 fi
 
-echo "Starting Gyanwire..."
+echo "Starting UI only (Vite)."
 echo "  UI  http://localhost:$UI_PORT"
-echo "  API http://localhost:$API_PORT"
-exec npm run dev
+echo "  API proxy → gyanwire-server :$API_PORT (start with npm run gyanwire-server)"
+exec npm run dev:client

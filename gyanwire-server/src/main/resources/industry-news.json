@@ -1,0 +1,470 @@
+[
+  {
+    "name": "IT",
+    "label": "IT products",
+    "why": "Hot product move in IT.",
+    "queries": [
+      "NVIDIA GPU AI chip product launch OR earnings",
+      "ChatGPT OpenAI product update OR API release",
+      "Microsoft Copilot product update enterprise"
+    ],
+    "blockGeneric": [
+      "share market live",
+      "stock market today",
+      "nifty closes"
+    ],
+    "subs": [
+      {
+        "name": "AI",
+        "label": "AI products",
+        "why": "AI product people are watching.",
+        "queries": [
+          "ChatGPT Claude Gemini product update",
+          "OpenAI API GPT model launch news",
+          "enterprise AI copilot product release"
+        ]
+      },
+      {
+        "name": "Semiconductors",
+        "label": "Chip products",
+        "why": "Semiconductor product catalyst.",
+        "queries": [
+          "NVIDIA AMD Intel AI chip launch",
+          "TSMC semiconductor capacity OR node news",
+          "GPU accelerator product announcement"
+        ]
+      },
+      {
+        "name": "Cybersecurity",
+        "label": "Security products",
+        "why": "Cybersecurity product move.",
+        "queries": [
+          "CrowdStrike Palo Alto cybersecurity product",
+          "zero trust security product launch",
+          "ransomware security tool update news"
+        ]
+      },
+      {
+        "name": "Cloud",
+        "label": "Cloud products",
+        "why": "Cloud product people use.",
+        "queries": [
+          "AWS Azure Google Cloud product launch",
+          "Kubernetes serverless cloud platform update",
+          "SaaS infrastructure cloud product news"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Medical",
+    "label": "Medical products",
+    "why": "Medical product or therapy breakthrough.",
+    "queries": [
+      "Ozempic Wegovy drug trial OR FDA approval",
+      "CRISPR gene therapy clinical trial results",
+      "mRNA vaccine cancer therapy research news"
+    ],
+    "blockGeneric": [
+      "share market live",
+      "stock market today"
+    ],
+    "subs": [
+      {
+        "name": "Paediatrics",
+        "label": "Paediatrics products",
+        "why": "Child-health product or vaccine news.",
+        "queries": [
+          "paediatric vaccine childhood drug trial",
+          "pediatric rare disease therapy FDA",
+          "child health medical device approval news"
+        ]
+      },
+      {
+        "name": "Cardiology",
+        "label": "Cardiology products",
+        "why": "Heart-care product or therapy news.",
+        "queries": [
+          "cardiology stent pacemaker FDA OR trial",
+          "heart failure drug clinical trial results",
+          "Apple Watch ECG cardiac monitoring product"
+        ]
+      },
+      {
+        "name": "Gynecology",
+        "label": "Gynecology products",
+        "why": "Women’s health product people search.",
+        "queries": [
+          "gynecology fertility IVF product OR trial",
+          "OB GYN endometriosis treatment news",
+          "women health drug device FDA approval"
+        ]
+      },
+      {
+        "name": "Oncology",
+        "label": "Oncology products",
+        "why": "Cancer therapy product breakthrough.",
+        "queries": [
+          "cancer immunotherapy drug trial results",
+          "oncology CAR-T therapy FDA approval",
+          "mRNA cancer vaccine clinical trial news"
+        ]
+      },
+      {
+        "name": "Mental Health",
+        "label": "Mental health products",
+        "why": "Mental health product people seek.",
+        "queries": [
+          "depression anxiety drug clinical trial",
+          "digital mental health app therapy product",
+          "psychiatry psychedelic therapy research news"
+        ]
+      },
+      {
+        "name": "Dermatology",
+        "label": "Dermatology products",
+        "why": "Skin-care treatment product news.",
+        "queries": [
+          "dermatology eczema psoriasis drug approval",
+          "acne biologic skin treatment trial",
+          "dermatology medical device laser product news"
+        ]
+      },
+      {
+        "name": "Autism",
+        "label": "Autism products",
+        "why": "Autism therapy, diagnostic, or support product news.",
+        "queries": [
+          "autism therapy drug clinical trial OR FDA",
+          "autism diagnosis screening tool digital product",
+          "ABA OR speech therapy autism product research news",
+          "autism wearable OR AI support product launch"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Space",
+    "label": "Space products",
+    "why": "Space product or mission update.",
+    "queries": [
+      "SpaceX Starship Falcon 9 launch update",
+      "Starlink satellite product news OR expansion",
+      "ISRO Chandrayaan OR Gaganyaan mission update"
+    ],
+    "blockGeneric": [
+      "share market live",
+      "stock market today"
+    ],
+    "subs": [
+      {
+        "name": "Satellites",
+        "label": "Satellite products",
+        "why": "Satellite product or constellation news.",
+        "queries": [
+          "Starlink OneWeb satellite constellation news",
+          "earth observation satellite product launch",
+          "satellite broadband commercial service update"
+        ]
+      },
+      {
+        "name": "Launch",
+        "label": "Launch products",
+        "why": "Rocket / launch product update.",
+        "queries": [
+          "SpaceX Falcon Starship launch update",
+          "ISRO LVM3 rocket launch mission news",
+          "reusable rocket launch vehicle product"
+        ]
+      },
+      {
+        "name": "Commercial Space",
+        "label": "Commercial space products",
+        "why": "Commercial space product people follow.",
+        "queries": [
+          "space tourism commercial crew product news",
+          "Blue Origin Virgin Galactic flight update",
+          "commercial space station product announcement"
+        ]
+      },
+      {
+        "name": "Lunar",
+        "label": "Lunar products",
+        "why": "Moon mission product people track.",
+        "queries": [
+          "NASA Artemis lunar lander mission news",
+          "ISRO Chandrayaan lunar mission update",
+          "moon rover lander product announcement"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Share Market",
+    "label": "Share products",
+    "why": "Share-specific product or company move.",
+    "queries": [
+      "Reliance OR TCS OR Infosys stock earnings OR product",
+      "Tesla OR NVIDIA stock price product catalyst",
+      "IPO listing OR SME IPO allotment today India"
+    ],
+    "blockGeneric": [
+      "share market live",
+      "share market today: latest",
+      "nifty closes below",
+      "indian stock market prediction",
+      "things that will decide stock market action"
+    ],
+    "subs": [
+      {
+        "name": "IT",
+        "label": "IT shares",
+        "why": "IT stock / product catalyst.",
+        "queries": [
+          "TCS Infosys Wipro stock earnings product",
+          "NVIDIA Microsoft IT stock catalyst news",
+          "AI software company stock product launch"
+        ]
+      },
+      {
+        "name": "EV",
+        "label": "EV shares",
+        "why": "EV stock / product catalyst.",
+        "queries": [
+          "Tesla EV stock delivery OR product news",
+          "Tata Motors Ola Electric EV share news",
+          "electric vehicle battery stock catalyst"
+        ]
+      },
+      {
+        "name": "Space",
+        "label": "Space shares",
+        "why": "Space stock / product catalyst.",
+        "queries": [
+          "SpaceX related stock OR satellite company shares",
+          "aerospace defence stock product contract news",
+          "rocket satellite company IPO OR share news"
+        ]
+      },
+      {
+        "name": "Pharma",
+        "label": "Pharma shares",
+        "why": "Pharma stock / drug catalyst.",
+        "queries": [
+          "Sun Pharma Dr Reddy stock drug approval",
+          "pharma stock FDA trial catalyst news",
+          "biotech share price clinical trial result"
+        ]
+      },
+      {
+        "name": "Banking",
+        "label": "Banking shares",
+        "why": "Bank stock / product catalyst.",
+        "queries": [
+          "HDFC Bank ICICI SBI stock earnings news",
+          "bank share price fintech product catalyst",
+          "private bank stock quarterly results India"
+        ]
+      },
+      {
+        "name": "Energy",
+        "label": "Energy shares",
+        "why": "Energy stock / product catalyst.",
+        "queries": [
+          "Reliance ONGC energy stock product news",
+          "renewable energy stock solar wind catalyst",
+          "oil gas company share earnings update"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Social Media",
+    "label": "Social products",
+    "why": "Social product feature or platform move.",
+    "queries": [
+      "Instagram Reels OR Threads product update Meta",
+      "TikTok Shop OR TikTok algorithm product news",
+      "WhatsApp Channels OR WhatsApp AI feature"
+    ],
+    "blockGeneric": [
+      "share market live",
+      "stock market today"
+    ],
+    "subs": [
+      {
+        "name": "Short Video",
+        "label": "Short video products",
+        "why": "Short-video product people binge.",
+        "queries": [
+          "Instagram Reels TikTok YouTube Shorts update",
+          "short video algorithm product feature news",
+          "Reels monetisation creator product update"
+        ]
+      },
+      {
+        "name": "Social Commerce",
+        "label": "Social commerce products",
+        "why": "Shop-on-social product move.",
+        "queries": [
+          "TikTok Shop Instagram shopping product news",
+          "social commerce checkout feature launch",
+          "Meta shoppable Reels product update"
+        ]
+      },
+      {
+        "name": "Messaging",
+        "label": "Messaging products",
+        "why": "Messaging product people use daily.",
+        "queries": [
+          "WhatsApp Channels AI feature update",
+          "iMessage Telegram Signal product news",
+          "messaging app privacy feature launch"
+        ]
+      },
+      {
+        "name": "Creators",
+        "label": "Creator products",
+        "why": "Creator-economy product update.",
+        "queries": [
+          "creator fund monetisation product update",
+          "LinkedIn newsletter creator tools news",
+          "influencer platform product feature launch"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Gaming",
+    "label": "Gaming products",
+    "why": "Game launch, platform, or esports product move.",
+    "queries": [
+      "PlayStation Xbox Nintendo game launch OR update",
+      "BGMI OR Free Fire OR Genshin Impact game news",
+      "Steam Epic Games Store product update OR release"
+    ],
+    "blockGeneric": [
+      "share market live",
+      "stock market today"
+    ],
+    "subs": [
+      {
+        "name": "Mobile",
+        "label": "Mobile game products",
+        "why": "Mobile game launch or update people play.",
+        "queries": [
+          "BGMI Free Fire PUBG Mobile game update India",
+          "mobile game launch OR monetisation product news",
+          "Genshin OR Honkai OR Roblox mobile game update"
+        ]
+      },
+      {
+        "name": "Esports",
+        "label": "Esports products",
+        "why": "Esports tournament or team product news.",
+        "queries": [
+          "esports tournament prize pool OR league news",
+          "BGMI OR Valorant OR Dota esports India update",
+          "esports team sponsorship OR franchise product news"
+        ]
+      },
+      {
+        "name": "Console",
+        "label": "Console products",
+        "why": "Console hardware or exclusive game news.",
+        "queries": [
+          "PlayStation Xbox Nintendo Switch console update",
+          "console exclusive game launch OR trailer news",
+          "Sony Microsoft Nintendo hardware product announcement"
+        ]
+      },
+      {
+        "name": "PC Gaming",
+        "label": "PC gaming products",
+        "why": "PC game or storefront product update.",
+        "queries": [
+          "Steam Epic Games PC game launch OR sale news",
+          "PC gaming hardware GPU OR laptop product update",
+          "indie OR AAA PC game release trailer news"
+        ]
+      },
+      {
+        "name": "Game Dev",
+        "label": "Game development products",
+        "why": "Game engine or studio product move.",
+        "queries": [
+          "Unity Unreal Engine game development update",
+          "game studio acquisition OR funding product news",
+          "game engine tool OR SDK product launch"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Astrology",
+    "label": "Astrology products",
+    "why": "Astrology app, forecast, or ritual product people seek.",
+    "queries": [
+      "astrology app OR horoscope product update India",
+      "Vedic astrology planetary transit OR prediction news",
+      "tarot OR numerology OR vastu product OR guide update"
+    ],
+    "blockGeneric": [
+      "share market live",
+      "stock market today",
+      "nifty closes"
+    ],
+    "subs": [
+      {
+        "name": "Horoscope",
+        "label": "Horoscope products",
+        "why": "Daily or weekly horoscope product people check.",
+        "queries": [
+          "daily horoscope zodiac prediction India today",
+          "weekly horoscope app OR product update",
+          "sun sign moon sign horoscope forecast news"
+        ]
+      },
+      {
+        "name": "Vedic",
+        "label": "Vedic astrology products",
+        "why": "Vedic / Jyotish product or transit news.",
+        "queries": [
+          "Vedic astrology Jyotish planetary transit news",
+          "kundli OR birth chart astrology product update",
+          "graha gochar OR dasha prediction India news"
+        ]
+      },
+      {
+        "name": "Tarot",
+        "label": "Tarot products",
+        "why": "Tarot reading product or deck people use.",
+        "queries": [
+          "tarot reading app OR deck product launch",
+          "tarot card meaning guide OR product update",
+          "online tarot consultation product news"
+        ]
+      },
+      {
+        "name": "Numerology",
+        "label": "Numerology products",
+        "why": "Numerology forecast or tool product news.",
+        "queries": [
+          "numerology life path number prediction India",
+          "numerology app OR calculator product update",
+          "name numerology OR lucky number product news"
+        ]
+      },
+      {
+        "name": "Vastu",
+        "label": "Vastu products",
+        "why": "Vastu tips or home product people search.",
+        "queries": [
+          "Vastu Shastra home tips OR product India",
+          "Vastu for house OR office product guide news",
+          "Vastu consultation OR remedy product update"
+        ]
+      }
+    ]
+  }
+]

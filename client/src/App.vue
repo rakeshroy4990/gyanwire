@@ -3,7 +3,6 @@ import { onMounted, onUnmounted, watch } from 'vue';
 import AppHeader from './components/layout/AppHeader.vue';
 import LoginModal from './components/auth/LoginModal.vue';
 import RegisterModal from './components/auth/RegisterModal.vue';
-import ResearchWorkspace from './components/research/ResearchWorkspace.vue';
 import { useAuth } from './composables/useAuth.js';
 
 const { isAnyPopupOpen, closePopup } = useAuth();
@@ -24,7 +23,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
 
 <template>
   <AppHeader />
-  <ResearchWorkspace />
+  <RouterView />
   <LoginModal />
   <RegisterModal />
 </template>

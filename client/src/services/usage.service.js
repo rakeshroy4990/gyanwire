@@ -1,3 +1,5 @@
+import { apiUrl } from './apiBase.js';
+
 async function parseJson(res) {
   try {
     return await res.json();
@@ -7,7 +9,7 @@ async function parseJson(res) {
 }
 
 export async function fetchUsage() {
-  const res = await fetch('/api/me/usage', {
+  const res = await fetch(apiUrl('/api/me/usage'), {
     method: 'GET',
     credentials: 'include',
   });

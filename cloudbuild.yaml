@@ -17,7 +17,7 @@
 #   gcloud builds submit --project=gyanwire --config=cloudbuild.yaml .
 #
 # Optional substitutions:
-#   --substitutions=_VITE_GOOGLE_OAUTH_CLIENT_ID=xxxxx.apps.googleusercontent.com,_UI_ORIGIN=https://gyanwire-xxxxx.run.app
+#   --substitutions=_VITE_BACKEND_URL=https://gyanwire-r5eanyyt6a-el.a.run.app,_VITE_GOOGLE_OAUTH_CLIENT_ID=xxxxx.apps.googleusercontent.com,_UI_ORIGIN=https://gyanwire-a4293.web.app
 
 substitutions:
   _LOCATION: asia-south1
@@ -29,6 +29,7 @@ substitutions:
   _CPU: "1"
   _MIN_INSTANCES: "0"
   _MAX_INSTANCES: "3"
+  _VITE_BACKEND_URL: https://gyanwire-r5eanyyt6a-el.a.run.app
   _VITE_GOOGLE_OAUTH_CLIENT_ID: 1023853361537-d6n3qjsic736ga3p140va3gq1iqtq4is.apps.googleusercontent.com
   _UI_ORIGIN: ""
 
@@ -47,6 +48,7 @@ steps:
       - --platform=linux/amd64
       - --file=Dockerfile
       - --build-arg=VITE_GOOGLE_OAUTH_CLIENT_ID=${_VITE_GOOGLE_OAUTH_CLIENT_ID}
+      - --build-arg=VITE_BACKEND_URL=${_VITE_BACKEND_URL}
       - --tag=${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${BUILD_ID}
       - --tag=${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:latest
       - .
@@ -91,7 +93,7 @@ steps:
           --no-cpu-throttling
           --startup-probe=httpGet.path=/api/health,httpGet.port=8080,periodSeconds=5,timeoutSeconds=3,failureThreshold=36
           --env-vars-file=cloudrun-env.yaml
-          --set-secrets=GYANWIRE_DATABASE_URL=gyanwire-database-url:latest,JWT_SECRET=gyanwire-jwt-secret:latest,LLM_API_KEY=gyanwire-llm-api-key:latest
+          --set-secrets=SPRING_DATASOURCE_URL=gyanwire-spring-datasource-url:latest,SPRING_DATASOURCE_USERNAME=gyanwire-spring-datasource-username:latest,SPRING_DATASOURCE_PASSWORD=gyanwire-spring-datasource-password:latest,JWT_SECRET=gyanwire-jwt-secret:latest,LLM_API_KEY=gyanwire-llm-api-key:latest
           --quiet
         )
 
