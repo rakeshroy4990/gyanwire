@@ -4,7 +4,7 @@ import vue from '@vitejs/plugin-vue';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const uiPort = Number(env.UI_PORT || 5180);
-  const apiPort = Number(env.PORT || 3010);
+  const apiPort = Number(env.GYANWIRE_SERVER_PORT || env.PORT || 8080);
 
   return {
     root: 'client',

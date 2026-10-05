@@ -3,7 +3,8 @@ import { defineStore } from 'pinia';
 export const useUiStore = defineStore('ui', {
   state: () => ({
     activePopup: null, // 'login' | 'register' | null
-    statusLine: '',
+    /** Bumped when the header brand asks to return to the home workspace. */
+    homeNonce: 0,
   }),
 
   getters: {
@@ -22,8 +23,9 @@ export const useUiStore = defineStore('ui', {
     closePopup() {
       this.activePopup = null;
     },
-    setStatus(message) {
-      this.statusLine = String(message || '');
+    requestHome() {
+      this.closePopup();
+      this.homeNonce += 1;
     },
   },
 });

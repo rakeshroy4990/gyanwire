@@ -1,7 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import { RouterLink } from 'vue-router';
-import { storeToRefs } from 'pinia';
+import { RouterLink, useRouter } from 'vue-router';
 import { useAuth } from '../../composables/useAuth.js';
 import { useBilling } from '../../composables/useBilling.js';
 import { useUiStore } from '../../stores/ui.store.js';
@@ -16,10 +15,19 @@ const {
   logoutUser,
 } = useAuth();
 
+const router = useRouter();
 const { cancel, loadStatus, status, isBusy, error } = useBilling();
 const menuOpen = ref(false);
 const ui = useUiStore();
-const { statusLine } = storeToRefs(ui);
+
+async function goHome() {
+  menuOpen.value = false;
+  ui.requestHome();
+  if (router.currentRoute.value.path !== '/') {
+    await router.push({ name: 'research' });
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
 async function toggleMenu() {
   menuOpen.value = !menuOpen.value;
@@ -41,19 +49,28 @@ async function onCancel() {
 <template>
   <header class="site-header">
     <div class="site-header__inner">
-      <RouterLink class="brand" to="/" aria-label="Gyanwire home">
-        <span class="brand__mark" aria-hidden="true" />
-        <span class="brand__text">
-          <span class="brand__name">Gyanwire</span>
-          <span class="brand__tag">Live research</span>
-        </span>
-      </RouterLink>
+      <div class="site-header__leading">
+        <RouterLink
+          class="brand"
+          to="/"
+          aria-label="Gyanwire home"
+          @click.prevent="goHome"
+        >
+          <span class="brand__mark" aria-hidden="true" />
+          <span class="brand__text">
+            <span class="brand__name">Gyanwire</span>
+            <span class="brand__tag">Live research</span>
+          </span>
+        </RouterLink>
 
-      <p class="site-header__status" aria-live="polite">{{ statusLine }}</p>
+        <span class="site-header__rule" aria-hidden="true" />
 
-      <div class="auth-chrome">
-        <RouterLink class="btn btn--ghost" to="/pricing">Pricing</RouterLink>
+        <nav class="site-header__nav" aria-label="Primary">
+          <RouterLink class="site-header__nav-link" to="/pricing">Pricing</RouterLink>
+        </nav>
+      </div>
 
+      <div class="site-header__actions">
         <button
           v-if="!isAuthenticated"
           type="button"

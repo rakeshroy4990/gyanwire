@@ -45,7 +45,7 @@ Then:
 **Prompt:**
 ```
 Decouple Gyanwire auth from the hospital Supabase DB.
-- Rename env vars from SPRING_DATASOURCE_* to GYANWIRE_DATABASE_URL (single connection string). Keep backward-compat only for local dev if trivial.
+- Use DATABASE_URL as the single connection string (SPRING_DATASOURCE_* kept as optional fallback).
 - Add a migration system: server/db/migrations/001_init.sql creating users, refresh_tokens (own schema, UUID ids, email unique, created_at, deleted_at, role default 'user').
 - Update userRepository.js and refreshTokenRepository.js to the new schema. No hospital-specific columns (external_id, patient roles).
 - Write a one-off script server/scripts/export-gyanwire-users.js that copies only users who signed in via Gyanwire, if any exist.

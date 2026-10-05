@@ -1,5 +1,8 @@
-import { computed, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { storeToRefs } from 'pinia';
 import { useUiStore } from '../stores/ui.store.js';
+import { apiUrl } from '../services/apiBase.js';
+import { loadResearchIndustries } from '../services/industries.service.js';
 import { useUsage } from './useUsage.js';
 
 const FALLBACK_CATALOG = [
@@ -23,6 +26,14 @@ const FALLBACK_CATALOG = [
     name: 'Social Media',
     subs: ['Short Video', 'Social Commerce', 'Messaging', 'Creators'],
   },
+  {
+    name: 'Gaming',
+    subs: ['Mobile', 'Esports', 'Console', 'PC Gaming', 'Game Dev'],
+  },
+  {
+    name: 'Astrology',
+    subs: ['Horoscope', 'Vedic', 'Tarot', 'Numerology', 'Vastu'],
+  },
 ];
 
 function hostname(url) {
@@ -33,8 +44,21 @@ function hostname(url) {
   }
 }
 
+function mapResults(payload) {
+  const list = Array.isArray(payload?.results) ? payload.results : [];
+  return list.map((item) => ({
+    ...item,
+    host: hostname(item.url),
+  }));
+}
+
+function makeId() {
+  return `turn_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
 export function useResearch() {
   const ui = useUiStore();
+  const { homeNonce } = storeToRefs(ui);
   const usage = useUsage();
   const catalog = ref(FALLBACK_CATALOG);
   const industry = ref('Share Market');
@@ -42,16 +66,22 @@ export function useResearch() {
   const thoughts = ref('');
   const formError = ref('');
   const isLoading = ref(false);
-  const results = ref([]);
-  const resultsSub = ref('');
-  const emptyMessage = ref('Pick an industry for product news, or research a question.');
+  /** Chat turns: each research question keeps its findings underneath. */
+  const thread = ref([]);
+  /** Browse-mode product news (shown only when the chat thread is empty). */
+  const browseResults = ref([]);
+  const browseSub = ref('');
+  const emptyMessage = ref('Pick an industry for product news, or start a research chat.');
   const showEmpty = ref(true);
-  const showResults = ref(false);
   let newsRequestId = 0;
 
   const subs = computed(() => {
     return catalog.value.find((item) => item.name === industry.value)?.subs || [];
   });
+
+  const hasThread = computed(() => thread.value.length > 0);
+
+  const showBrowseResults = computed(() => !hasThread.value && browseResults.value.length > 0);
 
   const queryPreview = computed(() => {
     const text = thoughts.value.trim();
@@ -68,44 +98,27 @@ export function useResearch() {
       .slice(0, 120);
   });
 
-  function setLoading(loading, status = 'Researching…') {
-    isLoading.value = loading;
-    ui.setStatus(loading ? status : '');
-    if (loading) {
-      showEmpty.value = false;
-      showResults.value = false;
-      resultsSub.value = '';
-    }
+  function scrollComposerIntoView() {
+    nextTick(() => {
+      document.getElementById('research-thoughts')?.focus({ preventScroll: true });
+      document.getElementById('research-chat')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   }
 
-  function applyResults(payload, { scroll = true, subtitle } = {}) {
-    const list = Array.isArray(payload?.results) ? payload.results : [];
-    results.value = list.map((item) => ({
-      ...item,
-      host: hostname(item.url),
-    }));
-    resultsSub.value = subtitle
-      || (list.length ? `${list.length} findings` : 'No strong findings');
-    showEmpty.value = list.length === 0;
-    showResults.value = list.length > 0;
-    emptyMessage.value = list.length
-      ? 'Pick an industry for product news, or research a question.'
-      : 'No strong findings yet. Try a clearer question or another industry.';
-    ui.setStatus('');
-    if (scroll && list.length) {
-      document.getElementById('resultsTitle')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+  function scrollTurnIntoView(turnId) {
+    nextTick(() => {
+      document.getElementById(`turn-${turnId}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
   }
 
   async function loadNewsFeed({ industryName = null, sub = null } = {}) {
+    // News browsing does not clear an active research chat.
+    if (hasThread.value) return;
+
     const requestId = ++newsRequestId;
-    const status = sub
-      ? `Loading ${industryName} · ${sub}…`
-      : industryName
-        ? `Loading ${industryName} products…`
-        : 'Loading product news…';
-    setLoading(true, status);
-    resultsSub.value = sub || industryName || 'Products';
+    isLoading.value = true;
+    browseSub.value = sub || industryName || 'Products';
+    showEmpty.value = false;
 
     try {
       let path = '/api/news/default';
@@ -113,7 +126,7 @@ export function useResearch() {
         path = `/api/news/${encodeURIComponent(industryName)}`;
         if (sub) path += `?sub=${encodeURIComponent(sub)}`;
       }
-      const res = await fetch(path);
+      const res = await fetch(apiUrl(path), { credentials: 'include' });
       const payload = await res.json();
       if (requestId !== newsRequestId) return;
       if (!res.ok || !payload.success) {
@@ -121,20 +134,20 @@ export function useResearch() {
       }
       const label = payload.data?.label || industryName || 'Product news';
       const scope = sub ? `${industryName} · ${sub}` : industryName;
-      applyResults(payload.data, {
-        scroll: Boolean(industryName || sub),
-        subtitle: industryName
-          ? `5 latest ${label}${sub ? ` · ${scope}` : ''}`
-          : 'Top searched product news',
-      });
+      browseResults.value = mapResults(payload.data);
+      browseSub.value = industryName
+        ? `5 latest ${label}${sub ? ` · ${scope}` : ''}`
+        : 'Top searched product news';
+      showEmpty.value = browseResults.value.length === 0;
+      emptyMessage.value = browseResults.value.length
+        ? 'Pick an industry for product news, or start a research chat.'
+        : 'No product news yet.';
     } catch (error) {
       if (requestId !== newsRequestId) return;
-      results.value = [];
-      showResults.value = false;
+      browseResults.value = [];
+      browseSub.value = '';
       showEmpty.value = true;
-      resultsSub.value = '';
       emptyMessage.value = error.message || 'Product news will appear here.';
-      ui.setStatus('');
     } finally {
       if (requestId === newsRequestId) {
         isLoading.value = false;
@@ -147,25 +160,25 @@ export function useResearch() {
       industry.value = null;
       subcategory.value = null;
       formError.value = '';
-      loadNewsFeed();
+      if (!hasThread.value) loadNewsFeed();
       return;
     }
     industry.value = name;
     subcategory.value = null;
     formError.value = '';
-    loadNewsFeed({ industryName: name });
+    if (!hasThread.value) loadNewsFeed({ industryName: name });
   }
 
   function selectSub(name) {
     if (!industry.value) return;
     if (subcategory.value === name) {
       subcategory.value = null;
-      loadNewsFeed({ industryName: industry.value });
+      if (!hasThread.value) loadNewsFeed({ industryName: industry.value });
       return;
     }
     subcategory.value = name;
     formError.value = '';
-    loadNewsFeed({ industryName: industry.value, sub: name });
+    if (!hasThread.value) loadNewsFeed({ industryName: industry.value, sub: name });
   }
 
   async function runSearch() {
@@ -180,10 +193,32 @@ export function useResearch() {
       return;
     }
 
-    setLoading(true, 'Researching…');
+    const turnId = makeId();
+    const scope = subcategory.value
+      ? `${industry.value} · ${subcategory.value}`
+      : industry.value;
+
+    thread.value.push({
+      id: turnId,
+      userText: text,
+      industry: industry.value,
+      subcategory: subcategory.value,
+      status: 'pending',
+      results: [],
+      resultsSub: `Researching · ${scope}`,
+      error: '',
+      createdAt: Date.now(),
+    });
+
+    thoughts.value = '';
+    browseResults.value = [];
+    showEmpty.value = false;
+    isLoading.value = true;
     usage.clearLimitPrompt();
+    scrollTurnIntoView(turnId);
+
     try {
-      const res = await fetch('/api/search', {
+      const res = await fetch(apiUrl('/api/search'), {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -203,17 +238,24 @@ export function useResearch() {
         throw new Error(payload.message || 'Research failed.');
       }
       usage.applySearchUsage(payload.data?.usage);
-      const scope = subcategory.value
-        ? `${industry.value} · ${subcategory.value}`
-        : industry.value;
-      applyResults(payload.data, {
-        subtitle: `${payload.data.results?.length || 0} R&D findings · ${scope}`,
-      });
+
+      const turn = thread.value.find((item) => item.id === turnId);
+      if (turn) {
+        turn.status = 'done';
+        turn.results = mapResults(payload.data);
+        turn.resultsSub = `${turn.results.length} R&D findings · ${scope}`;
+        turn.error = '';
+      }
+      scrollTurnIntoView(turnId);
+      scrollComposerIntoView();
     } catch (error) {
-      showEmpty.value = true;
-      showResults.value = false;
-      results.value = [];
-      ui.setStatus('');
+      const turn = thread.value.find((item) => item.id === turnId);
+      if (turn) {
+        turn.status = 'error';
+        turn.results = [];
+        turn.resultsSub = '';
+        turn.error = error.message || 'Something went wrong.';
+      }
       formError.value = error.message || 'Something went wrong.';
     } finally {
       isLoading.value = false;
@@ -225,24 +267,38 @@ export function useResearch() {
     subcategory.value = null;
     thoughts.value = '';
     formError.value = '';
+    thread.value = [];
+    browseResults.value = [];
+    browseSub.value = '';
+    showEmpty.value = true;
+    usage.clearLimitPrompt();
     loadNewsFeed({ industryName: 'Share Market' });
   }
 
+  function goHomeWorkspace() {
+    clearForm();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  watch(homeNonce, (value, previous) => {
+    if (value !== previous) goHomeWorkspace();
+  });
+
   onMounted(async () => {
     try {
-      const res = await fetch('/api/industries');
-      const payload = await res.json();
-      if (res.ok && payload.success && Array.isArray(payload.data) && payload.data.length) {
-        const share = payload.data.find((item) => item.name === 'Share Market');
-        const rest = payload.data.filter((item) => item.name !== 'Share Market');
-        catalog.value = share ? [share, ...rest] : payload.data;
+      const { catalog: rows } = await loadResearchIndustries();
+      if (rows.length) {
+        const share = rows.find((item) => item.name === 'Share Market');
+        const rest = rows.filter((item) => item.name !== 'Share Market');
+        catalog.value = share ? [share, ...rest] : rows;
       }
     } catch {
-      // fallback catalog
+      // keep FALLBACK_CATALOG
     }
-    industry.value = 'Share Market';
+    const defaultIndustry = catalog.value[0]?.name || 'Share Market';
+    industry.value = defaultIndustry;
     subcategory.value = null;
-    loadNewsFeed({ industryName: 'Share Market' });
+    loadNewsFeed({ industryName: defaultIndustry });
   });
 
   return {
@@ -252,11 +308,13 @@ export function useResearch() {
     thoughts,
     formError,
     isLoading,
-    results,
-    resultsSub,
+    thread,
+    hasThread,
+    browseResults,
+    browseSub,
+    showBrowseResults,
     emptyMessage,
     showEmpty,
-    showResults,
     subs,
     queryPreview,
     selectIndustry,

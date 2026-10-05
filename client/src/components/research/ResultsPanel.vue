@@ -1,4 +1,6 @@
 <script setup>
+import FindingsSkeleton from './FindingsSkeleton.vue';
+
 defineProps({
   results: { type: Array, default: () => [] },
   resultsSub: { type: String, default: '' },
@@ -6,27 +8,37 @@ defineProps({
   showEmpty: { type: Boolean, default: true },
   showResults: { type: Boolean, default: false },
   isLoading: { type: Boolean, default: false },
+  /** Compact findings block used inside a chat turn. */
+  embedded: { type: Boolean, default: false },
+  heading: { type: String, default: 'Findings' },
 });
 </script>
 
 <template>
-  <section class="results-section" aria-labelledby="resultsTitle">
-    <div class="results-section__head">
-      <h2 id="resultsTitle">Findings</h2>
-      <p class="results-sub">{{ resultsSub || 'Waiting for a search' }}</p>
+  <section
+    class="results-section"
+    :class="{ 'results-section--embedded': embedded }"
+    :aria-labelledby="embedded ? undefined : 'resultsTitle'"
+  >
+    <div v-if="!isLoading" class="results-section__head">
+      <h2 :id="embedded ? undefined : 'resultsTitle'" class="results-section__h">
+        {{ heading }}
+      </h2>
+      <p class="results-sub">{{ resultsSub || (embedded ? '' : 'Waiting for a search') }}</p>
     </div>
 
-    <div v-if="showEmpty && !isLoading" class="empty">
-      <p class="empty__title">Nothing here yet</p>
+    <FindingsSkeleton
+      v-if="isLoading"
+      :embedded="embedded"
+      :rows="embedded ? 3 : 5"
+    />
+
+    <div v-else-if="showEmpty" class="empty" :class="{ 'empty--embedded': embedded }">
+      <p v-if="!embedded" class="empty__title">Nothing here yet</p>
       <p>{{ emptyMessage }}</p>
     </div>
 
-    <div v-if="isLoading" class="loading" aria-live="polite">
-      <div class="loading__bar" aria-hidden="true" />
-      <p>Researching…</p>
-    </div>
-
-    <ol v-if="showResults && !isLoading" class="results">
+    <ol v-else-if="showResults" class="results">
       <li
         v-for="(item, index) in results"
         :key="item.url + index"

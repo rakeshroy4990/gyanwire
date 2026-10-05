@@ -13,11 +13,13 @@ const {
   thoughts,
   formError,
   isLoading,
-  results,
-  resultsSub,
+  thread,
+  hasThread,
+  browseResults,
+  browseSub,
+  showBrowseResults,
   emptyMessage,
   showEmpty,
-  showResults,
   subs,
   queryPreview,
   selectIndustry,
@@ -43,6 +45,8 @@ const {
       :query-preview="queryPreview"
       :form-error="formError"
       :is-loading="isLoading"
+      :thread="thread"
+      :has-thread="hasThread"
       :searches-left-label="searchesLeftLabel"
       :limit-reached="limitReached"
       :limit-message="limitMessage"
@@ -54,12 +58,13 @@ const {
       @clear="clearForm"
     />
     <ResultsPanel
-      :results="results"
-      :results-sub="resultsSub"
+      v-if="!hasThread"
+      :results="browseResults"
+      :results-sub="browseSub"
       :empty-message="emptyMessage"
-      :show-empty="showEmpty"
-      :show-results="showResults"
-      :is-loading="isLoading"
+      :show-empty="showEmpty && !isLoading"
+      :show-results="showBrowseResults"
+      :is-loading="isLoading && !hasThread"
     />
   </main>
 </template>

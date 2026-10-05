@@ -1,10 +1,10 @@
 ---
 alwaysApply: true
 ---
-- Stack: Vue 3 + Pinia + Vite (client/), Express + pg (server/). JavaScript, ESM.
+- Stack: Vue 3 + Pinia + Vite (client/), Spring Boot (gyanwire-server/). Frontend JavaScript/ESM; API Java 17+.
 - Components never call APIs directly; go through composables -> services.
 - JWTs only in httpOnly cookies. Never use localStorage for tokens.
 - All secrets from root .env. Never hardcode keys. Update .env.example for every new variable.
-- Every new route gets input validation (zod) and a basic test.
-- Every new DB change is a numbered SQL migration in server/db/migrations/.
+- Every new API endpoint gets validation and a basic Spring test.
+- Every new DB change is a Flyway migration in gyanwire-server/src/main/resources/db/migration/.
 - Keep changes scoped to the current step in CURSOR_PLAN.md.

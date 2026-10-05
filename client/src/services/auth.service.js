@@ -1,6 +1,7 @@
 import { useAuthSessionStore } from '../stores/authSession.store.js';
 import { useAuthFormStore } from '../stores/authForm.store.js';
 import { useUiStore } from '../stores/ui.store.js';
+import { apiUrl } from './apiBase.js';
 import { requestGoogleSignInAccessToken } from './googleSignIn.service.js';
 
 async function parseJson(res) {
@@ -12,7 +13,7 @@ async function parseJson(res) {
 }
 
 async function apiPost(path, body) {
-  const res = await fetch(path, {
+  const res = await fetch(apiUrl(path), {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
@@ -22,7 +23,7 @@ async function apiPost(path, body) {
 }
 
 async function apiGet(path) {
-  const res = await fetch(path, {
+  const res = await fetch(apiUrl(path), {
     method: 'GET',
     credentials: 'include',
   });

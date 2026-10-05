@@ -1,0 +1,99 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.4.2'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.gyanwire'
+version = '0.0.1-SNAPSHOT'
+description = 'Gyanwire Spring Boot API'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+jar {
+    enabled = false
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    runtimeOnly 'org.postgresql:postgresql'
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+    implementation 'org.jsoup:jsoup:1.18.3'
+    implementation 'com.razorpay:razorpay-java:1.4.8'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+/** Load KEY=value pairs from .env (comments, blank lines, optional export prefix). */
+def loadDotEnv(File envFile) {
+    if (!envFile.exists()) {
+        return [:]
+    }
+    Map<String, String> out = new LinkedHashMap<>()
+    envFile.eachLine { String raw ->
+        String line = raw.trim()
+        if (line.isEmpty() || line.startsWith('#')) {
+            return
+        }
+        if (line.startsWith('export ')) {
+            line = line.substring(7).trim()
+        }
+        int i = line.indexOf('=')
+        if (i < 1) {
+            return
+        }
+        String key = line.substring(0, i).trim()
+        if (key.isEmpty()) {
+            return
+        }
+        String val = line.substring(i + 1).trim()
+        if (val.length() >= 2
+                && ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'")))) {
+            val = val.substring(1, val.length() - 1)
+        }
+        out.put(key, val)
+    }
+    return out
+}
+
+tasks.named('bootRun', org.springframework.boot.gradle.tasks.run.BootRun) { bootRun ->
+    Map<String, Object> env = new LinkedHashMap<>(System.getenv())
+    // Prefer gyanwire-server/.env, then monorepo root .env
+    loadDotEnv(file("${project.projectDir}/.env")).each { String k, String v ->
+        env.put(k, v)
+    }
+    loadDotEnv(file("${project.projectDir}/../.env")).each { String k, String v ->
+        env.putIfAbsent(k, v)
+    }
+    // Local: prefer GYANWIRE_SERVER_PORT over Express-era PORT=3010.
+    env.remove('PORT')
+    if (!env.containsKey('GYANWIRE_SERVER_PORT') || String.valueOf(env.get('GYANWIRE_SERVER_PORT')).isBlank()) {
+        env.put('GYANWIRE_SERVER_PORT', '8080')
+    }
+    // Map JWT_SECRET from monorepo .env into Spring property env.
+    if (env.containsKey('JWT_SECRET') && !env.containsKey('APP_AUTH_JWT_SECRET')) {
+        env.put('APP_AUTH_JWT_SECRET', env.get('JWT_SECRET'))
+    }
+    bootRun.environment = env
+}
