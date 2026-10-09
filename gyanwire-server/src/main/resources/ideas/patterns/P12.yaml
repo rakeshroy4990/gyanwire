@@ -1,0 +1,10 @@
+id: P12
+name: Government scheme
+eventTypes:
+  - govt_scheme
+  - regulation
+ideaShape: Application help or a vendor service
+suitedFor:
+  - student
+  - working
+  - founder

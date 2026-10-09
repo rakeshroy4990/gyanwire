@@ -1,0 +1,9 @@
+id: P7
+name: Infrastructure launch
+eventTypes:
+  - infrastructure
+ideaShape: Plugin or onboarding service on the new rail
+suitedFor:
+  - student
+  - working
+  - founder

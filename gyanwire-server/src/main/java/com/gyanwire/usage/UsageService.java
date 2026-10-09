@@ -1,5 +1,6 @@
 package com.gyanwire.usage;
 
+import com.gyanwire.persistence.FlowStore;
 import com.gyanwire.persistence.postgres.model.PlanEntity;
 import com.gyanwire.persistence.postgres.model.SubscriptionEntity;
 import com.gyanwire.persistence.postgres.model.UsageEventEntity;
@@ -30,15 +31,18 @@ public class UsageService {
     private final PlanRepository planRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final UsageEventRepository usageEventRepository;
+    private final FlowStore flowStore;
 
     public UsageService(
             PlanRepository planRepository,
             SubscriptionRepository subscriptionRepository,
-            UsageEventRepository usageEventRepository
+            UsageEventRepository usageEventRepository,
+            FlowStore flowStore
     ) {
         this.planRepository = planRepository;
         this.subscriptionRepository = subscriptionRepository;
         this.usageEventRepository = usageEventRepository;
+        this.flowStore = flowStore;
     }
 
     public static String hashIp(String ip) {
@@ -60,13 +64,23 @@ public class UsageService {
             anon.put("dailySearchLimit", ANON_DAILY_SEARCH_LIMIT);
             return anon;
         }
+        Map<String, Object> plan;
         List<SubscriptionEntity> active = subscriptionRepository.findActiveForUser(userId);
         if (!active.isEmpty()) {
-            return planRepository.findById(active.get(0).getPlanId())
+            plan = planRepository.findById(active.get(0).getPlanId())
                     .map(this::toPlanMap)
                     .orElseGet(this::freePlanMap);
+        } else {
+            plan = planRepository.findById(DEFAULT_PLAN_ID).map(this::toPlanMap).orElseGet(this::freePlanMap);
         }
-        return planRepository.findById(DEFAULT_PLAN_ID).map(this::toPlanMap).orElseGet(this::freePlanMap);
+        int bonus = 0;
+        try {
+            bonus = flowStore.bonusSearches(userId);
+        } catch (Exception ignored) {
+            bonus = 0;
+        }
+        plan.put("dailySearchLimit", ((Number) plan.get("dailySearchLimit")).intValue() + bonus);
+        return plan;
     }
 
     @Transactional(readOnly = true)
@@ -78,6 +92,19 @@ public class UsageService {
         }
         if (ipHash == null || ipHash.isBlank()) return 0;
         return usageEventRepository.countAnonSearches(ipHash, start, end);
+    }
+
+    @Transactional(readOnly = true)
+    public long countToday(UUID userId, String ipHash, String kind) {
+        Instant start = LocalDate.now(ZoneOffset.UTC).atStartOfDay().toInstant(ZoneOffset.UTC);
+        Instant end = start.plusSeconds(86400);
+        if (userId != null) {
+            return usageEventRepository.countUserKind(userId, kind, start, end);
+        }
+        if (ipHash == null || ipHash.isBlank()) {
+            return 0;
+        }
+        return usageEventRepository.countAnonKind(ipHash, kind, start, end);
     }
 
     public static Map<String, Object> evaluateSearchLimit(long used, int limit) {
@@ -107,10 +134,15 @@ public class UsageService {
 
     @Transactional
     public void recordSearchUsage(UUID userId, String ipHash, BigDecimal cost) {
+        recordUsage(userId, ipHash, "search", cost);
+    }
+
+    @Transactional
+    public void recordUsage(UUID userId, String ipHash, String kind, BigDecimal cost) {
         UsageEventEntity event = new UsageEventEntity();
         event.setUserId(userId);
         event.setIpHash(userId == null ? ipHash : null);
-        event.setKind("search");
+        event.setKind(kind);
         event.setCostInrEstimate(cost == null ? BigDecimal.ZERO : cost);
         usageEventRepository.save(event);
     }
@@ -124,6 +156,10 @@ public class UsageService {
         out.put("canExport", plan.isCanExport());
         out.put("canAlert", plan.isCanAlert());
         out.put("seats", plan.getSeats());
+        out.put("dailyBriefLimit", plan.getDailyBriefLimit());
+        out.put("dailyIdeaLimit", plan.getDailyIdeaLimit());
+        out.put("canRoadmap", plan.isCanRoadmap());
+        out.put("projectLimit", plan.getProjectLimit());
         return out;
     }
 
@@ -137,6 +173,10 @@ public class UsageService {
             out.put("canExport", false);
             out.put("canAlert", false);
             out.put("seats", 1);
+            out.put("dailyBriefLimit", 1);
+            out.put("dailyIdeaLimit", 3);
+            out.put("canRoadmap", false);
+            out.put("projectLimit", 1);
             return out;
         });
     }

@@ -39,7 +39,11 @@ public class BillingController {
         AuthUserPrincipal user = requireUser();
         String planId = String.valueOf(body.getOrDefault("planId", "")).trim().toLowerCase();
         String interval = String.valueOf(body.getOrDefault("interval", "monthly")).trim().toLowerCase();
-        if (!Set.of("pro", "team").contains(planId) || !Set.of("monthly", "annual").contains(interval)) {
+        if ("student".equals(planId)) {
+            if (!"monthly".equals(interval) || !RazorpayBillingService.studentEmail(user.email())) {
+                throw new BillingException("Student checkout needs a .ac.in or .edu email and a monthly plan.", "VALIDATION_ERROR", 400);
+            }
+        } else if (!Set.of("pro", "team").contains(planId) || !Set.of("monthly", "annual").contains(interval)) {
             throw new BillingException("Choose Pro or Team and a billing interval.", "VALIDATION_ERROR", 400);
         }
         Map<String, Object> data = billingService.createCheckout(user.id(), user.email(), planId, interval);
@@ -51,6 +55,11 @@ public class BillingController {
         AuthUserPrincipal user = requireUser();
         Map<String, Object> data = billingService.cancelSubscription(user.id());
         return ResponseEntity.ok(StandardApiResponse.success("Subscription will end at the current period.", data));
+    }
+
+    @GetMapping("/offers")
+    public ResponseEntity<StandardApiResponse<Map<String, Object>>> offers() {
+        return ResponseEntity.ok(StandardApiResponse.success("OK", billingService.offers()));
     }
 
     @GetMapping("/status")

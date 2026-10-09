@@ -3,8 +3,10 @@ package com.gyanwire.research.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gyanwire.research.ResearchException;
+import com.gyanwire.research.engine.CuriosityRank;
 import com.gyanwire.research.engine.DiscoverService;
 import com.gyanwire.research.engine.IndiaSupport;
+import com.gyanwire.research.engine.PublishedDates;
 import jakarta.annotation.PostConstruct;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -19,6 +21,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -86,11 +89,17 @@ public class IndustryNewsService {
                 for (Map<String, Object> item : fetchGoogleNewsRss(query, limit + 4, active.path("why").asText(), blockGeneric)) {
                     if (results.size() >= Math.max(limit * 2, 8)) break;
                     String key = normalizeKey(String.valueOf(item.get("title")));
-                    if (seen.contains(key) || isGeneric(String.valueOf(item.get("title")), blockGeneric)) continue;
+                    if (seen.contains(key) || isGeneric(String.valueOf(item.get("title")), blockGeneric)
+                            || CuriosityRank.looksGeneric(String.valueOf(item.get("title")))) continue;
                     seen.add(key);
                     item.put("category", category);
                     item.put("sub", activeSub);
                     item.put("why", item.getOrDefault("why", active.path("why").asText()));
+                    item.put("score", CuriosityRank.boost(item));
+                    String curiosityWhy = CuriosityRank.why(String.valueOf(item.get("title")) + " " + item.get("description"));
+                    if (!curiosityWhy.isBlank()) {
+                        item.put("why", curiosityWhy);
+                    }
                     results.add(item);
                 }
             } catch (Exception ignored) {}
@@ -104,7 +113,8 @@ public class IndustryNewsService {
                 for (Map<String, String> item : discovered) {
                     if (results.size() >= Math.max(limit * 2, 8)) break;
                     String key = normalizeKey(item.get("title"));
-                    if (seen.contains(key) || isGeneric(item.get("title"), blockGeneric)) continue;
+                    if (seen.contains(key) || isGeneric(item.get("title"), blockGeneric)
+                            || CuriosityRank.looksGeneric(item.get("title"))) continue;
                     seen.add(key);
                     Map<String, Object> row = new HashMap<>();
                     row.put("title", item.get("title"));
@@ -115,18 +125,20 @@ public class IndustryNewsService {
                     row.put("source", item.getOrDefault("source", "web"));
                     row.put("category", category);
                     row.put("sub", activeSub);
+                    row.put("score", CuriosityRank.boost(row));
                     results.add(row);
                 }
             } catch (Exception ignored) {}
         }
 
         results = IndiaSupport.sortIndiaFirst(results, r -> host(String.valueOf(r.get("url"))));
+        results.sort((a, b) -> Integer.compare(CuriosityRank.boost(b), CuriosityRank.boost(a)));
         List<Map<String, Object>> ordered = results.subList(0, Math.min(limit, results.size()));
         List<Map<String, Object>> withIds = new ArrayList<>();
         for (int i = 0; i < ordered.size(); i++) {
             Map<String, Object> copy = new HashMap<>(ordered.get(i));
             copy.put("id", "n-" + (i + 1));
-            copy.putIfAbsent("score", Math.max(58, 94 - i * 6));
+            copy.put("score", CuriosityRank.boost(copy));
             withIds.add(copy);
         }
 
@@ -188,6 +200,7 @@ public class IndustryNewsService {
             String title = item.selectFirst("title") == null ? "" : item.selectFirst("title").text();
             String link = item.selectFirst("link") == null ? "" : item.selectFirst("link").text();
             String description = item.selectFirst("description") == null ? "" : Jsoup.parse(item.selectFirst("description").text()).text();
+            String pubDate = item.selectFirst("pubDate") == null ? "" : item.selectFirst("pubDate").text();
             if (title.isBlank() || link.isBlank() || isGeneric(title, blockGeneric)) continue;
             Map<String, Object> row = new HashMap<>();
             row.put("title", title);
@@ -196,6 +209,10 @@ public class IndustryNewsService {
             row.put("why", why);
             row.put("source", "google-news");
             row.put("score", Math.max(60, 95 - items.size() * 5));
+            Instant published = PublishedDates.parse(pubDate);
+            if (published != null) {
+                PublishedDates.apply(row, published);
+            }
             items.add(row);
         }
         return items;

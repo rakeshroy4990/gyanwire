@@ -1,0 +1,39 @@
+{
+  "date" : "2026-10-09",
+  "queries" : 70,
+  "ndcgAt5" : 1.0,
+  "hybridNdcgAt5" : 1.0,
+  "precisionAt5" : 1.0,
+  "trustedDomainShare" : 0.8,
+  "latencyMs" : 80,
+  "llmCalls" : 0,
+  "industries" : [ {
+    "industry" : "Astrology",
+    "queries" : 10,
+    "ndcgAt5" : 1.0
+  }, {
+    "industry" : "Gaming",
+    "queries" : 10,
+    "ndcgAt5" : 1.0
+  }, {
+    "industry" : "IT",
+    "queries" : 10,
+    "ndcgAt5" : 1.0
+  }, {
+    "industry" : "Medical",
+    "queries" : 10,
+    "ndcgAt5" : 1.0
+  }, {
+    "industry" : "Share Market",
+    "queries" : 10,
+    "ndcgAt5" : 1.0
+  }, {
+    "industry" : "Social Media",
+    "queries" : 10,
+    "ndcgAt5" : 1.0
+  }, {
+    "industry" : "Space",
+    "queries" : 10,
+    "ndcgAt5" : 1.0
+  } ]
+}

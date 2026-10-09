@@ -1,0 +1,9 @@
+id: P11
+name: Event or season
+eventTypes:
+  - event_season
+ideaShape: Time-boxed service or content series
+suitedFor:
+  - student
+  - working
+  - founder

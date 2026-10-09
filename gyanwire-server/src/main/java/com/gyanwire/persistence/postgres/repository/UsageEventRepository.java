@@ -36,4 +36,33 @@ public interface UsageEventRepository extends JpaRepository<UsageEventEntity, UU
             @Param("start") Instant start,
             @Param("end") Instant end
     );
+
+    @Query("""
+            select count(u) from UsageEventEntity u
+            where u.kind = :kind
+              and u.userId = :userId
+              and u.createdAt >= :start
+              and u.createdAt < :end
+            """)
+    long countUserKind(
+            @Param("userId") UUID userId,
+            @Param("kind") String kind,
+            @Param("start") Instant start,
+            @Param("end") Instant end
+    );
+
+    @Query("""
+            select count(u) from UsageEventEntity u
+            where u.kind = :kind
+              and u.userId is null
+              and u.ipHash = :ipHash
+              and u.createdAt >= :start
+              and u.createdAt < :end
+            """)
+    long countAnonKind(
+            @Param("ipHash") String ipHash,
+            @Param("kind") String kind,
+            @Param("start") Instant start,
+            @Param("end") Instant end
+    );
 }

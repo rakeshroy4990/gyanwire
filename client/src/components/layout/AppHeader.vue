@@ -103,8 +103,16 @@ async function onCancel() {
                 <span v-if="status.cancelAtPeriodEnd"> (cancels at period end)</span>
               </p>
               <p v-if="error" class="form-error">{{ error }}</p>
+              <RouterLink class="account-menu__link" to="/profile" @click="menuOpen = false">
+                <span class="account-menu__title">Profile</span>
+                <span class="account-menu__hint">Persona, goals, and referral</span>
+              </RouterLink>
+              <RouterLink class="account-menu__link" to="/projects" @click="menuOpen = false">
+                <span class="account-menu__title">Projects</span>
+                <span class="account-menu__hint">Saved research and exports</span>
+              </RouterLink>
               <RouterLink class="account-menu__link" to="/pricing" @click="menuOpen = false">
-                Manage subscription
+                <span class="account-menu__title">Manage subscription</span>
               </RouterLink>
               <button
                 v-if="status?.providerSubscriptionId && status.planId !== 'free' && !status.cancelAtPeriodEnd"

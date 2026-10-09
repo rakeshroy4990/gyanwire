@@ -47,6 +47,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/me/usage").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/search").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/billing/webhook").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/billing/offers").permitAll()
                         .requestMatchers("/api/billing/**").authenticated()
                         .requestMatchers("/api/**").permitAll()
                         .anyRequest().permitAll()

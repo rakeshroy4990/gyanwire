@@ -30,6 +30,18 @@ public class PlanEntity {
     @Column(nullable = false)
     private int seats = 1;
 
+    @Column(name = "daily_brief_limit", nullable = false)
+    private int dailyBriefLimit = 1;
+
+    @Column(name = "daily_idea_limit", nullable = false)
+    private int dailyIdeaLimit = 3;
+
+    @Column(name = "can_roadmap", nullable = false)
+    private boolean canRoadmap;
+
+    @Column(name = "project_limit")
+    private Integer projectLimit;
+
     public String getId() {
         return id;
     }
@@ -56,5 +68,21 @@ public class PlanEntity {
 
     public int getSeats() {
         return seats;
+    }
+
+    public int getDailyBriefLimit() {
+        return dailyBriefLimit;
+    }
+
+    public int getDailyIdeaLimit() {
+        return dailyIdeaLimit;
+    }
+
+    public boolean isCanRoadmap() {
+        return canRoadmap;
+    }
+
+    public Integer getProjectLimit() {
+        return projectLimit;
     }
 }

@@ -32,6 +32,14 @@ export async function startCheckout({ planId, interval }) {
   return payload.data;
 }
 
+export async function fetchBillingOffers() {
+  const { res, payload } = await api('/api/billing/offers');
+  if (!res.ok || !payload?.success) {
+    return { annual: false, student: false };
+  }
+  return payload.data || { annual: false, student: false };
+}
+
 export async function fetchBillingStatus() {
   const { res, payload } = await api('/api/billing/status');
   if (!res.ok || !payload?.success) {

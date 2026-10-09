@@ -4,11 +4,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = UserDetailsServiceAutoConfiguration.class)
 public class GyanwireApplication {
     private static final Logger log = LoggerFactory.getLogger(GyanwireApplication.class);
     private static final String PERSISTENCE_PROVIDER_ENV = "APP_PERSISTENCE_PROVIDER";

@@ -19,6 +19,7 @@ It’s the site where you dump messy research thoughts and get the best pages fr
 |---|---|
 | **Primary** | Turn industry + free-form thoughts into a small set of high-signal web findings (papers, products, news, labs). |
 | **Secondary** | Surface industry product news quickly when a category is selected (before a deep research chat). |
+| **From news to a plan** (`CURSOR_PLAN_FLOW_FIRST.md`, not shipped) | After search streaming and a cited brief: profile-fit ideas, a 10% skill budget, a 12-week plan, and a one-page outline. Scores and rupee amounts come from code. The current LLM only phrases them. |
 | **Account** | Email/password or Google sign-in; profile in Pinia; JWTs in httpOnly cookies only. |
 | **Monetization** | Free daily search limits; Pro/Team via Razorpay; usage shown in the workspace. |
 | **Quality control** | Rank with Gyanwire’s own pointers (trusted domains, practical terms, category boosts). |
@@ -28,7 +29,10 @@ It’s the site where you dump messy research thoughts and get the best pages fr
 - Not a full browser or content CMS  
 - Not a medical diagnosis / clinical decision tool  
 - Not a filmic multi-act marketing scroll page (grammar is **live surface**)  
-- Steps 4–14 in `CURSOR_PLAN.md` (provider abstraction, source packs, projects, alerts, etc.) are planned, not all shipped yet  
+- Steps 4–14 in `CURSOR_PLAN.md` are historical. The active sequence is `CURSOR_PLAN_FLOW_FIRST.md` (S0–S16), not shipped yet  
+- Model, provider, and `LLM_*` settings stay frozen until S16. Embeddings, routers, and agents are parked in `docs/PARKED_MODEL_WORK.md`  
+- Share Market ideas stay education/tools only (no tips or signals). Medical ideas stay education/admin/logistics only (no diagnosis or treatment claims)  
+- Not a store of exact salary, Aadhaar, PAN, or bank details
 
 ---
 
@@ -95,6 +99,26 @@ It’s the site where you dump messy research thoughts and get the best pages fr
 | `POST` | `/api/billing/webhook` | Razorpay signed webhooks (raw body) |
 | `POST` | `/api/billing/cancel` | Cancel at period end |
 | `GET` | `/api/billing/status` | Subscription status |
+
+### 3.7 Flow API (`CURSOR_PLAN_FLOW_FIRST.md`)
+
+Search streams on `POST /api/search/stream` (`status`, `finding`, `done`, `error`) and still accepts JSON `POST /api/search`. Profile, ideas, skill and weekly plans, outlines, projects, source-pack toggles, saved queries, referrals, industry mode, claim check, and `POST /api/mcp` (header `X-Api-Key`) are on the server. Scores, rupees, and week counts are computed in Java. The configured model is unchanged.
+
+| Method | Path | Step | Purpose |
+|---|---|---|---|
+| `POST` | `/api/search/stream` | S4 | SSE findings (`status`, `finding`, `done`, `error`). JSON `POST /api/search` stays |
+| `GET` / `PUT` | `/api/me/profile` | S7 | Profile v2. Income as a band. `consent_at` required |
+| `DELETE` | `/api/me/profile/data` | S7 | Delete profile and skills only |
+| `POST` | `/api/ideas/from-news` | S9 | `{ url, title, description, industry, sub }` → ranked ideas |
+| `GET` | `/api/ideas` | S9 | Saved ideas for the user |
+| `POST` | `/api/ideas/{id}/feedback` | S9 | Thumbs and reason |
+| `POST` | `/api/plans/skill` | S10 | 10% skill budget for an idea |
+| `POST` | `/api/plans/weekly` | S11 | 12-week plan (Pro/Team) |
+| `POST` | `/api/plans/checkin` | S11 | `done` / `partly` / `not_done` |
+| `POST` / `GET` | `/api/plans/business-outline` | S11 | Nine-section outline. Markdown download |
+| MCP | `search_research`, `get_findings`, `generate_idea` | S14 | API key. Inputs treated as untrusted |
+
+Planned pages: `/profile`, `/plan`, `/roadmap`, a business-outline page, `/terms`, `/privacy`, `/refund`, `/contact`. The Idea button sits on each row in `ResultsPanel.vue`. Metering kinds: `search` (shipped), `brief` (1/day on Free), `idea` (Free 3/day, Pro 30, Team 150). Over limit → HTTP 402 `LIMIT_REACHED`. Weekly plan and outline require `can_roadmap`.
 
 ---
 
@@ -189,6 +213,7 @@ gyanwire-server/
     billing/       # Razorpay checkout + webhook
     usage/         # plan limits + /api/me/usage
     research/      # news + discover/scrape/pointers/LLM search
+    llm/           # LlmClient: the only /chat/completions call + llm_calls log
     persistence/   # JPA entities + repositories
     controller/    # industries, health, API envelope
   src/main/resources/db/migration/   # Flyway V1+
@@ -206,7 +231,10 @@ Chat message + industry (+ optional sub)
    DiscoverService  ──► candidate URLs
         │              (DDG / Wikipedia / SearXNG / seeds)
         ▼
-   ScrapeService    ──► extract main text (Jsoup)
+   ScrapeService    ──► UrlGuard (public http/https, no private or metadata IPs,
+                     max 3 redirects re-checked, 2 MB, 8 s)
+                  ──► robots.txt + per-host pause
+                  ──► visible text only; model sees it inside <page_content>
         │
         ▼
    PointersService  ──► score 0–100 + why-line
@@ -217,6 +245,39 @@ Chat message + industry (+ optional sub)
 
 **Score meaning in UI:** left number = list rank; amber badge = pointer match score (0–100).
 
+The only model HTTP call is `LlmClient.complete` (`com.gyanwire.llm.LlmClient`): `LLM_MODEL` / `LLM_BASE_URL` / `LLM_API_KEY`, temperature `0.2`, `response_format: json_object`. Each call is logged to `llm_calls`. Feature work does not change the request shape.
+
+### 4.4b Planned flow (S0–S16, not shipped)
+
+News and finding ids (`n-1`, `r-1`) are not stored. Idea generation sends `{ url, title, description, industry, sub }`. Industry keys are catalog names (`Share Market`, `IT`, `Medical`, `Space`, `Social Media`, `Gaming`, `Astrology`). Full page text is not kept permanently. S5 may cache snippet plus extracted text for 7 days in `page_cache`.
+
+```text
+ScrapeService + UrlGuard
+        │
+        ▼
+   pointers + page_cache full-text + freshness   (RRF, no embeddings)
+        │
+        ▼
+   SSE findings → Cited Brief (citations required)
+        │
+        ▼
+   news_signals (cached by url hash)
+        │
+        ▼
+   PatternMatcher → IdeaGenerator (LlmClient wording)
+        │
+        ▼
+   FitFilter → IdeaScorer (Java weights, breakdown JSON)
+        │
+        ▼
+   skill budget (10% of income-band proxy, free first)
+        │
+        ▼
+   12-week plan → 9-section business outline
+```
+
+`skill_budget_month = incomeProxy(band) × invest_pct / 100` (default 10%, range 5–15). Band proxies: `0` → ₹0, `under_15k` → ₹7,500, `15_30` → ₹22,500, `30_50` → ₹40,000, `50_100` → ₹75,000, `over_100` → ₹1,00,000. A paid catalog row replaces its free alternative only when it saves at least 4 weeks. Subscriptions carry `cancel_by`. Affiliate links stay off.
+
 ### 4.5 Data model (Postgres)
 
 | Table | Role |
@@ -225,10 +286,23 @@ Chat message + industry (+ optional sub)
 | `refresh_tokens` | Session refresh tokens, soft-delete via `deleted_at` |
 | `plans` | Seeded `free` / `pro` / `team` limits + feature flags |
 | `subscriptions` | User ↔ plan, Razorpay ids, status, period end |
-| `usage_events` | Metered actions (`search`); user or anonymous `ip_hash` |
+| `usage_events` | Metered actions (`search`; planned kinds `brief`, `idea`); user or anonymous `ip_hash` |
 | `billing_events` | Razorpay event ids for idempotent webhooks |
 | `research_industries` / `research_industry_subs` | UI catalog |
-| `gyanwire_flyway_schema_history` | Flyway history |
+| `gyanwire_flyway_schema_history` | Flyway history (RLS via V18; created by Flyway, not V5) |
+| `llm_calls` | V6. Feature, prompt version, tokens, latency. Does not change the request |
+| `page_cache` | Planned V7. Snippet + text + `tsvector`, 7-day TTL. No embeddings |
+| `finding_passages` | Planned V8. Passages cited by a brief |
+| `user_profiles` / `user_skills` | Planned V9. Persona, income **band**, hours, consent |
+| `news_signals` | Planned V10. One JSON signal per URL hash |
+| `idea_runs` / `ideas` | Planned V11. Score breakdown from Java |
+| `tools` / `courses` / `skill_graph` | Planned V12. INR prices, `last_verified_at`, `affiliate` false |
+| `weekly_plans` / `weekly_tasks` / `business_outlines` | Planned V13 |
+| `projects` / `project_items` | Planned V14 |
+| `source_packs` / `source_pack_domains` | Planned V15 |
+| `saved_queries` / `digests` | Planned V16. Scheduled mail, not an agent |
+
+`plans` gains `daily_idea_limit` and `can_roadmap` with the idea step. New tables use the V5 RLS lockdown (enable RLS, revoke from `PUBLIC` and from `anon` / `authenticated` / `authenticator` when those roles exist).
 
 Migrations run on Spring Boot startup (Flyway).
 
@@ -237,10 +311,10 @@ Migrations run on Spring Boot startup (Flyway).
 | Concern | Approach |
 |---|---|
 | Persistence | `SPRING_DATASOURCE_*` JDBC + Flyway |
-| RLS | Enabled on product tables; no `anon`/`authenticated` policies |
+| RLS | Enabled on product tables and `gyanwire_flyway_schema_history`; no `anon`/`authenticated` policies |
 | Users | Own schema only — never shared with patient-platform DBs |
 | Sessions | JWT access + refresh; refresh cookie path `/api/auth` |
-| Plan limits | Search metering → HTTP 402 `LIMIT_REACHED` + `/pricing` |
+| Plan limits | Search metering → HTTP 402 `LIMIT_REACHED` + `/pricing`. Planned brief, idea, and roadmap gates use the same 402 |
 | Billing | Razorpay keys; webhook HMAC on raw body |
 | Secrets | Root `.env`; Vite `envDir` = project root for `VITE_*` |
 | CORS | `APP_CORS_ALLOWED_ORIGIN_PATTERNS` + credentials |
@@ -254,7 +328,7 @@ Migrations run on Spring Boot startup (Flyway).
 | `VITE_GOOGLE_OAUTH_CLIENT_ID` | Google Sign-In |
 | `RAZORPAY_KEY_ID` / `KEY_SECRET` / `WEBHOOK_SECRET` | Billing |
 | `RAZORPAY_PLAN_PRO_MONTHLY` (etc.) | Razorpay plan ids |
-| `LLM_*` / `SEARXNG_URL` | Optional query sharpen / discovery |
+| `LLM_*` / `SEARXNG_URL` | Optional query sharpen / discovery. Frozen until S16: do not change model, base URL, or key as part of a feature step |
 | `VITE_BACKEND_URL` | API origin baked into the UI (`http://localhost:8080` local, Cloud Run in prod) |
 
 See `.env.example` for the full list.
@@ -288,13 +362,17 @@ Deploy helpers: Cloud Run / Firebase UI scripts under `scripts/`, `Dockerfile`, 
 5. **Cookies for tokens** — browser JS never stores JWTs in `localStorage`.  
 6. **Skeleton loading in content** — never use the header as a status ticker.  
 7. **Scrollcraft taste on a tool** — forest/bone/amber, Fraunces + DM Sans; signature move = likely-search preview (`BRIEF.md`).  
+8. **Deterministic score, LLM for wording only** — idea rank, rupee amounts, and week lists come from code and the catalog. The current LLM may phrase titles, why-lines, briefs, and outline prose, and only from stripped fields (no name, email, or exact income). Same inputs produce the same ranking.  
+9. **Model freeze until S16** — do not change `LLM_MODEL`, provider, temperature (`0.2`), or `response_format`. No embeddings, router, or agent until `docs/PARKED_MODEL_WORK.md` says the start condition is met.
 
 ---
 
 ## 6. Related docs
 
 - `BRIEF.md` — vibe, feeling curve, signature move, aesthetic  
-- `CURSOR_PLAN.md` — step-by-step path from tool → paid product  
+- `CURSOR_PLAN.md` — historical path from tool → paid product (Steps 0–14)  
+- `CURSOR_PLAN_FLOW_FIRST.md` — active sequence S0–S16 under model freeze  
+- `docs/PARKED_MODEL_WORK.md` — model upgrades P1–P6, blocked until S16
 - `README.md` — quick start and env overview  
 - `FINGERPRINTS.md` — design fingerprint registry  
 - `.cursor/rules/gyanwire.mdc` — always-on coding conventions  

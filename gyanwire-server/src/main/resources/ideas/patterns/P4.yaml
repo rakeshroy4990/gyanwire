@@ -1,0 +1,9 @@
+id: P4
+name: Funding in sector
+eventTypes:
+  - funding
+ideaShape: Supplier to funded firms or a talent pipeline
+suitedFor:
+  - student
+  - working
+  - founder

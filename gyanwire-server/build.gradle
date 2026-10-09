@@ -34,6 +34,11 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
     implementation 'org.jsoup:jsoup:1.18.3'
+    implementation 'io.github.resilience4j:resilience4j-circuitbreaker:2.2.0'
+    implementation 'com.bucket4j:bucket4j_jdk17-core:8.14.0'
+    implementation 'io.opentelemetry:opentelemetry-api:1.43.0'
+    implementation 'io.opentelemetry:opentelemetry-sdk:1.43.0'
+    implementation 'io.opentelemetry:opentelemetry-exporter-logging:1.43.0'
     implementation 'com.razorpay:razorpay-java:1.4.8'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -43,6 +48,14 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+tasks.register('evalSearch', JavaExec) {
+    group = 'verification'
+    description = 'Score the golden query set and write eval/reports/baseline-<date>.json'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.gyanwire.eval.EvalSearchMain'
+    workingDir = file("${project.projectDir}/..")
 }
 
 /** Load KEY=value pairs from .env (comments, blank lines, optional export prefix). */

@@ -52,6 +52,46 @@ function mapResults(payload) {
   }));
 }
 
+async function readSearchStream(response, turnId, scope, usage, thread) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const chunks = buffer.split('\n\n');
+    buffer = chunks.pop() || '';
+    for (const chunk of chunks) {
+      const name = chunk.match(/^event:\s*(.*)$/m)?.[1]?.trim() || 'message';
+      const dataText = chunk.split('\n').filter((line) => line.startsWith('data:')).map((line) => line.slice(5).trim()).join('\n');
+      if (!dataText) continue;
+      const data = JSON.parse(dataText);
+      const turn = thread.value.find((item) => item.id === turnId);
+      if (!turn) continue;
+      if (name === 'status') {
+        turn.status = 'streaming';
+        turn.resultsSub = `${data.stage || 'working'} · ${scope}`;
+      } else if (name === 'finding') {
+        turn.status = 'streaming';
+        const row = { ...data, host: hostname(data.url) };
+        if (!turn.results.some((item) => item.url === row.url)) {
+          turn.results = [...turn.results, row];
+        }
+      } else if (name === 'done') {
+        turn.status = 'done';
+        turn.results = mapResults(data);
+        turn.brief = data.brief || null;
+        turn.disclaimer = data.disclaimer || '';
+        turn.resultsSub = `${turn.results.length} R&D findings · ${scope}`;
+        usage.applySearchUsage(data.usage);
+      } else if (name === 'error') {
+        throw new Error(data.message || 'Research failed.');
+      }
+    }
+  }
+}
+
 function makeId() {
   return `turn_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -117,7 +157,8 @@ export function useResearch() {
 
     const requestId = ++newsRequestId;
     isLoading.value = true;
-    browseSub.value = sub || industryName || 'Products';
+    browseResults.value = [];
+    browseSub.value = sub || industryName || 'Loading…';
     showEmpty.value = false;
 
     try {
@@ -217,34 +258,61 @@ export function useResearch() {
     usage.clearLimitPrompt();
     scrollTurnIntoView(turnId);
 
-    try {
-      const res = await fetch(apiUrl('/api/search'), {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          categories: [industry.value],
-          subcategory: subcategory.value,
-          thoughts: text,
-          limit: 6,
-        }),
-      });
-      const payload = await res.json();
-      if (res.status === 402 || payload?.errorCode === 'LIMIT_REACHED') {
-        usage.handleLimitError(payload);
-        throw new Error(payload?.message || 'Daily search limit reached.');
-      }
-      if (!res.ok || !payload.success) {
-        throw new Error(payload.message || 'Research failed.');
-      }
-      usage.applySearchUsage(payload.data?.usage);
+    const searchBody = {
+      categories: [industry.value],
+      subcategory: subcategory.value,
+      thoughts: text,
+      limit: 6,
+    };
 
-      const turn = thread.value.find((item) => item.id === turnId);
-      if (turn) {
-        turn.status = 'done';
-        turn.results = mapResults(payload.data);
-        turn.resultsSub = `${turn.results.length} R&D findings · ${scope}`;
-        turn.error = '';
+    try {
+      let streamed = false;
+      try {
+        const stream = await fetch(apiUrl('/api/search/stream'), {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+          body: JSON.stringify(searchBody),
+        });
+        if (stream.status === 402) {
+          const payload = await stream.json();
+          usage.handleLimitError(payload);
+          throw new Error(payload?.message || 'Daily search limit reached.');
+        }
+        if (stream.ok && stream.body) {
+          await readSearchStream(stream, turnId, scope, usage, thread);
+          streamed = true;
+        }
+      } catch (streamError) {
+        if (streamError?.message?.includes('limit')) throw streamError;
+        streamed = false;
+      }
+
+      if (!streamed) {
+        const res = await fetch(apiUrl('/api/search'), {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(searchBody),
+        });
+        const payload = await res.json();
+        if (res.status === 402 || payload?.errorCode === 'LIMIT_REACHED') {
+          usage.handleLimitError(payload);
+          throw new Error(payload?.message || 'Daily search limit reached.');
+        }
+        if (!res.ok || !payload.success) {
+          throw new Error(payload.message || 'Research failed.');
+        }
+        usage.applySearchUsage(payload.data?.usage);
+        const turn = thread.value.find((item) => item.id === turnId);
+        if (turn) {
+          turn.status = 'done';
+          turn.results = mapResults(payload.data);
+          turn.brief = payload.data?.brief || null;
+          turn.disclaimer = payload.data?.disclaimer || '';
+          turn.resultsSub = `${turn.results.length} R&D findings · ${scope}`;
+          turn.error = '';
+        }
       }
       scrollTurnIntoView(turnId);
       scrollComposerIntoView();

@@ -1,5 +1,7 @@
 package com.gyanwire.research.engine;
 
+import com.gyanwire.sources.SourcePackCatalog;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -13,15 +15,17 @@ import java.util.stream.Collectors;
 @Service
 public class PointersService {
 
-    private static final Map<String, Double> WEIGHTS = Map.of(
-            "thoughtOverlap", 22.0,
-            "titleOverlap", 14.0,
-            "categoryAffinity", 14.0,
-            "researchSignal", 14.0,
-            "indiaSignal", 16.0,
-            "contentDepth", 8.0,
-            "trustedDomain", 8.0,
-            "discoveryRank", 4.0
+    private static final Map<String, Double> WEIGHTS = Map.ofEntries(
+            Map.entry("thoughtOverlap", 18.0),
+            Map.entry("titleOverlap", 12.0),
+            Map.entry("categoryAffinity", 12.0),
+            Map.entry("researchSignal", 12.0),
+            Map.entry("curiositySignal", 18.0),
+            Map.entry("indiaSignal", 12.0),
+            Map.entry("contentDepth", 8.0),
+            Map.entry("trustedDomain", 6.0),
+            Map.entry("discoveryRank", 4.0),
+            Map.entry("genericPenalty", 14.0)
     );
 
     private static final List<String> RESEARCH_TERMS = List.of(
@@ -37,6 +41,13 @@ public class PointersService {
     );
 
     private static final List<String> LOW = List.of("pinterest.com", "quora.com", "scribd.com");
+
+    private SourcePackCatalog packs;
+
+    @Autowired(required = false)
+    public void setPacks(SourcePackCatalog packs) {
+        this.packs = packs;
+    }
 
     private static final Map<String, List<String>> CATEGORY = Map.of(
             "IT", List.of("software", "computing", "artificial intelligence", "semiconductor", "cybersecurity"),
@@ -61,28 +72,47 @@ public class PointersService {
         breakdown.put("titleOverlap", overlap(thoughtTokens, title) * WEIGHTS.get("titleOverlap"));
         breakdown.put("categoryAffinity", categoryScore(categoryTerms, haystack) * WEIGHTS.get("categoryAffinity"));
         breakdown.put("researchSignal", researchScore(haystack) * WEIGHTS.get("researchSignal"));
+        breakdown.put("curiositySignal", CuriosityRank.hookScore(haystack) * WEIGHTS.get("curiositySignal"));
         breakdown.put("indiaSignal", (IndiaSupport.indiaAffinity(host(String.valueOf(page.get("url")))) / 24.0) * WEIGHTS.get("indiaSignal"));
         breakdown.put("contentDepth", depth(page) * WEIGHTS.get("contentDepth"));
         breakdown.put("trustedDomain", domain(String.valueOf(page.get("url"))) * WEIGHTS.get("trustedDomain"));
         breakdown.put("discoveryRank", Math.max(0.2, 1 - discoveryIndex * 0.08) * WEIGHTS.get("discoveryRank"));
+        breakdown.put("genericPenalty", -CuriosityRank.genericScore(haystack) * WEIGHTS.get("genericPenalty"));
+        breakdown.put("sourcePack", packBoost(String.valueOf(page.get("url"))));
 
         double raw = breakdown.values().stream().mapToDouble(Double::doubleValue).sum();
         double max = WEIGHTS.values().stream().mapToDouble(Double::doubleValue).sum();
         int score = (int) Math.round(Math.min(100, Math.max(0, (raw / max) * 100)));
-        String top = breakdown.entrySet().stream().max(Map.Entry.comparingByValue()).map(Map.Entry::getKey).orElse("");
+        String top = breakdown.entrySet().stream()
+                .filter(e -> !"genericPenalty".equals(e.getKey()))
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse("");
+        if (CuriosityRank.looksGeneric(haystack)) {
+            top = "genericPenalty";
+        } else if (CuriosityRank.hookScore(haystack) >= 0.34
+                && breakdown.getOrDefault("curiositySignal", 0.0) >= breakdown.getOrDefault(top, 0.0)) {
+            top = "curiositySignal";
+        }
         Map<String, Object> out = new HashMap<>();
         out.put("score", score);
-        out.put("why", why(top, categories, score, String.valueOf(page.get("url"))));
+        out.put("why", why(top, categories, score, String.valueOf(page.get("url")), haystack));
         out.put("breakdown", breakdown);
         return out;
     }
 
-    private static String why(String top, List<String> categories, int score, String url) {
+    private static String why(String top, List<String> categories, int score, String url, String haystack) {
+        String curiosity = CuriosityRank.why(haystack);
+        if (!curiosity.isBlank() && ("curiositySignal".equals(top) || "genericPenalty".equals(top))) {
+            return curiosity;
+        }
         return switch (top) {
             case "thoughtOverlap" -> "Matches the language in your notes closely.";
             case "titleOverlap" -> "The page title lines up with what you wrote.";
             case "categoryAffinity" -> "Strong fit for " + (categories == null || categories.isEmpty() ? "your topics" : String.join(" / ", categories.subList(0, Math.min(2, categories.size())))) + ".";
             case "researchSignal" -> "Looks like R&D or research-grade material.";
+            case "curiositySignal" -> "Curious angle that invites a closer read.";
+            case "genericPenalty" -> "Looks like a routine wrap, so it ranks lower.";
             case "indiaSignal" -> "India-first source or India-focused coverage.";
             case "contentDepth" -> "Has enough depth for research reading.";
             case "trustedDomain" -> "Comes from a solid source (" + host(url) + ").";
@@ -109,6 +139,14 @@ public class PointersService {
         if (length > 500) return 0.55;
         if (length > 160) return 0.35;
         return 0.15;
+    }
+
+    private double packBoost(String url) {
+        if (packs == null) {
+            return 0;
+        }
+        double weight = packs.weight(host(url));
+        return Math.max(-8, Math.min(12, (weight - 1) * 12));
     }
 
     private static double domain(String url) {

@@ -1,0 +1,10 @@
+id: P1
+name: Regulation change
+eventTypes:
+  - regulation
+  - govt_scheme
+ideaShape: Compliance checklist, audit, or training
+suitedFor:
+  - student
+  - working
+  - founder

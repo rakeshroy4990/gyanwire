@@ -1,6 +1,7 @@
 <script setup>
 import FindingsSkeleton from './FindingsSkeleton.vue';
 import ResultsPanel from './ResultsPanel.vue';
+import CitedBrief from './CitedBrief.vue';
 
 defineProps({
   greetingName: { type: String, default: '' },
@@ -26,6 +27,9 @@ const emit = defineEmits([
   'select-sub',
   'search',
   'clear',
+  'idea',
+  'feedback',
+  'claim',
 ]);
 
 function onThoughtsKeydown(event) {
@@ -169,6 +173,9 @@ function onThoughtsKeydown(event) {
         </RouterLink>
       </div>
 
+      <p v-if="industry === 'Share Market'" class="disclaimer">Informational only. Not investment advice or a recommendation to buy or sell.</p>
+      <p v-else-if="industry === 'Medical'" class="disclaimer">Research aid, not a diagnosis or treatment.</p>
+      <p v-else-if="industry === 'Astrology'" class="disclaimer">Cultural and educational context, not a health or financial prediction.</p>
       <p v-if="formError" class="form-error" role="alert">{{ formError }}</p>
 
       <div v-if="hasThread" class="chat-thread" aria-live="polite">
@@ -190,6 +197,7 @@ function onThoughtsKeydown(event) {
 
           <div class="chat-bubble chat-bubble--assistant">
             <p class="chat-bubble__meta">Gyanwire</p>
+            <p v-if="turn.disclaimer" class="disclaimer">{{ turn.disclaimer }}</p>
             <FindingsSkeleton
               v-if="turn.status === 'pending'"
               embedded
@@ -198,17 +206,22 @@ function onThoughtsKeydown(event) {
             <p v-else-if="turn.status === 'error'" class="chat-bubble__text chat-bubble__text--error">
               {{ turn.error || 'That search failed.' }}
             </p>
-            <ResultsPanel
-              v-else
-              embedded
-              heading="Findings"
-              :results="turn.results"
-              :results-sub="turn.resultsSub"
-              :show-empty="turn.results.length === 0"
-              :show-results="turn.results.length > 0"
-              :is-loading="false"
-              :empty-message="'No strong findings for this question.'"
-            />
+            <template v-else>
+              <ResultsPanel
+                embedded
+                heading="Findings"
+                show-ideas
+                :results="turn.results"
+                :results-sub="turn.resultsSub"
+                :show-empty="turn.results.length === 0"
+                :show-results="turn.results.length > 0"
+                :is-loading="turn.status === 'streaming'"
+                :empty-message="'No strong findings for this question.'"
+                @idea="emit('idea', $event)"
+                @feedback="emit('feedback', $event)"
+              />
+              <CitedBrief v-if="turn.brief?.summary" :brief="turn.brief" @claim="emit('claim', $event)" />
+            </template>
           </div>
         </article>
       </div>

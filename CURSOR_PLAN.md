@@ -3,8 +3,10 @@
 How to use this file:
 1. Put it in the repo root next to `ARCHITECTURE.md`.
 2. Work **one step at a time**. Each step = one git branch, one Cursor chat (Agent mode), one PR.
-3. In each Cursor chat, start with: `@ARCHITECTURE.md @CURSOR_PLAN.md — implement Step N only. Don't touch anything outside its scope.`
+3. Historical steps in this file use: `@ARCHITECTURE.md @CURSOR_PLAN.md — implement Step N only. Don't touch anything outside its scope.`
 4. Paste the step's **Prompt** block. Review the diff, run the **Done when** checks, commit, then move on.
+
+**Next build:** `CURSOR_PLAN_FLOW_FIRST.md` (S0–S16). The LLM model, provider, and `LLM_*` settings stay frozen until S16 is done. Do not start new work from Steps 4–14 or from the retired idea-roadmap order.
 
 Tip: use Plan mode first for Steps 1, 3, 4 and 8 (they touch many files), then switch to Agent mode.
 
@@ -284,6 +286,21 @@ Show: signups/day, active users 7d, searches/day, cost per search (avg), MRR (fr
 
 ---
 
+## Retired — Steps 15–25
+
+The idea-roadmap order that used to live here is superseded by `CURSOR_PLAN_FLOW_FIRST.md`.
+
+- Profile, consent, and income bands → **S7**
+- News signals → **S8**
+- Idea engine, metering, Idea card → **S9**
+- 10% skill budget → **S10**
+- Weekly plan and business outline → **S11**
+- Projects, export, source packs, digests, pricing and legal → **S12–S16**
+
+Product rules that still apply are written in that file (Phase 4): income bands with fixed rupee proxies, invest % default 10, no affiliate links, Free 3 idea runs/day, roadmap and outline on Pro/Team, scores from Java, LLM for wording only, Share Market and Medical safe variants.
+
+---
+
 ## Suggested order and rough effort
 
 | Phase | Steps | Effort (solo, evenings/weekends) |
@@ -294,7 +311,7 @@ Show: signups/day, active users 7d, searches/day, cost per search (avg), MRR (fr
 | Make it scalable | 10-13 | 2 weeks |
 | Sell | 14 | ongoing |
 
-If you only have time for a minimum viable paid version: **Steps 0, 1, 2, 3, 5, 7, 11.** The rest can follow once you have paying users.
+Steps 0–14 above are the original tool-to-product sequence. The active sequence is `CURSOR_PLAN_FLOW_FIRST.md`: S0–S2 safety and eval, S3–S6 search flow, S7 profile, S8–S11 ideas and plans, S12–S14 product shell, S15–S16 launch. Model upgrades (P1–P6) stay parked until S16.
 
 ---
 

@@ -1,0 +1,9 @@
+id: P5
+name: Supply disruption
+eventTypes:
+  - supply_disruption
+ideaShape: Local alternative or buffer service
+suitedFor:
+  - student
+  - working
+  - founder

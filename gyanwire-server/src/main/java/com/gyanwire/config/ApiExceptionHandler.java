@@ -5,6 +5,7 @@ import com.gyanwire.billing.BillingException;
 import com.gyanwire.controller.dto.StandardApiResponse;
 import com.gyanwire.research.ResearchException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -23,6 +24,12 @@ public class ApiExceptionHandler {
     public ResponseEntity<StandardApiResponse<Object>> billing(BillingException e) {
         return ResponseEntity.status(e.getStatus())
                 .body(StandardApiResponse.error(e.getMessage(), e.getErrorCode()));
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<StandardApiResponse<Object>> invalid(MethodArgumentNotValidException e) {
+        return ResponseEntity.badRequest()
+                .body(StandardApiResponse.error("Check the form and try again.", "VALIDATION_ERROR"));
     }
 
     @ExceptionHandler(ResearchException.class)

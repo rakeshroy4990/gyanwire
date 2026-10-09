@@ -1,0 +1,9 @@
+id: P2
+name: Price shock
+eventTypes:
+  - price_move
+ideaShape: Substitute sourcing or a cost tracker
+suitedFor:
+  - student
+  - working
+  - founder

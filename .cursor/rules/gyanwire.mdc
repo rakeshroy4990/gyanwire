@@ -7,4 +7,10 @@ alwaysApply: true
 - All secrets from root .env. Never hardcode keys. Update .env.example for every new variable.
 - Every new API endpoint gets validation and a basic Spring test.
 - Every new DB change is a Flyway migration in gyanwire-server/src/main/resources/db/migration/.
-- Keep changes scoped to the current step in CURSOR_PLAN.md.
+- Active sequence is CURSOR_PLAN_FLOW_FIRST.md (S0–S16). Keep each change scoped to the named step. CURSOR_PLAN.md Steps 0–14 are history.
+- MODEL FREEZE: do not change the LLM model id, provider, LLM_* values, temperature, max tokens, or thinking/effort settings.
+- Do not add a model router, new model ids, Managed Agents, compaction, prompt-cache changes, hosted web-search tools, or an embedding model. Hybrid ranking uses Postgres full-text (S5). Embeddings are Phase 7.
+- New LLM features call the existing client only (LlmService today; LlmClient after S0). Same request shape, including temperature 0.2 and response_format json_object.
+- New prompts are plain instructions plus JSON, validated with one retry, stored in src/main/resources/prompts/<name>.v1.txt. Do not add tool-calling or thinking parameters.
+- Log LLM calls to llm_calls. Logging must not change the completion request.
+- If a task seems to need a model change, add it to docs/PARKED_MODEL_WORK.md and stop.

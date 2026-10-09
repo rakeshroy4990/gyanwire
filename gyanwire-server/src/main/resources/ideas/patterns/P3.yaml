@@ -1,0 +1,9 @@
+id: P3
+name: New technology
+eventTypes:
+  - tech_release
+ideaShape: Integration service, template, or training
+suitedFor:
+  - student
+  - working
+  - founder

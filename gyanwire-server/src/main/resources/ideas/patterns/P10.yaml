@@ -1,0 +1,9 @@
+id: P10
+name: Data release
+eventTypes:
+  - data_release
+ideaShape: Dashboard, newsletter, or explainer
+suitedFor:
+  - student
+  - working
+  - founder

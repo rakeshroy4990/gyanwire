@@ -1,0 +1,9 @@
+id: P9
+name: Skills gap
+eventTypes:
+  - skills_gap
+ideaShape: Cohort, mentoring, or a micro agency
+suitedFor:
+  - student
+  - working
+  - founder

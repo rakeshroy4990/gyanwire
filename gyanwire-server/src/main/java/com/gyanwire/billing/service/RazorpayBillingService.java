@@ -37,6 +37,7 @@ public class RazorpayBillingService {
     private final String proAnnual;
     private final String teamMonthly;
     private final String teamAnnual;
+    private final String studentMonthly;
     private final SubscriptionRepository subscriptionRepository;
     private final PlanRepository planRepository;
     private final BillingEventRepository billingEventRepository;
@@ -50,6 +51,7 @@ public class RazorpayBillingService {
             @Value("${app.razorpay.plan.pro.annual:}") String proAnnual,
             @Value("${app.razorpay.plan.team.monthly:}") String teamMonthly,
             @Value("${app.razorpay.plan.team.annual:}") String teamAnnual,
+            @Value("${app.razorpay.plan.student.monthly:}") String studentMonthly,
             SubscriptionRepository subscriptionRepository,
             PlanRepository planRepository,
             BillingEventRepository billingEventRepository,
@@ -62,10 +64,26 @@ public class RazorpayBillingService {
         this.proAnnual = proAnnual == null ? "" : proAnnual.trim();
         this.teamMonthly = teamMonthly == null ? "" : teamMonthly.trim();
         this.teamAnnual = teamAnnual == null ? "" : teamAnnual.trim();
+        this.studentMonthly = studentMonthly == null ? "" : studentMonthly.trim();
         this.subscriptionRepository = subscriptionRepository;
         this.planRepository = planRepository;
         this.billingEventRepository = billingEventRepository;
         this.objectMapper = objectMapper;
+    }
+
+    public Map<String, Object> offers() {
+        return Map.of(
+                "annual", !proAnnual.isBlank() || !teamAnnual.isBlank(),
+                "student", !studentMonthly.isBlank()
+        );
+    }
+
+    public static boolean studentEmail(String email) {
+        if (email == null) {
+            return false;
+        }
+        String value = email.toLowerCase();
+        return value.endsWith(".ac.in") || value.endsWith(".edu");
     }
 
     public boolean isConfigured() {
@@ -94,10 +112,11 @@ public class RazorpayBillingService {
             case "pro:annual" -> proAnnual;
             case "team:monthly" -> teamMonthly;
             case "team:annual" -> teamAnnual;
+            case "student:monthly" -> studentMonthly;
             default -> "";
         };
         if (id.isBlank()) {
-            if (!"pro".equals(plan) && !"team".equals(plan)) {
+            if (!"pro".equals(plan) && !"team".equals(plan) && !"student".equals(plan)) {
                 throw new BillingException("Unsupported plan or billing interval.", "BILLING_PLAN_INVALID", 400);
             }
             throw new BillingException("Missing Razorpay plan id env for " + plan + "/" + intv,
@@ -148,6 +167,8 @@ public class RazorpayBillingService {
             notes.put("gyanwire_user_id", userId.toString());
             notes.put("gyanwire_plan_id", normalizedPlan);
             notes.put("gyanwire_interval", intv);
+            notes.put("gst_invoice", "true");
+            notes.put("place_of_supply", "India");
             req.put("notes", notes);
             Subscription subscription = client().subscriptions.create(req);
             String subscriptionId = String.valueOf(subscription.get("id"));
@@ -261,7 +282,7 @@ public class RazorpayBillingService {
             if (!userIdRaw.isBlank()) userId = UUID.fromString(userIdRaw);
         } catch (Exception ignored) {}
         String planId = subscriptionEntity.path("notes").path("gyanwire_plan_id").asText("pro").trim().toLowerCase();
-        if (!"pro".equals(planId) && !"team".equals(planId)) planId = "pro";
+        if (!"pro".equals(planId) && !"team".equals(planId) && !"student".equals(planId)) planId = "pro";
         Instant periodEnd = subscriptionEntity.hasNonNull("current_end")
                 ? Instant.ofEpochSecond(subscriptionEntity.path("current_end").asLong())
                 : null;

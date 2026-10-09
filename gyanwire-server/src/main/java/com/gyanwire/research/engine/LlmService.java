@@ -2,42 +2,69 @@ package com.gyanwire.research.engine;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Value;
+import com.gyanwire.llm.LlmClient;
+import com.gyanwire.research.llm.LlmOutputs;
+import com.gyanwire.usage.SpendGuard;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
 
 @Service
 public class LlmService {
 
-    private final String apiKey;
-    private final String baseUrl;
-    private final String model;
-    private final ObjectMapper mapper;
-    private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+    static final String QUERY_SHARPEN_VERSION = "query-sharpen.v1";
+    static final String BLEND_RANK_VERSION = "blend-rank.v1";
 
-    public LlmService(
-            @Value("${app.llm.api-key:}") String apiKey,
-            @Value("${app.llm.base-url:https://api.openai.com/v1}") String baseUrl,
-            @Value("${app.llm.model:gpt-4o-mini}") String model,
-            ObjectMapper mapper
-    ) {
-        this.apiKey = apiKey == null ? "" : apiKey.trim();
-        this.baseUrl = baseUrl == null ? "https://api.openai.com/v1" : baseUrl.replaceAll("/$", "");
-        this.model = model;
+    private final LlmClient llmClient;
+    private final ObjectMapper mapper;
+    private final ObjectProvider<SpendGuard> spendGuard;
+
+    public LlmService(LlmClient llmClient, ObjectMapper mapper) {
+        this(llmClient, mapper, emptyGuard());
+    }
+
+    @Autowired
+    public LlmService(LlmClient llmClient, ObjectMapper mapper, ObjectProvider<SpendGuard> spendGuard) {
+        this.llmClient = llmClient;
         this.mapper = mapper;
+        this.spendGuard = spendGuard;
+    }
+
+    private static ObjectProvider<SpendGuard> emptyGuard() {
+        return new ObjectProvider<>() {
+            @Override
+            public SpendGuard getObject() {
+                return null;
+            }
+
+            @Override
+            public SpendGuard getObject(Object... args) {
+                return null;
+            }
+
+            @Override
+            public SpendGuard getIfAvailable() {
+                return null;
+            }
+
+            @Override
+            public SpendGuard getIfUnique() {
+                return null;
+            }
+        };
     }
 
     public boolean isConfigured() {
-        return !apiKey.isBlank() && !apiKey.contains("your-key");
+        return llmClient.isConfigured();
     }
 
     public Map<String, Object> refineQuery(List<String> categories, String subcategory, String thoughts) {
@@ -45,27 +72,21 @@ public class LlmService {
                 ? String.join(", ", categories)
                 : String.join(", ", categories) + " / " + subcategory;
         String fallback = buildFallback(categories, thoughts, subcategory);
-        JsonNode refined = chatJson(
-                """
-                You turn research notes into a precise R&D web search query.
-                Return JSON only: {"query":"...","intent":"one short sentence"}.
-                Rules:
-                - Always frame the query for research and development value
-                - Prefer India-first context whenever relevant
-                - Prefer papers, trials, patents, labs, technical reports, and primary sources
-                - Query max 18 words
-                - Keep the person's real intent
-                - Do not invent facts they did not mention
-                """,
-                "Research scope: " + scope + "\nRegion preference: India first, then global\nResearch notes:\n" + thoughts
+        JsonNode refined = completeValidated(
+                null,
+                QUERY_SHARPEN_VERSION,
+                "query-sharpen",
+                prompt("query-sharpen.v1.txt"),
+                "Research scope: " + scope + "\nRegion preference: India first, then global\nResearch notes:\n" + thoughts,
+                LlmOutputs::validateSharpen
         );
-        if (refined == null || refined.path("query").asText("").isBlank()) {
+        if (refined == null) {
             return Map.of("query", fallback, "intent", "R&D research in " + scope + ".", "usedLlm", false);
         }
         Map<String, Object> out = new HashMap<>();
-        out.put("query", refined.path("query").asText().trim().substring(0, Math.min(180, refined.path("query").asText().trim().length())));
-        String intent = refined.path("intent").asText("R&D research in " + scope + ".").trim();
-        out.put("intent", intent.substring(0, Math.min(160, intent.length())));
+        String query = LlmOutputs.truncate(refined.path("query").asText(), 180);
+        out.put("query", query);
+        out.put("intent", LlmOutputs.truncate(refined.path("intent").asText("R&D research in " + scope + "."), 160));
         out.put("usedLlm", true);
         return out;
     }
@@ -81,7 +102,7 @@ public class LlmService {
             row.put("id", item.get("id"));
             row.put("title", item.get("title"));
             row.put("url", item.get("url"));
-            row.put("description", item.get("description"));
+            row.put("description", PageText.forModel(String.valueOf(item.getOrDefault("description", ""))));
             row.put("pointerScore", item.get("score"));
             row.put("why", item.get("why"));
             compact.add(row);
@@ -93,16 +114,15 @@ public class LlmService {
                     "query", query,
                     "results", compact
             ));
-            JsonNode ranked = chatJson(
-                    """
-                    You nudge rankings for an R&D research search engine that already scored pages with pointers.
-                    Return JSON only:
-                    {"rankings":[{"id":"r-1","delta":-15to15,"why":"one plain sentence under 22 words"}]}.
-                    Include every id exactly once.
-                    """,
-                    user
+            JsonNode ranked = completeValidated(
+                    null,
+                    BLEND_RANK_VERSION,
+                    "blend-rank",
+                    prompt("blend-rank.v1.txt"),
+                    user,
+                    LlmOutputs::validateBlend
             );
-            if (ranked == null || !ranked.path("rankings").isArray()) {
+            if (ranked == null) {
                 return Map.of("results", results, "usedLlm", false);
             }
             Map<String, JsonNode> byId = new HashMap<>();
@@ -114,10 +134,12 @@ public class LlmService {
                 Map<String, Object> copy = new HashMap<>(item);
                 JsonNode nudge = byId.get(String.valueOf(item.get("id")));
                 if (nudge != null) {
-                    int score = ((Number) item.getOrDefault("score", 0)).intValue() + nudge.path("delta").asInt(0);
-                    copy.put("score", Math.max(0, Math.min(100, score)));
-                    if (!nudge.path("why").asText("").isBlank()) {
-                        copy.put("why", nudge.path("why").asText());
+                    int score = ((Number) item.getOrDefault("score", 0)).intValue()
+                            + LlmOutputs.clampDelta(nudge.path("delta").asInt(0));
+                    copy.put("score", LlmOutputs.clampScore(score));
+                    String why = LlmOutputs.truncate(nudge.path("why").asText(""), 160);
+                    if (!why.isBlank()) {
+                        copy.put("why", why);
                     }
                     copy.put("usedLlm", true);
                 }
@@ -132,32 +154,48 @@ public class LlmService {
         }
     }
 
-    private JsonNode chatJson(String system, String user) {
-        if (!isConfigured()) return null;
-        try {
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("model", model);
-            payload.put("temperature", 0.2);
-            payload.put("response_format", Map.of("type", "json_object"));
-            payload.put("messages", List.of(
-                    Map.of("role", "system", "content", system),
-                    Map.of("role", "user", "content", user)
-            ));
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "/chat/completions"))
-                    .timeout(Duration.ofSeconds(30))
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + apiKey)
-                    .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(payload)))
-                    .build();
-            HttpResponse<String> res = http.send(req, HttpResponse.BodyHandlers.ofString());
-            if (res.statusCode() >= 400) return null;
-            JsonNode root = mapper.readTree(res.body());
-            String content = root.path("choices").path(0).path("message").path("content").asText("");
-            if (content.isBlank()) return null;
-            return mapper.readTree(content);
-        } catch (Exception e) {
+    public JsonNode completeValidated(
+            UUID userId,
+            String promptVersion,
+            String feature,
+            String system,
+            String user,
+            Function<JsonNode, String> validate
+    ) {
+        if (!spendAllowed(userId)) {
             return null;
+        }
+        JsonNode first = llmClient.complete(userId, feature, promptVersion, system, user);
+        String error = validate.apply(first);
+        if (error == null) {
+            return first;
+        }
+        if (!spendAllowed(userId)) {
+            return null;
+        }
+        JsonNode second = llmClient.complete(
+                userId,
+                feature,
+                promptVersion,
+                system,
+                user + "\nValidation error: " + error + "\nReturn JSON that fixes it."
+        );
+        if (validate.apply(second) != null) {
+            return null;
+        }
+        return second;
+    }
+
+    private boolean spendAllowed(UUID userId) {
+        SpendGuard guard = spendGuard.getIfAvailable();
+        return guard == null || guard.allow(userId);
+    }
+
+    public static String prompt(String name) {
+        try {
+            return new String(new ClassPathResource("prompts/" + name).getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            return "Return JSON only.";
         }
     }
 

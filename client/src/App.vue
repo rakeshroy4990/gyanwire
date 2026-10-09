@@ -24,6 +24,12 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
 <template>
   <AppHeader />
   <RouterView />
+  <footer class="site-footer">
+    <RouterLink to="/terms">Terms</RouterLink>
+    <RouterLink to="/privacy">Privacy</RouterLink>
+    <RouterLink to="/refund">Refunds</RouterLink>
+    <RouterLink to="/contact">Contact</RouterLink>
+  </footer>
   <LoginModal />
   <RegisterModal />
 </template>

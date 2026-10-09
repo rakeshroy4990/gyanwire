@@ -204,16 +204,21 @@
     "label": "Share products",
     "why": "Share-specific product or company move.",
     "queries": [
-      "Reliance OR TCS OR Infosys stock earnings OR product",
-      "Tesla OR NVIDIA stock price product catalyst",
-      "IPO listing OR SME IPO allotment today India"
+      "Reliance OR TCS OR Infosys surprise earnings OR unusual product move",
+      "Tesla OR NVIDIA unexpected product catalyst OR stock shock",
+      "India IPO odd allotment OR SME IPO controversy OR exclusive listing story"
     ],
     "blockGeneric": [
       "share market live",
       "share market today: latest",
       "nifty closes below",
       "indian stock market prediction",
-      "things that will decide stock market action"
+      "things that will decide stock market action",
+      "sensex ends",
+      "nifty ends",
+      "market wrap",
+      "closing bell",
+      "stocks to watch today"
     ],
     "subs": [
       {
