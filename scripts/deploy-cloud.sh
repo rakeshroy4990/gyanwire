@@ -19,6 +19,28 @@ if [[ ! -f cloudbuild.yaml ]]; then
   exit 1
 fi
 
+if [[ ! -f package.json || ! -f package-lock.json ]]; then
+  echo "Missing package.json or package-lock.json in ${ROOT}" >&2
+  exit 1
+fi
+
+if ! command -v npm >/dev/null 2>&1; then
+  echo "npm not found. Install Node.js/npm so the lockfile can be verified before deploy." >&2
+  exit 1
+fi
+
+# Docker ui-build runs `npm ci`, which requires package.json and package-lock.json in sync.
+echo "Checking package-lock.json is in sync with package.json..."
+if ! npm ci --dry-run --ignore-scripts >/dev/null 2>&1; then
+  echo "Lockfile out of sync; updating package-lock.json..."
+  npm install --package-lock-only
+  if ! npm ci --dry-run --ignore-scripts >/dev/null 2>&1; then
+    echo "package-lock.json still out of sync after update. Fix locally and retry." >&2
+    exit 1
+  fi
+  echo "Updated package-lock.json (commit it so future deploys stay green)."
+fi
+
 echo "Submitting Cloud Build → project ${GCP_PROJECT}..."
 gcloud builds submit \
   --project="${GCP_PROJECT}" \

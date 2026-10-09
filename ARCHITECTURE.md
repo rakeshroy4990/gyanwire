@@ -289,7 +289,7 @@ ScrapeService + UrlGuard
 | `usage_events` | Metered actions (`search`; planned kinds `brief`, `idea`); user or anonymous `ip_hash` |
 | `billing_events` | Razorpay event ids for idempotent webhooks |
 | `research_industries` / `research_industry_subs` | UI catalog |
-| `gyanwire_flyway_schema_history` | Flyway history (RLS via V18; created by Flyway, not V5) |
+| `gyanwire_flyway_schema_history` | Flyway history (RLS after migrate via `FlywayHistoryRlsLockdown`; not inside V18 — would deadlock) |
 | `llm_calls` | V6. Feature, prompt version, tokens, latency. Does not change the request |
 | `page_cache` | Planned V7. Snippet + text + `tsvector`, 7-day TTL. No embeddings |
 | `finding_passages` | Planned V8. Passages cited by a brief |
