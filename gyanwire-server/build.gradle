@@ -58,6 +58,39 @@ tasks.register('evalSearch', JavaExec) {
     workingDir = file("${project.projectDir}/..")
 }
 
+tasks.register('evalLlm', JavaExec) {
+    group = 'verification'
+    description = 'Score routed LLM stages against the golden set'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.gyanwire.eval.EvalLlmMain'
+    workingDir = file("${project.projectDir}/..")
+}
+
+tasks.register('evalNewsBaseline', JavaExec) {
+    group = 'verification'
+    description = 'Record current news quality into eval/news-baseline.json'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.gyanwire.eval.NewsBaselineMain'
+    workingDir = file("${project.projectDir}/..")
+    args '--legacy'
+}
+
+tasks.register('evalModelBakeoff', JavaExec) {
+    group = 'verification'
+    description = 'Compare the low and high models on idea and outline, quality per rupee'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.gyanwire.eval.EvalModelBakeoffMain'
+    workingDir = file("${project.projectDir}/..")
+    Map<String, Object> env = new LinkedHashMap<>(System.getenv())
+    loadDotEnv(file("${project.projectDir}/.env")).each { String k, String v ->
+        env.put(k, v)
+    }
+    loadDotEnv(file("${project.projectDir}/../.env")).each { String k, String v ->
+        env.putIfAbsent(k, v)
+    }
+    environment = env
+}
+
 /** Load KEY=value pairs from .env (comments, blank lines, optional export prefix). */
 def loadDotEnv(File envFile) {
     if (!envFile.exists()) {

@@ -52,6 +52,19 @@ public class PatternMatcher {
         return List.copyOf(patterns);
     }
 
+    public List<String> shapesFor(List<String> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        List<String> shapes = new ArrayList<>();
+        for (Pattern pattern : patterns) {
+            if (ids.contains(pattern.id())) {
+                shapes.add(pattern.ideaShape());
+            }
+        }
+        return shapes;
+    }
+
     private static List<String> stringList(Object value) {
         if (value instanceof List<?> list) {
             return list.stream().map(String::valueOf).toList();

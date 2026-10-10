@@ -1,6 +1,6 @@
 <script setup>
 defineProps({
-  /** cards | facts | list | pricing | compact */
+  /** cards | facts | list | pricing | compact | options */
   variant: { type: String, default: 'cards' },
   rows: { type: Number, default: 4 },
   label: { type: String, default: 'Loading' },
@@ -60,6 +60,21 @@ defineProps({
       <span class="skeleton-line skeleton-line--why" />
       <span class="skeleton-line skeleton-line--host" />
       <span class="skeleton-line page-skeleton__button" />
+    </template>
+
+    <template v-else-if="variant === 'options'">
+      <div v-for="n in rows" :key="n" class="page-skeleton__option">
+        <div class="page-skeleton__option-top">
+          <span class="skeleton-line skeleton-line--meta" />
+          <span class="skeleton-line skeleton-line--score" />
+        </div>
+        <span class="skeleton-line skeleton-line--heading" />
+        <span class="skeleton-line skeleton-line--heading page-skeleton__line--short" />
+        <span class="skeleton-line skeleton-line--why" />
+        <span class="skeleton-line skeleton-line--why page-skeleton__line--mid" />
+        <span class="skeleton-line skeleton-line--host" />
+        <span class="skeleton-line page-skeleton__button" />
+      </div>
     </template>
 
     <template v-else>

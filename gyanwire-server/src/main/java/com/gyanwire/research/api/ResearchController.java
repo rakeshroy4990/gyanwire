@@ -7,7 +7,6 @@ import com.gyanwire.controller.dto.StandardApiResponse;
 import com.gyanwire.research.ResearchException;
 import com.gyanwire.research.brief.BriefService;
 import com.gyanwire.research.industry.IndustryModes;
-import com.gyanwire.research.service.IndustryNewsService;
 import com.gyanwire.research.service.SearchEngineService;
 import com.gyanwire.service.ResearchIndustryService;
 import com.gyanwire.usage.UsageService;
@@ -24,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
@@ -36,7 +34,6 @@ import java.util.UUID;
 @RestController
 public class ResearchController {
 
-    private final IndustryNewsService industryNewsService;
     private final SearchEngineService searchEngineService;
     private final ResearchIndustryService researchIndustryService;
     private final UsageService usageService;
@@ -44,57 +41,17 @@ public class ResearchController {
     private final FlowStore flowStore;
 
     public ResearchController(
-            IndustryNewsService industryNewsService,
             SearchEngineService searchEngineService,
             ResearchIndustryService researchIndustryService,
             UsageService usageService,
             BriefService briefService,
             FlowStore flowStore
     ) {
-        this.industryNewsService = industryNewsService;
         this.searchEngineService = searchEngineService;
         this.researchIndustryService = researchIndustryService;
         this.usageService = usageService;
         this.briefService = briefService;
         this.flowStore = flowStore;
-    }
-
-    @GetMapping("/api/news/default")
-    public ResponseEntity<StandardApiResponse<Map<String, Object>>> defaultNews() {
-        Map<String, Object> data = industryNewsService.getDefaultProductNews(5);
-        data.put("intent", "Top searched share and medical product news");
-        data.put("engine", "gyanwire");
-        data.put("usedLlm", false);
-        data.put("isDefaultNews", true);
-        return ResponseEntity.ok(StandardApiResponse.success("Product news ready.", data));
-    }
-
-    @GetMapping("/api/news/{industry}")
-    public ResponseEntity<StandardApiResponse<Map<String, Object>>> industryNews(
-            @PathVariable String industry,
-            @RequestParam(value = "sub", required = false) String sub
-    ) {
-        String decoded = URLDecoder.decode(industry, StandardCharsets.UTF_8);
-        List<String> names = researchIndustryService.listCatalog().stream().map(i -> i.getName()).toList();
-        if (!names.contains(decoded)) {
-            throw new ResearchException("Pick a valid research industry.", "UNKNOWN_INDUSTRY", 400);
-        }
-        List<String> subs = researchIndustryService.listCatalog().stream()
-                .filter(i -> i.getName().equals(decoded))
-                .findFirst()
-                .map(i -> i.getSubs())
-                .orElse(List.of());
-        String subTrim = sub == null || sub.isBlank() ? null : sub.trim();
-        if (subTrim != null && !subs.contains(subTrim)) {
-            throw new ResearchException("Pick a valid sub-combination for this industry.", "UNKNOWN_SUB", 400);
-        }
-        Map<String, Object> data = industryNewsService.getIndustryProductNews(decoded, 5, subTrim);
-        data.put("intent", "Latest " + data.get("label"));
-        data.put("engine", "gyanwire");
-        data.put("usedLlm", false);
-        data.put("isDefaultNews", false);
-        data.put("subs", subs);
-        return ResponseEntity.ok(StandardApiResponse.success("Latest " + data.get("label") + ".", data));
     }
 
     @PostMapping("/api/search")
@@ -106,13 +63,14 @@ public class ResearchController {
         if (!(catsObj instanceof List<?> cats) || cats.isEmpty() || cats.size() > 6) {
             throw new ResearchException("Pick a research industry and write a clearer research question.", "VALIDATION_ERROR", 400);
         }
-        List<String> categories = cats.stream().map(String::valueOf).map(String::trim).filter(s -> !s.isBlank()).toList();
+        List<String> categories = normalizeCategories(cats);
         String thoughts = String.valueOf(body.getOrDefault("thoughts", "")).trim();
         if (thoughts.length() < 8 || thoughts.length() > 2000) {
             throw new ResearchException("Pick a research industry and write a clearer research question.", "VALIDATION_ERROR", 400);
         }
         String subcategory = body.get("subcategory") == null ? null : String.valueOf(body.get("subcategory")).trim();
         if (subcategory != null && subcategory.isBlank()) subcategory = null;
+        if (categories.isEmpty()) subcategory = null;
         int limit = 6;
         if (body.get("limit") instanceof Number n) {
             limit = Math.max(3, Math.min(10, n.intValue()));
@@ -232,7 +190,7 @@ public class ResearchController {
         if (!(catsObj instanceof List<?> cats) || cats.isEmpty() || cats.size() > 6) {
             throw new ResearchException("Pick a research industry and write a clearer research question.", "VALIDATION_ERROR", 400);
         }
-        List<String> categories = cats.stream().map(String::valueOf).map(String::trim).filter(s -> !s.isBlank()).toList();
+        List<String> categories = normalizeCategories(cats);
         String thoughts = String.valueOf(body.getOrDefault("thoughts", "")).trim();
         if (thoughts.length() < 8 || thoughts.length() > 2000) {
             throw new ResearchException("Pick a research industry and write a clearer research question.", "VALIDATION_ERROR", 400);
@@ -241,11 +199,25 @@ public class ResearchController {
         if (subcategory != null && subcategory.isBlank()) {
             subcategory = null;
         }
+        if (categories.isEmpty()) {
+            subcategory = null;
+        }
         int limit = 6;
         if (body.get("limit") instanceof Number n) {
             limit = Math.max(3, Math.min(10, n.intValue()));
         }
         return new ParsedSearch(categories, subcategory, thoughts, limit);
+    }
+
+    /** "All" means no industry filter; search scores from the question alone. */
+    private static List<String> normalizeCategories(List<?> cats) {
+        List<String> categories = cats.stream()
+                .map(String::valueOf)
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .filter(s -> !"All".equalsIgnoreCase(s))
+                .toList();
+        return categories;
     }
 
     private Map<String, Object> usageSnapshot(UUID userId, String ipHash) {

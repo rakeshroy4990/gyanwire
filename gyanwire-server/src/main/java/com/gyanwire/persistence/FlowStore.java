@@ -195,6 +195,33 @@ public class FlowStore {
         }, userId);
     }
 
+    /** Ideas for one from-news run, flattened like a fresh IdeaService response, highest score first. */
+    public List<Map<String, Object>> listIdeasForRun(UUID userId, UUID runId) {
+        return jdbc.query("""
+                SELECT id, title, why, score, body::text
+                FROM ideas
+                WHERE user_id = ? AND run_id = ?
+                ORDER BY score DESC NULLS LAST, created_at DESC
+                """, (rs, i) -> {
+            Map<String, Object> row = new LinkedHashMap<>();
+            Object body = readJson(rs.getString("body"));
+            if (body instanceof Map<?, ?> map) {
+                for (Map.Entry<?, ?> entry : map.entrySet()) {
+                    if (entry.getKey() != null) {
+                        row.put(String.valueOf(entry.getKey()), entry.getValue());
+                    }
+                }
+            }
+            row.put("id", rs.getObject("id").toString());
+            row.put("title", rs.getString("title"));
+            row.put("why", rs.getString("why"));
+            row.put("whyNow", row.containsKey("whyNow") ? row.get("whyNow") : rs.getString("why"));
+            java.math.BigDecimal score = rs.getBigDecimal("score");
+            row.put("score", score == null ? 0 : score.intValue());
+            return row;
+        }, userId, runId);
+    }
+
     public Map<String, Object> findIdea(UUID userId, UUID ideaId) {
         List<Map<String, Object>> rows = jdbc.query("""
                 SELECT i.title, i.why, i.body::text AS body, r.title AS news_title, r.url AS news_url, r.industry
@@ -212,6 +239,14 @@ public class FlowStore {
             return row;
         }, ideaId, userId);
         return rows.isEmpty() ? null : rows.get(0);
+    }
+
+    public void updateIdeaContent(UUID userId, UUID ideaId, int score, String breakdown, String title, String why, String body) {
+        jdbc.update("""
+                UPDATE ideas
+                SET score = ?, breakdown = ?::jsonb, title = ?, why = ?, body = ?::jsonb
+                WHERE id = ? AND user_id = ?
+                """, score, breakdown, title, why, body, ideaId, userId);
     }
 
     public void feedbackIdea(UUID userId, UUID ideaId, Integer feedback, Boolean tried) {
@@ -438,20 +473,79 @@ public class FlowStore {
     }
 
     private List<Map<String, Object>> readCatalog(String table) {
-        return jdbc.query("SELECT id, name, cost_inr, billing, free_alternative_id, unlocks_skills, weeks_saved, priority, bucket FROM " + table, (rs, i) -> {
-            Map<String, Object> row = new LinkedHashMap<>();
-            row.put("id", rs.getString("id"));
-            row.put("name", rs.getString("name"));
-            row.put("costInr", rs.getInt("cost_inr"));
-            row.put("billing", rs.getString("billing"));
-            row.put("freeAlternativeId", rs.getString("free_alternative_id"));
-            row.put("skills", array(rs.getArray("unlocks_skills")));
-            row.put("weeksSaved", rs.getInt("weeks_saved"));
-            row.put("priority", rs.getInt("priority"));
-            row.put("bucket", rs.getString("bucket"));
-            row.put("free", rs.getInt("cost_inr") == 0);
-            return row;
-        });
+        return jdbc.query(
+                "SELECT id, name, cost_inr, billing, free_alternative_id, unlocks_skills, weeks_saved, priority, bucket,"
+                        + " kind, task_fit::text, COALESCE(priced_at, last_verified_at) AS priced_at,"
+                        + " last_verified_at, stale, sample_count, url, blurb"
+                        + " FROM " + table,
+                (rs, i) -> {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("id", rs.getString("id"));
+                    row.put("name", rs.getString("name"));
+                    row.put("costInr", rs.getInt("cost_inr"));
+                    row.put("billing", rs.getString("billing"));
+                    row.put("freeAlternativeId", rs.getString("free_alternative_id"));
+                    row.put("skills", array(rs.getArray("unlocks_skills")));
+                    row.put("weeksSaved", rs.getInt("weeks_saved"));
+                    row.put("priority", rs.getInt("priority"));
+                    row.put("bucket", rs.getString("bucket"));
+                    row.put("free", rs.getInt("cost_inr") == 0);
+                    row.put("kind", rs.getString("kind") == null ? ("courses".equals(table) ? "course" : "tool") : rs.getString("kind"));
+                    row.put("taskFit", readJson(rs.getString("task_fit")));
+                    row.put("pricedAt", rs.getDate("priced_at") == null ? null : rs.getDate("priced_at").toLocalDate().toString());
+                    row.put("lastVerifiedAt", rs.getDate("last_verified_at") == null ? null : rs.getDate("last_verified_at").toLocalDate().toString());
+                    row.put("stale", rs.getBoolean("stale"));
+                    row.put("sampleCount", rs.getInt("sample_count"));
+                    row.put("url", rs.getString("url"));
+                    row.put("blurb", rs.getString("blurb"));
+                    return row;
+                });
+    }
+
+    public void savePlanActual(UUID userId, UUID ideaId, int weekNo, String optionId, String taskType, double hoursActual) {
+        jdbc.update(
+                "INSERT INTO plan_week_actuals (id, user_id, idea_id, week_no, option_id, task_type, hours_actual) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                UUID.randomUUID(), userId, ideaId, weekNo, optionId, taskType, hoursActual);
+    }
+
+    public List<Map<String, Object>> optionTaskAggregates(String optionId, String taskType) {
+        return jdbc.query(
+                """
+                        SELECT option_id, task_type, COUNT(*)::int AS n,
+                               AVG(hours_actual)::float8 AS avg_hours
+                        FROM plan_week_actuals
+                        WHERE option_id = ? AND task_type = ?
+                        GROUP BY option_id, task_type
+                        """,
+                (rs, i) -> {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("optionId", rs.getString("option_id"));
+                    row.put("taskType", rs.getString("task_type"));
+                    row.put("n", rs.getInt("n"));
+                    row.put("avgHours", rs.getDouble("avg_hours"));
+                    return row;
+                },
+                optionId, taskType);
+    }
+
+    public void updateOptionTaskFit(String optionId, String taskFitJson, int sampleCount) {
+        int tools = jdbc.update(
+                "UPDATE tools SET task_fit = ?::jsonb, sample_count = ? WHERE id = ?",
+                taskFitJson, sampleCount, optionId);
+        if (tools == 0) {
+            jdbc.update(
+                    "UPDATE courses SET task_fit = ?::jsonb, sample_count = ? WHERE id = ?",
+                    taskFitJson, sampleCount, optionId);
+        }
+    }
+
+    public Map<String, Object> findCatalogItem(String optionId) {
+        for (Map<String, Object> row : catalogItems()) {
+            if (optionId != null && optionId.equals(row.get("id"))) {
+                return row;
+            }
+        }
+        return null;
     }
 
     private Object readJson(String json) {

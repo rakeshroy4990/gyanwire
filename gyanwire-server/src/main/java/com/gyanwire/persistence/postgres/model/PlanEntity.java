@@ -42,6 +42,12 @@ public class PlanEntity {
     @Column(name = "project_limit")
     private Integer projectLimit;
 
+    @Column(name = "max_plan_variants", nullable = false)
+    private int maxPlanVariants = 1;
+
+    @Column(name = "allows_high_model", nullable = false)
+    private boolean allowsHighModel;
+
     public String getId() {
         return id;
     }
@@ -84,5 +90,13 @@ public class PlanEntity {
 
     public Integer getProjectLimit() {
         return projectLimit;
+    }
+
+    public int getMaxPlanVariants() {
+        return maxPlanVariants;
+    }
+
+    public boolean isAllowsHighModel() {
+        return allowsHighModel;
     }
 }

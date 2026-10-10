@@ -3,10 +3,14 @@ package com.gyanwire.plans;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gyanwire.config.PlanLimitException;
 import com.gyanwire.llm.LlmClient;
+import com.gyanwire.llm.LlmRequest;
+import com.gyanwire.llm.LlmResult;
+import com.gyanwire.llm.ModelTier;
 import com.gyanwire.persistence.FlowStore;
 import com.gyanwire.profile.ProfileService;
 import com.gyanwire.research.engine.LlmService;
 import com.gyanwire.usage.UsageService;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -28,23 +32,39 @@ public class LearningPlanService {
     private final UsageService usage;
     private final LlmClient llmClient;
     private final ObjectMapper mapper;
+    private final ObjectProvider<com.gyanwire.llm.LlmService> tiered;
+    private final ObjectProvider<PlanDraftService> drafts;
 
-    public LearningPlanService(FlowStore store, ProfileService profiles, UsageService usage, LlmClient llmClient, ObjectMapper mapper) {
+    public LearningPlanService(
+            FlowStore store,
+            ProfileService profiles,
+            UsageService usage,
+            LlmClient llmClient,
+            ObjectMapper mapper,
+            ObjectProvider<com.gyanwire.llm.LlmService> tiered,
+            ObjectProvider<PlanDraftService> drafts
+    ) {
         this.store = store;
         this.profiles = profiles;
         this.usage = usage;
         this.llmClient = llmClient;
         this.mapper = mapper;
+        this.tiered = tiered;
+        this.drafts = drafts;
     }
 
     public Map<String, Object> skillPlan(UUID userId, UUID ideaId) {
         SkillBudgetPlanner.Path path = computedPath(userId, ideaId, false);
         SkillBudgetPlanner.Plan plan = path.budget();
+        PlanDraftService draft = drafts.getIfAvailable();
+        if (draft != null) {
+            draft.stageA(userId, path.newsTitle(), "general");
+        }
         String explanation = "This path finishes \"" + path.ideaTitle() + "\" from the news \"" + path.newsTitle()
                 + "\". Each week has one goal and the tool to use. This month's budget is ₹" + plan.skillBudgetMonth()
                 + " and this plan spends ₹" + plan.total() + ". Totals come from the plan JSON.";
         try {
-            var node = llmClient.complete(userId, "skill-plan", "skill-plan.v1", LlmService.prompt("skill-plan.v1.txt"), mapper.writeValueAsString(Map.of(
+            var node = complete(userId, "skill-plan", "skill-plan.v1", LlmService.prompt("skill-plan.v1.txt"), mapper.writeValueAsString(Map.of(
                     "goal", path.goal(),
                     "ideaTitle", path.ideaTitle(),
                     "newsTitle", path.newsTitle(),
@@ -73,6 +93,8 @@ public class LearningPlanService {
         out.put("weeks", path.weeks());
         out.put("explanation", explanation);
         out.put("amountSource", "plan");
+        out.put("hoursPerWeek", hoursFromProfile(userId));
+        out.put("hoursPerSitting", WeekTaskType.HOURS_PER_SITTING);
         return out;
     }
 
@@ -87,17 +109,72 @@ public class LearningPlanService {
             row.put("outcome", week.goal());
             row.put("tasks", week.tasks());
             row.put("metric", week.metric());
+            row.put("toolId", week.toolId());
             row.put("toolName", week.toolName());
             row.put("costInr", week.costInr());
             row.put("billing", week.billing());
+            row.put("taskType", week.taskType());
+            row.put("sittings", week.sittings());
+            row.put("baseHours", week.baseHours());
+            if (week.toolUrl() != null && !week.toolUrl().isBlank()) {
+                row.put("toolUrl", week.toolUrl());
+            }
+            if (week.toolBlurb() != null && !week.toolBlurb().isBlank()) {
+                row.put("toolBlurb", week.toolBlurb());
+            }
             rows.add(row);
         }
+        overlayStageB(userId, path, rows);
         try {
             store.saveWeekly(userId, ideaId, hours, false, rows);
         } catch (Exception ignored) {
             // return the computed plan even if persistence is unavailable
         }
         return Map.of("weeks", rows, "hoursPerWeek", hours, "lighter", false, "goal", path.goal());
+    }
+
+    private void overlayStageB(UUID userId, SkillBudgetPlanner.Path path, List<Map<String, Object>> rows) {
+        PlanDraftService draft = drafts.getIfAvailable();
+        if (draft == null) {
+            return;
+        }
+        try {
+            var shared = draft.stageA(userId, path.newsTitle(), "general");
+            if (shared == null) {
+                return;
+            }
+            Set<String> tools = new HashSet<>();
+            for (SkillBudgetPlanner.WeekStep week : path.weeks()) {
+                tools.add(week.toolId());
+            }
+            var generated = draft.stageB(userId, mapper.writeValueAsString(shared), path.budget().total(), tools);
+            if (generated == null || !generated.path("weeks").isArray()) {
+                return;
+            }
+            int i = 0;
+            for (var week : generated.path("weeks")) {
+                if (i >= rows.size()) {
+                    break;
+                }
+                String title = week.path("title").asText("");
+                if (!title.isBlank()) {
+                    rows.get(i).put("outcome", title);
+                }
+                i++;
+            }
+        } catch (Exception ignored) {
+            // Java weeks stay.
+        }
+    }
+
+    private com.fasterxml.jackson.databind.JsonNode complete(UUID userId, String feature, String version, String system, String user) {
+        com.gyanwire.llm.LlmService routed = tiered.getIfAvailable();
+        if (routed != null && routed.routerEnabled() && !routed.shadow()) {
+            String stage = "outline".equals(feature) || "skill-plan".equals(feature) ? "plan_b" : feature;
+            LlmResult result = routed.call(new LlmRequest(stage, ModelTier.LIGHT, system, user, userId, null, "high", null));
+            return result.ok() ? result.json() : null;
+        }
+        return llmClient.complete(userId, feature, version, system, user);
     }
 
     public void checkin(UUID userId, UUID taskId, String state) {
@@ -114,7 +191,7 @@ public class LearningPlanService {
         int cost = ((Number) skill.getOrDefault("total", 0)).intValue();
         Map<String, Object> content = OutlineDraft.template("Idea outline", cost, 0);
         try {
-            var node = llmClient.complete(userId, "outline", "outline.v1", LlmService.prompt("outline.v1.txt"), mapper.writeValueAsString(content));
+            var node = complete(userId, "outline", "outline.v1", LlmService.prompt("outline.v1.txt"), mapper.writeValueAsString(content));
             if (node != null && node.isObject()) {
                 node.fields().forEachRemaining(entry -> {
                     if (!"monthlyCost".equals(entry.getKey()) && !"breakEvenCustomers".equals(entry.getKey())) {
@@ -184,7 +261,9 @@ public class LearningPlanService {
                         row.get("freeAlternativeId") == null ? null : String.valueOf(row.get("freeAlternativeId")),
                         ((Number) row.get("weeksSaved")).intValue(),
                         ((Number) row.get("priority")).intValue(),
-                        Boolean.TRUE.equals(row.get("free"))
+                        Boolean.TRUE.equals(row.get("free")),
+                        blankStr(row.get("url")),
+                        blankStr(row.get("blurb"))
                 ));
                 skills.put(id, skillNames(row.get("skills")));
             }
@@ -231,6 +310,14 @@ public class LearningPlanService {
             return String.valueOf(map.get("offer"));
         }
         return "";
+    }
+
+    private static String blankStr(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String text = String.valueOf(value).trim();
+        return text.isEmpty() || "null".equals(text) ? null : text;
     }
 
     private static List<String> skillNames(Object raw) {

@@ -8,6 +8,7 @@ import {
   requestSkillPlan,
   requestWeeklyPlan,
   sendFindingFeedback,
+  sendNewsFeedback,
 } from '../services/product.service.js';
 
 export function useProduct() {
@@ -36,6 +37,7 @@ export function useProduct() {
     projects: () => run(() => listProjects()),
     addProject: (name) => run(() => createProject(name)),
     feedback: (body) => sendFindingFeedback(body),
+    newsFeedback: (body) => sendNewsFeedback(body),
     claim: (sentence) => requestClaimCheck(sentence),
     industryMode: (body) => requestIndustryMode(body),
   };

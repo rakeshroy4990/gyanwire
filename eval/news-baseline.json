@@ -1,0 +1,752 @@
+{
+  "capturedAt": "2026-10-10T17:44:33.381026Z",
+  "mode": "legacy-service",
+  "note": "signalLabel on manualReview is filled by hand: launch, funding, approval, regulation, pricing, shortage, research, opinion, or other.",
+  "queries": [
+    {
+      "industry": "Share Market",
+      "sub": "",
+      "count": 2,
+      "newestAgeDays": 194,
+      "medianAgeDays": 876,
+      "duplicateRate": 0.0,
+      "redirectLinkRate": 1.0,
+      "items": [
+        {
+          "title": "Reliance SEZ export duty clarity key under India's fuel tax rejig: Analysts - ET Auto",
+          "url": "https://news.google.com/rss/articles/CBMi3AFBVV95cUxQYjVNZ2ZFMkNURzl3bGlYdDVNQllnUjUxYTl3SGNhazY2a1QxSjJkVFNkRlRXV05VTjg1UUlBUVNteXpSSUFsbW5RQUNxZDdtd3ZOVG5iLV9NZDBmWE9yb1JiTlBhMUsyV2ozWXBoblV4Vk15ZlRnZFowUnVvQU5Vb3ZmN3MzVGdxRkw2TWRkNlNCWFVPVmVFMUs2b3Z6RVliM3FlWGhpajlmaDJ0QjRWTGp1TkczQ1ZqRjNEN2hjb3BvRU94MWZRVE1URzNJMlVTVDFSWm9wUkd0ZEtI0gHiAUFVX3lxTE1NUGVLTHluVjd5Y2lIUzYySnh1MWVSYUpWZG1LTEcwX2V3b2VjSnVja0QxUmgxTkxhdkZqVU1vOW1wT0x6ZEVaZU5EWS1GTy1VQU4zbkgycUlwckRzZGlDTFJ4bmE5OVVmazJvZmlmTlVub0ljZmE0TnZ2aGpMY2xWX0tUWXBsdXhQNFBBcDg3V3FFcVJiN2paTUMwRUl0eHVmV2hmbloxWlE2YXlhMUhjSUZFUFV0YjlucUhod1g4NXh2VHhydXBSS0owUFMzSDREdThnNkhSLWg0cUpLM05HNVE?oc=5",
+          "score": 17,
+          "why": "Idea fit 17% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training (education/tools only).",
+          "ageDays": 194
+        },
+        {
+          "title": "Windfall tax: $12 margin hit for Reliance; Govt rakes in Rs 1.3 lakh crore - Livemint",
+          "url": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxOWng4bHRvUUUyZXp0Q0RZSzFqLTdXa25sdjZHS3FaM1BnODZGOWhaZVFlbTZLWGJLcGptTlBBVy14S0xaLVpndTNqYVQ3dkRjcldFLTloWW5ySzBHcFI1Ymd5T0xzRVc5V1NIWVRZSldOVEZoMlVFYXBiSGRDR3hKUTB2YU5GbTFQUWxYT0stcmRwTm9jT2JScmlCajlDR0pkcERXMm9HUkx1ZUVfeUlfV3U2UFI5aDJRY0VDa0UzLTg2Zw?oc=5",
+          "score": 17,
+          "why": "Idea fit 17% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training (education/tools only).",
+          "ageDays": 1558
+        }
+      ]
+    },
+    {
+      "industry": "Share Market",
+      "sub": "IT",
+      "count": 0,
+      "newestAgeDays": -1,
+      "medianAgeDays": -1,
+      "duplicateRate": 0.0,
+      "redirectLinkRate": 0.0,
+      "items": []
+    },
+    {
+      "industry": "Share Market",
+      "sub": "Banking",
+      "count": 1,
+      "newestAgeDays": 46,
+      "medianAgeDays": 46,
+      "duplicateRate": 0.0,
+      "redirectLinkRate": 1.0,
+      "items": [
+        {
+          "title": "ICICI Bank, SBI: Foreign brokerages pick winners in the Indian banking pack - Business Standard",
+          "url": "https://news.google.com/rss/articles/CBMi1wFBVV95cUxQSk5RcHh6bFJKdl9IaE5WZ1NBb3g4eEFuWDBJLTlYNi11M3Fyc01EYW5BUGExclpDSjV1c0F4NG1BMENlQlVpUHlXbEZGSXhDV05PS0JFb1d6X3NjS0JhalFuRWVCOE1ZNHlDU1NVNVVFVTZPSzd0UnlrN0lOX2NFSHlrZE9ENl85el9WX2NHQkx6blVycTZvMW1JWllGeG5oUUR5VHV2TWxSWFZuNjFDOG82VmYxaGF2WVg3SXpMelRlX1JIWGl1UDF6RFRXUk9aaDFLdEtSb9IB3AFBVV95cUxQckNYM1NXdk1hZ0ZnUEdpa2xQSVRsRU9VSmMxRWQ3SUZIWXlydEp1TVRHVTJESG1ZSk51d3F0dzNma1NVVmJzUVg5MHhVb2R0cV9Jajd1a3MweUVJdHhiRGU2X3RUUm5YNGNJU2NTd1R1TnhBMDhENnBUR2NubnY0T2FRSVBKeGxLUzQ5TDFIYjloYjZRNmlaSURPN1BQOVQ1UGljTThZc3FSa01Kcno3djRXNDk5cEtEOGx0V09HU25yb2ZHVEdPVjhjcFkyRjhsM18xRFBPX2l2TGNR?oc=5",
+          "score": 17,
+          "why": "Idea fit 17% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training (education/tools only).",
+          "ageDays": 46
+        }
+      ]
+    },
+    {
+      "industry": "IT",
+      "sub": "",
+      "count": 5,
+      "newestAgeDays": 46,
+      "medianAgeDays": 106,
+      "duplicateRate": 0.0,
+      "redirectLinkRate": 1.0,
+      "items": [
+        {
+          "title": "Google, Blackstone launch $5 billion AI cloud company to challenge Nvidia - Business Standard",
+          "url": "https://news.google.com/rss/articles/CBMi3gFBVV95cUxPVmFLbllkdkNhdkVVZWJJY1llbElTM2VtOXg1WXhYRk8teHdxZDZtSDVQaTZvUURjX0xFS21IQlZkdXVTOXdDSlV5c1RocUFQME02TWNVWm9aRkZLWldsYmVLakZBVWpaVkRTbk9oQVZGaHFKMVdIVW9WSGZBc01JWm02OWlxSGdfQXlZaVFNM2JBVmhGNnlhRXQ1N1llQ1oyV3N6bDB2VkR2Z2w0WWRZaEQtbFNDcFIyT1pTd3llaFQ1Qi0zWXFjemZKaUl6ZEUzLXhPdDFxLTlzSVVPNGfSAeMBQVVfeXFMT01YWjdXUUItYnkwMGV3Skx4NHNYMHBING9EQ0pCaXdjcDN2Q1VoSFZtLU9ZMW5VTXdfZHhSQ2hBNHdWVEpvRjA4NEpkdkpkeV9XakR4c20zVHlCV016ZkxYYVNMV3NfeUVSbzFPaUJkZGhGOUZWYUVhdGRMbDY0X29OM05COE5Jck5Tek9fYWFraTlhLTRza2JZQkdiY0txMHd2c3UybGRJX1pOZWpLd01uek1mVVB2RG1rWVppUHJ2cnhRRGktcmlhbEE0WFc2N2FiVzJpQXhEUUdkVTlkT0NMZFk?oc=5",
+          "score": 35,
+          "why": "Idea fit 35% \u00b7 New technology \u2192 Integration service, template, or training.",
+          "ageDays": 144
+        },
+        {
+          "title": "AM Intelligence Orders 9,000 NVIDIA Rubin GPUs to Launch Asia\u2019s First Frontier AI Cluster in Hyderabad - Indianweb2.com",
+          "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE5rR1RTQmNWUTJ1Q0hNY0F1VFBwUWZHb002Qk5lczBQb0FQMTNIcjRmNUllazE2YzhHY0hIMVVrU1dHNDFleVR0dHctQXktY0dfVjRpeXoyVkJIMWgxOHVhSF9wUEgtWXFNYVg1RFFoa0xSdTB1WHZVV1A1bzVQWXc?oc=5",
+          "score": 35,
+          "why": "Idea fit 35% \u00b7 New technology \u2192 Integration service, template, or training.",
+          "ageDays": 46
+        },
+        {
+          "title": "Nvidia releases AI model that can run on single GPU on a laptop or desktop - The Times of India",
+          "url": "https://news.google.com/rss/articles/CBMi7gFBVV95cUxNY1h3QUpKRmFSX29EekdmRzFUcXFxMzBEaTZPZzU0bEU5cW1XZUJwZmROQ0pSWk95V0g4LURmSzlqMGZ6bjEtUlZLU0Z2MFJQY0REcVdZcUZONkFHc094SjBxVmc4dk9zWFVfdmdvaWx0X3dOMHF6bExUckJpcUVzcFQteXBPaHFUSW14TGRNX3Mtc2VyTDM2eWtkYzJweG5VSEliSTNxUzRSX3JpblJaLU9sLVdvNUZReEdRTWpHV1FEMFdWOWIyb3VzX2doaEVoUzNYTTJNUlJOWndrc2VST2tFUGpmS09vRmZlamNn0gHzAUFVX3lxTE9zVTR6dW5DQlBLRmJ3QmVuX1FFM0ZrbzU0ajBmMk9tWnMwNkt5QzNiczM5aFU0U1dRSTR3SUhneWNZS3pMV294V002MlBDV3pxcGtVeldRcFl2OTlqQ3ZlLUdsR1pxRlBfVmNWS3c2bGY4YlNTLUdMQTJoblNhZ3g5NHJ5NTRQQV9ESTBkb2M0UUlEZ2U5ZjJMbUN3TGM3T04wb05rcXRWQ1NCYUZNbjFEMDl2YmZSLWVoT0FYSmhCcVRWMjMtYnFBMkJPWW0yRDM0dlVDclF3YmdZWkQzbEJ0MW5tUlExcmlwc2FkY21rLVBSRQ?oc=5",
+          "score": 33,
+          "why": "Idea fit 33% \u00b7 New technology \u2192 Integration service, template, or training.",
+          "ageDays": 60
+        },
+        {
+          "title": "Nvidia prepares AI \u2018inference\u2019 chip launch to counter rising challengers - Financial Times",
+          "url": "https://news.google.com/rss/articles/CBMihAFBVV95cUxQVTlFWjgwZms4QlRPYlpoM0wtcXMycE5OTDV1LUJnTUc0aHhabjlZcjRkMDJ3dVVNY090SVRYTkx4OE9KUTdQakpuNmJuY1ZBbHRFSTJ5ZFdSWjVMUFJaYm1iT0lCM1lrcVB4UHZCMk9yVHREc0ZqSlZHeHZiR0NSVkFBOFI?oc=5",
+          "score": 28,
+          "why": "Idea fit 28% \u00b7 New technology \u2192 Integration service, template, or training.",
+          "ageDays": 211
+        },
+        {
+          "title": "What is OpenAI and Broadcom\u2019s \u2018Jalape\u00f1o\u2019 AI chip, and why does it matter? - The Indian Express",
+          "url": "https://news.google.com/rss/articles/CBMiygFBVV95cUxQdlRzQm9vd0FkeDgzM2tJYXRzaXNfeDlOaWxHdXB0V2ZWUWt6S2JBSFQ3UHBsX3M4Z1hWa1FUNXVIaTh6ZTRoVDd5Mm5qZlNWbjFURFFFWnVadzhVS3h4c0pkX0l6Zk9tSWZ1VkNQMUZTWFJpX3B2VkduUVo1YTM5WTVjWTRCOUl3OEEyenUzS1JJR1ZyNlQ3MnplRGpZT3pOa1VUcGRoMlh6WkFkSVlfN3ZXQkw0c0M2QkJkR3E3VkgyOU16b1lsZVVB0gHQAUFVX3lxTE5MTVJxTk9XYWNxVzkzakNwdTMyQlF0bzJQRm5wc3hpN083eDFqRGlNYTlfMUU2eHJpbVpCQXFMaFA5RlhZd2JsRmlTVUtNdm1RUWduaEJ6b0laQ2Z3RGxXTEU1ZzlaNGpYOHdZbzBlYmVMMUNrME5BT21GM1I2QTZEY24yVWlVN3hnSUtwa2wydkk5WDA1WFBLQlRMeVlqWTdKYVY1aldtRTVvSzh2aTB3bXZBRHNkY3hiX0hKc0hhRWs0cG1MSW5uYjVVeWRVQVI?oc=5",
+          "score": 22,
+          "why": "Idea fit 22% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 106
+        }
+      ]
+    },
+    {
+      "industry": "IT",
+      "sub": "AI",
+      "count": 5,
+      "newestAgeDays": 25,
+      "medianAgeDays": 56,
+      "duplicateRate": 0.0,
+      "redirectLinkRate": 1.0,
+      "items": [
+        {
+          "title": "Which Country Created ChatGPT, Gemini, Grok, DeepSeek and Other Major AI Tools? - Gizmo Times",
+          "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxPMndHekJxMzRVYV9Pcl9ydEtBaTMtaVNrdWdaRkVHcXlEX09xY0RCS1RMT0FWNUlPd2JJM3h0STN4WExiMnFtd1ZGWFkxY085YnpCTm9zdGswLVNBX0pJeFVhY3F6Q3Z3cmlhQ1ZvWERQT0ZGOG95Mk5UM19FY3JPU2FSRmp0aDFLYVJfNUlSNWlOZnBTcXl5TFdpbw?oc=5",
+          "score": 32,
+          "why": "Idea fit 32% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 25
+        },
+        {
+          "title": "Google's Gemini AI is coming to Mac, and it could have a feature ChatGPT and Claude are missing - The Times of India",
+          "url": "https://news.google.com/rss/articles/CBMihwJBVV95cUxNdnFJOU1GRVB3R09KeWp2NnZNMVhoNmxDa1hiQmdSbGV6bzhRbTE0bGxDbzdoakhzN1NfMW4yMjFXa0d3M0NWUHk0Q0FXSExQc3pqM1pMeHRUdDkwcjR1SzRFNmRDU3JXZWI1WU9aZkZNd280REl3Y2FRS0dySmI0NzZCSTBDdk5HaXo2ak1NVkZLdDVhSFJMVC1jMDktSWFadzNLT3hFNXpQN1ZmcXZCcXgtMmNtVmZsNm5yNllCZDJlQjk4V21tT21iVTluQ3FmR1IyN2FIWlVnMHhReFZGYlZsaTNCbE5ES1JrN19MazhGeU9rRk14WGhlOXVlYlktY2ZkbEFPWdIBjAJBVV95cUxQeFl4ZVIxNWdUaHpjcndBTDI1WjBMcTdRdnZQNnE0MXZYa1BNbExWY2NQODRpSUk5d2dlRjM0XzZCN1RLMHZ1dUduZmk3R25ldnNlalY4MkZOLWNRTjA5cDNuTU9TUTVfbDdidzRYVDZla1Q1WVV4WmpudXVzb0dWdDRzV3lXX21LTklBMXVKTlNUUV9SblROQ1Y2clJCMkpkeklxR3BDMndWVDZUVGJqMWFzZVdiUm1RaktvQzJIbVVycmVRZGFlSTBCZFYyMGpvNDZoXzYyVFdkZVFkaWRxS01oR2t6VU1LTjlBUjN5OUVSLXh3cUc5VFJnNldpdlBnUHVxVGw3a1U1MDE1?oc=5",
+          "score": 23,
+          "why": "Idea fit 23% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 204
+        },
+        {
+          "title": "Enterprise AI Security: ChatGPT, Claude, Gemini and Copilot Compared - DQ",
+          "url": "https://news.google.com/rss/articles/CBMingFBVV95cUxOOGlyU0lqX0hZbmkwYW1QLXhxMXlwOF9xa2pOTkZ1dDRjREtvX0lvQk9FVldBazZXNC01SjNLc3dYWEFBUExSRnNSZlZUWElNdktVUXVxSGk1V3JYTnM1d1BBV1ZsMGxMcnB5T0tZcGlSd0pkZXNVQXhGUjVpWjNkMm9iWndDSC1IZmJBOXZyMGdaOHgycWZUUmd0UFFNd9IBngFBVV95cUxOOGlyU0lqX0hZbmkwYW1QLXhxMXlwOF9xa2pOTkZ1dDRjREtvX0lvQk9FVldBazZXNC01SjNLc3dYWEFBUExSRnNSZlZUWElNdktVUXVxSGk1V3JYTnM1d1BBV1ZsMGxMcnB5T0tZcGlSd0pkZXNVQXhGUjVpWjNkMm9iWndDSC1IZmJBOXZyMGdaOHgycWZUUmd0UFFNdw?oc=5",
+          "score": 21,
+          "why": "Idea fit 21% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 26
+        },
+        {
+          "title": "India\u2019s AI app race heats up as Claude surges and Gemini closes in on ChatGPT - The Economic Times",
+          "url": "https://news.google.com/rss/articles/CBMi8gFBVV95cUxNRlRYbjNKYk9oc28wcnVZLTY4OGNjSWVGTkMwMjBpbXFvZlI3TGN6RGU5R1N4ek5FcWh1dklXZUhkZUJRNFNLZ1FYd0xsWExPUXZYU3J5Z29aMFRQNTBWaGpvQnVVdDJ1UW5XMHBuejZKYW5hbnhGSTlHelhsMjh3RUtLcjUwdlNLMWszN1BRQmhGMi1lZE00dzNybmdpTmUwWGMwT2VsckViajRtaFU5M0U5UlM2R2FEbHdZNEw4NFZ3TFNlTWp4UlZQOE91WHV1WWRhOXphdXY4MlpBSjFsSlhoLUZhb19vVkhVazlsd1pJd9IB9wFBVV95cUxQbkdsZzZMOTFUTjZYX1FIZ1R3MVRtS0FsbFZWazBybk13UVRVSkgwWWUwZWhBX2tOUGRZQW5XZHVrSGFFYVp4TW9qSEkwaElGcUpvMkxtRk52ZEtyNzdna3ViMWxqMU1UWlVaR2VKdTRQY09QT1N6ajBCMEJFekVWX3o1WDY0T0M1cF81LXVkT1ExbEVMMnVuUW9PSXJjOV9sZFBmZjdKamZaWC1ES0FvaC1pVUFrT3BaYTlUMy1aYzlkTWRaWlBnRVNYY2tXWC12X05EbWxEcGkzM01FTXg2Qm9lSmRfUnRGUTdpLVRQNnJXa1JvWVNZ?oc=5",
+          "score": 21,
+          "why": "Idea fit 21% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 56
+        },
+        {
+          "title": "Study: 9 in 10 Indian SMEs Cannot Be Found by ChatGPT or Gemini - ANI News",
+          "url": "https://news.google.com/rss/articles/CBMiswFBVV95cUxOT0tpdVZQT0U5OXN6a2MybnZRZW1EcU9JT2tWdXpUa3F2eEhpNnpvaEtxTGMzMzZsMUhvR0xSMUtQZUtFZURxNlk0VzllN0gteUotdDB4UmxGYmdfSnBRa3cwS0NBM1dBY051VzdpU3FwSHRCS2h2WnhXZFlITFU1MGp5ZHJTS1hwT1RBRjZISUFsUGFyd0Ffc3BvMU9RUFIyZDBqT3AtazZCaEY1R3Nlank4bw?oc=5",
+          "score": 21,
+          "why": "Idea fit 21% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 128
+        }
+      ]
+    },
+    {
+      "industry": "Medical",
+      "sub": "",
+      "count": 3,
+      "newestAgeDays": 291,
+      "medianAgeDays": 300,
+      "duplicateRate": 0.0,
+      "redirectLinkRate": 1.0,
+      "items": [
+        {
+          "title": "Wegovy pill: US FDA approval granted for oral version of weight loss drug - all you need to know - The Times of India",
+          "url": "https://news.google.com/rss/articles/CBMi9wFBVV95cUxPM0VCWkVpYUlfSWw4NEJzMS1yX2dheVczTmttNWxrNXM3Smk4VDFtX0ZwdHRSSGk5OGNpcGZVS1BaMFdWSUY5TTN2MkJDWElvUnV5MXhqTmhWRmN6OTlZZHN1a2ROMUIwUGR2aGVpNFF5YWprX196ZF83OUR5aEx3ZHRBYlFWQjNSdm90dmxZNnpvQTliNmNCMkMtMzFtMmJHZng0YWI1emk0TV9HN3JNRGkxM3lIVDJaYkYwM3ptOG1iUDlvZVd2dVJBU3lDeU1MWFJ1bWsyUnotVUxCQ2ZBLVdsWGxBZ1FjRnFkckxlaUY4elVoanNr0gH8AUFVX3lxTFBtM1hiRXpWSk9ZeG1zZVJhTkVBakZKdDFfWDZwNjJUZG5JVkRqOWozT2huZUdtY2owZUdtVGJOUEZOSmJHUGZCWkQxUEdQV28xMUxmOTV6cVJlbG5pRlZ3MlFZUFRaN2NnbGNZUG9xQmhWbmVLRVNPTE0wR2ZDYVFpVFdRZGNHRWlaTE9oTUh3WjNrNFpMMzdHVVVFeGYxMXVOdGlZLVZVcERJUnVFR18wMVl3UXJ5cnlzRXY1dDVFb3pycjFEckRJQWd1ZkZ5eklrLVBaWk1BdE5DYzdNelgySnRob3E3R2ZaWDQ2N0g0dHpPZmtSLUR2cVNGLQ?oc=5",
+          "score": 17,
+          "why": "Idea fit 17% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 291
+        },
+        {
+          "title": "From Ozempic to Wegovy: Which weight loss drugs are really approved in India? - Livemint",
+          "url": "https://news.google.com/rss/articles/CBMi7AFBVV95cUxOcllheXZveGZLMmpGTG8zR090OGJUWDhlcVRudVhHUGV6VHI2anZ3a2lCWWpJX2xVQ0xOTXRVZzdjeXlMSXFKMEl5ckRHUjZtT3M5REFzREZVMUlualE2ZE4zNFRydTRka05ZUVAzV3RzQTVEbzJGb2RXSXFKa1dWaHpvQThVcFNfajBNanQzVEFBMU1Gak1kRUh2c3FEUzFleVRmOVE3WXl2bHBBV0NnRWtBOC1XR3FYd1NMSS03Yk9NLUdsZUpzWDJsS1FkWFZLR2ZtWC1DVjVfVE4yWWNLM1VkSVhnUXFmeGxsZtIB8gFBVV95cUxPZFlyVVB6ZVdhMzZURklWU29jcjBzajRrd2pYY2lOckdDYXUxMEk1Q1lqQzZ1X0tQaFVPcm5pSGpVZmwwZUFienYtWkVyMkNNd3cwYldBUldjWTExQjZFZF9UczBDNEF2MU1jSnNzLVRyUEtyTmlSVUN3T3otSzNTQXNGOHZfb2lMV2YxMWJud1hmY051S0FYdlkya2hGaXU0ck1zM0JaaC0zZElUUE9QN0NIRHdiQm15OHVCaDZVNzhNdm1vbW9qS21yYndCTTl3Q3dIXzFGZ1NpTzJIdW9IMHVYdVlDQXdmenk2SllsQm1OUQ?oc=5",
+          "score": 17,
+          "why": "Idea fit 17% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 300
+        },
+        {
+          "title": "Nozempic? A look at what will happen when GLP-1 drugs go off patent in some countries next year - Chemical & Engineering News",
+          "url": "https://news.google.com/rss/articles/CBMigwFBVV95cUxQcDE0RWplMkE0U1NzbC1HX0M4dm5oWWVaMzBOSFFMNE9mUXExMHJrNHl6cGQ3VmZzN1VyMTN5YVRyUnhDUDg0LTBTbkc1Z3RGUDA2ZGFaMXJJUDFWSXpIWTdmTFYzdGNlT0hITWNPR2Zkb01MNEUxS3BxcUJJTTcwWmR1SQ?oc=5",
+          "score": 16,
+          "why": "Idea fit 16% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 305
+        }
+      ]
+    },
+    {
+      "industry": "Medical",
+      "sub": "Paediatrics",
+      "count": 2,
+      "newestAgeDays": 88,
+      "medianAgeDays": 204,
+      "duplicateRate": 0.0,
+      "redirectLinkRate": 1.0,
+      "items": [
+        {
+          "title": "India's childhood immunization program reduced deaths while reshaping educational outcomes - News-Medical",
+          "url": "https://news.google.com/rss/articles/CBMi0wFBVV95cUxOX0hwcHp2NXlFRnY0TkRHVXkzQTY3UXRVcS0tZWtqQV9lUkZvMFBXamV0Ykd6Z1JFRkJjUHl4cXQ0QmIyNjRWQmtveVMwaERfM1JjRmx5TWNQNnc5NmI2RUlCRmZqOW5HQnhlTnBDTDVfX3AzbjhKQXN1TXE2Q0NvR2VSS1c5aDVLcHl5S2ktcjZvUlNiTWRqV3NKNGUzMjNSNzdjOWxfS0wyVFliS0FjdTh5Tkp2UnFjejhVZzU0U2RzTmdMNU1iZ05vY2IzazI3LTZJ?oc=5",
+          "score": 48,
+          "why": "Idea fit 48% \u00b7 New technology \u2192 Integration service, template, or training.",
+          "ageDays": 88
+        },
+        {
+          "title": "Blue Lake restarts paediatric RSV vaccine study after FDA clinical hold - Clinical Trials Arena",
+          "url": "https://news.google.com/rss/articles/CBMirAFBVV95cUxQMjVHM1NVZ2hUZ2I0emZhMndhb3VHR3A3LWxGVW1hdm9yS1NoWDJoclQ3Z1E3STFhMTYtSFNKOXpSRVB2eWNoMTQ1WXJKS1o2VVhQSWc2dHBqQndnSkdsZHl0VHU3d3RMTHJMUFNBam5GY1V0aTROXzBDa0hCZUF5cHhTXy1MSEZSTzNydFZWRERXY3hSenlHbkFka0dVam9GTk5SbmNTd180ektz?oc=5",
+          "score": 16,
+          "why": "Idea fit 16% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 320
+        }
+      ]
+    },
+    {
+      "industry": "Medical",
+      "sub": "Cardiology",
+      "count": 2,
+      "newestAgeDays": 942,
+      "medianAgeDays": 1909,
+      "duplicateRate": 0.0,
+      "redirectLinkRate": 1.0,
+      "items": [
+        {
+          "title": "New Expos\u00e9 Paints Sorry Picture of India\u2019s Medical Device Industry, Regulator Framework - The Wire Science",
+          "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE9ia2lJZlg4X1U3UUtycVNTY3JFeFhFeEwyN2VmVlJ0ZF95Ulp0czNmUVVnajJ5MjVtbmQ4YVRNRDBFX3o3VF9tN0tqQmdPYkJFWnk1U21jUVZYNzAzOXF1RUxFbmhRcnVjZzdJTk0wZFVNR0dFMDFmeFJITWk5TlE?oc=5",
+          "score": 17,
+          "why": "Idea fit 17% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 2875
+        },
+        {
+          "title": "What Medical Device Saved Mother Teresa's Life in 1991 - Medical Device and Diagnostic industry",
+          "url": "https://news.google.com/rss/articles/CBMinAFBVV95cUxOTm02eXlOYlRscU0ycS1yU0VzdHd1eC1EUFNxak5Nc3VwblVBaXNQMnRTczh4d0JraW9NaFpySmxiNXZta0Y2ZjVldnpFRFBOOVprRmdGOHNvUUkwMlUzN2FISHEyb290WVhkMU9rZXF5ZDlLejRJSnpXTHo1YVAwa0V4Yk00NnFtdDhhZFRaLWpRcUNWb3RBRWszUjE?oc=5",
+          "score": 16,
+          "why": "Idea fit 16% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 942
+        }
+      ]
+    },
+    {
+      "industry": "Space",
+      "sub": "",
+      "count": 5,
+      "newestAgeDays": 25,
+      "medianAgeDays": 89,
+      "duplicateRate": 0.0,
+      "redirectLinkRate": 1.0,
+      "items": [
+        {
+          "title": "Starship flies again as Skyroot chases India\u2019s first private orbital launch - Astronomy.com",
+          "url": "https://news.google.com/rss/articles/CBMixgFBVV95cUxPcUMteEZ5MGtqc21ndERacmRNOWE1ZnlTU3VkamlLN0xQS3M3QjJ1OTZKZW94UFBZU3c0SF9JZ0xzeTBhY3hiY3hoVlZMNlRZYTdEc3ZYczhSeVg5NU5vNDdlY0tWZE9QX2hzRUhSZkhFY0R1eDI1MFBibjk3T3l4LWdrZGRDTHNKUVF6bUVzRXc1dG9iU3J6Ny1oOVdJMXZnYWc1OEFOVFltOU5tVUdUZUN3VjQxYWxFV085UGwxcDcta3Ffc3c?oc=5",
+          "score": 38,
+          "why": "Idea fit 38% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 89
+        },
+        {
+          "title": "SpaceX prepares to launch Starship Version 3 rocket: Countdown begins for May 20 launch of upgraded mega - The Times of India",
+          "url": "https://news.google.com/rss/articles/CBMijAJBVV95cUxNZlhJbzB2eHBrUTd5QXRBd3E4SFpnNGZudEtEQXJMQmpQQ0J0NVZPc2h0LWoyOHZzRGxEX0VOMUZBaVdJRFR4SkpBREh4ZDdBa0VlWDJFTkU1N3kydDZYM3Bic1NlOGcwZ1NlRXVQWkJPcmM1ZVI5clU2QmpGNnNLVVhCNDdiYU9kMVR3eUZlUzZSRUNBMlo3WEpVTE1JendwUEN0SEc3ZHp4NVRxdkU2LWwwOFZfMFpvWW56RnZXYlk4ZXcxMXRQU0RhRlU3N0w1am44SFdMTUg1cGV2eEJqRTR2UWV4ZXVCb2xub0M0ZEI2UVJhTnBjeUgtOXlnX2FwV1VxVk1vNVZEOURw0gGSAkFVX3lxTE1YM2tDajlGWW1kS1cwcDYyWVJZdnpSSWhuQXVoSDdjOUlDX3VscEhfTGpqVmhXdHJJSnpCcng1MFBTdXh4NTlNTDkyeXZPMExkU20wTU43THlEUjNHMmwyM2QyLThCb0FiZlNOUWlrTHB4cGFOX1JnQ19xemNoQTBBTkNUTnBtV0N1bFIzaFk1VXpLenhpXzUwVmYxVHFtMFRLenVHdVo5akZDMS13UUdmWFp2SUxSTklha0lCS0Nla09IeThHTVl3QW5TaGZzbXlRNmNhMnlvXzZJWjRlTFhuWVFFdHVEZlBCdnhZajE5dEQ5SkJYQ3ZnTWhfY3JldzhQSVVyU3JIcDhCMjM2cEtUSFE?oc=5",
+          "score": 34,
+          "why": "Idea fit 34% \u00b7 New technology \u2192 Integration service, template, or training.",
+          "ageDays": 144
+        },
+        {
+          "title": "Launch preview: SpaceX tries again for first launch of its Starship Version 3 rocket - Spaceflight Now",
+          "url": "https://news.google.com/rss/articles/CBMiowFBVV95cUxNLVMtcWdyNzZ0M1BFSEtKSHo5VV9vX2ItS0xJZWpHSDNRT2duSENaR3lTTmZNQTV2SGhNYl9qSkdqQ1dULUtfT2JRdmVoOHBCZ29EVjZsa2w0SEx3THRmREVWcXpxUW1hZFI0U21KZ0NlRUp0a2ZULVZla2xvdEJWdkUzWjVDSkloTy1wZDZCSTRHMDdRN2lwYzlCbkgzcFVsZldJ?oc=5",
+          "score": 33,
+          "why": "Idea fit 33% \u00b7 New technology \u2192 Integration service, template, or training.",
+          "ageDays": 142
+        },
+        {
+          "title": "SpaceX will try to put Starship in orbit for the first time on September 28 - TechCrunch",
+          "url": "https://news.google.com/rss/articles/CBMirwFBVV95cUxQZEhhd2FxSzc0TWFHZ1JoTUdlcXRMMEJ6Zi1YX0ViYkpPY1hWYmdxTFp2WEhtdV9iNW85UlU3YTNPUE9JMjNnb0dqeGhTN3VnM3p1X0RjOTc2TnUxamhWVWJKZGNfeHphS3JQZ1RLWGRSRHVKTmg0Z3RuWnYtLWRCenROd0RmcG9zdGdnSkJkcGRlVFBFQXZxaUxDUEJwNFJqSDRZM2VPTG1HRkFESzRJ?oc=5",
+          "score": 31,
+          "why": "Idea fit 31% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 25
+        },
+        {
+          "title": "What time is SpaceX's Starship Flight 13 launch today? (Full mission timeline) - Space",
+          "url": "https://news.google.com/rss/articles/CBMipAFBVV95cUxNRmpydFoyazkyVzJwMHhMSmhtMVNVMV9TMFllWlJyWHJTd2xiNXMtd3NfdU1VaEd5QWdDZ2Z5dnZvUWVfN0RQQUxGWmZ0TmNva3VDaDg5TjdXVmczX1REYkVhbXBueW5uNGx3ME9BQUJLejR2ckNJV2UyN25pbGtaTVJlUEZCYnNONFJXY2puaUpWOERJdXlRVm5mYnF1ei03V0NMQQ?oc=5",
+          "score": 29,
+          "why": "Idea fit 29% \u00b7 New technology \u2192 Integration service, template, or training.",
+          "ageDays": 78
+        }
+      ]
+    },
+    {
+      "industry": "Space",
+      "sub": "Satellites",
+      "count": 5,
+      "newestAgeDays": 0,
+      "medianAgeDays": 51,
+      "duplicateRate": 0.0,
+      "redirectLinkRate": 1.0,
+      "items": [
+        {
+          "title": "Security compliance gaps delay satellite broadband launch by Starlink, OneWeb in India - Moneycontrol.com",
+          "url": "https://news.google.com/rss/articles/CBMi2gFBVV95cUxQbnV4T2RMWmJnOEs1bklnZmZCSVNndkZJTG41OWM0UUl4N2xVeFoyVHd2SXpuR2V4UmhvbjFWT3J1MG02WXhUTnhnRVhGajh4U0NSbFNtZmlLYTRyZjEwMjhXTHVQSG8yejl5R2tZdGg0WEZBdHNyTUpqdENMRDFjdEpzMUowb3RTdmxfTnV6N19MSldTblBOMnVkQmEtRHd5VnA3b1lha3FpRXV6OEdTdGhjcS1jNjV1MURQMGhIZEZBWGo1Nmh0RjVxaENLNjdhVDM2dHVHR3Bzd9IB3wFBVV95cUxOQjM3ZkhXUkhEaXRpalFfOGI1QVRQZFJFSGxtZVJjWEV4MG5EYlRTb3ZfUWIwWE4zQmpJZG44TnRjSkhSdGcxZEhpWjI2UHBzSjlxNzFUaEp3MjFQOW1Wd3pJNnpfRmlTaUQxSHprVVlBSDNVZ1BLdkVpMms4WVRaT3J0REh3V1c2MDZtZ1BoX05qTFNkNXNnTXNwNldETkdhaXdGbTFnY0FkY21oRUUyTEEyLW0wZWVBSHZTNHkyMU5aSFota01pNUVVUTU4ajR0SWltV0xkQ19QMnN6YXlz?oc=5",
+          "score": 36,
+          "why": "Idea fit 36% \u00b7 New technology \u2192 Integration service, template, or training.",
+          "ageDays": 51
+        },
+        {
+          "title": "Ahead of Starlink launch, Govt wants Elon Musk and others to be nice and coordinate with homegrown players - India Today",
+          "url": "https://news.google.com/rss/articles/CBMiggJBVV95cUxQQ0dicENQUTkwU1VGQUUzdmprOUdWSGlrMXc2UFhxODF0SkdPdEltdXhLM2wxMFBOTHBvOXVrZTVhMTAtUTEtMEdPUWNYUllneHZEaXlETDVQRlRFcWFialFRTW9ybjBXbFRGOUZMQ0YyU0RrSGlGYlE3RkdwZW9IMlBBQ1dVZ3lCSHhsZzE5NnVQb2VFc1NhLU1LM3VGcUsxLTdMaThGLTVBajZJMi14X2Y1NGhhZnRnOEZycjF2OXZYMTNaVFZONkFQcmozS2U5cDl1SV9oYmlWLU82dFNfVU9GeUhBblQ3ZDFTbm1KWGhxdG1lR0JQSi1xRTU3UjNDbGfSAYcCQVVfeXFMUFcyVUlKWVppZ0NMSjdNaGpuamh3aHJMZHh6Z25XLWtOVjY1Q0pjTTM4S0xmNGV4RERZeFdCc1QzU3B2WVpQbmRULWxfaGgzRW5wblFEbjc0NXNYaE1NVnVBWXI5QWI5cDFsS1J3dnlrdG1JcFNQMk5hbEVmMEl4aGxnM09teFNjMWoydV90MlR0eEJwQkdVQnZPbXVQRXB4Q2tWVjhhUWVSNmlWTXd2UnowRWVfSmVTcC0zWTh3VjZieVhrc0IwdjBkTTBCaU44TGUyRGJNQ2pYUkF1bFRnWWYxTlVmZVh5VHV1d2RwQ0dqXzZXdDJ4YV81NzEyRFNVcE1UZTFjcDg?oc=5",
+          "score": 35,
+          "why": "Idea fit 35% \u00b7 New technology \u2192 Integration service, template, or training.",
+          "ageDays": 64
+        },
+        {
+          "title": "Satcom services from Jio, Starlink, OneWeb stuck over security concerns - Livemint",
+          "url": "https://news.google.com/rss/articles/CBMizAFBVV95cUxPbEo4ZU5ETEpFcER6YXBWNkZsTXpMb096YmxKVkRyZGlsa09mWmhuMmJGdmlGdWVtc0ViWW9TWXg5S2xRNnhqekd0UjRhV2NnUzNfcXBoeEdRU3JXaFFSbk85OHBfT2lFQklYRy1ST2tSS09HWVlGSWZKMkxTd3ZsMWgyQlIxZ1EycjlJZ014NlNYTHZIN3FfYVNjQ2l1akloT0s2bWFIcU80T2lzblpDQVVLOXBfcXZ0aDA2VEkybUVQWFY4aTZHU216clnSAdIBQVVfeXFMT0k5a25MTU9SWWVaUUhJTnZLbnN0MEhaR1IyWWhUdW5aT18taGw4Z1k0VW44RGtVQmFkcFIzMWJ5c0hlUjZ4aDkwQWtqM1RkbGlrVHEtRmtWQlF0S1dJMjcxcFFwNzd0UWJZSlM5YVpkbkVId1BwVDdPQ2RMdlBmaC1halg5T1dKYVFiN0MzVFlfRGtRdUZCME9uUzVEYks3VmNQU0NwZnpNYTh6YVZoSjRGMHplc1IydFljVE1XVDh3UmtiS0ktb01GX2xxRHh1TDJR?oc=5",
+          "score": 23,
+          "why": "Idea fit 23% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 51
+        },
+        {
+          "title": "\u2018Dear Prime Minister Ambani\u2019: Musk doubles down on Starlink delay row - The Indian Express",
+          "url": "https://news.google.com/rss/articles/CBMivAFBVV95cUxQc2JuVkJpX205akw2SDUycUc0Qkg4eExvb0RCWk84T0JfVzFJcnJVRGJqdzN4WmlYVGNsMVIwNjRBODBCM3pfZVpCYjFrcm9KSUlZUm9HQkJEal91bExTOUJ0S01ha2tQMTFGQUYtYVhRcnBITnpQWURWSmhOcGNkYkplaHpHXy1rY21SRXpwcXQwX0JLY002RUNGYnhNR04xU3lFM3RtTTdzck9NdDU3Z3lNejdHWE41ODJEMtIBwwFBVV95cUxQb1IwQTBISlhWUzRPcGhQNWlfMGxOaERld3U3YzN0ZWhZZ21MNzY3aDNxZGhIeFFmdndQb3VMMGliejhTcUxzOVo4dnNFN1pWZXJEZzdOZFh1YTFXNzliZVJHLThrRHJyOXZrbHAzSlFHMXotc0pPalNna0MyaWVseUdTMnRqcDdCenpjMEI0cTRNSDg5YnZ3SV9VVUFCdlU2ZTAtZWhJVnoyTWZXMVZMc29CUG9zeTRpdm91MWpEQ1UtdUk?oc=5",
+          "score": 21,
+          "why": "Idea fit 21% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 0
+        },
+        {
+          "title": "Starlink, OneWeb and Jio: Where India\u2019s satellite internet race stands - The Economic Times",
+          "url": "https://news.google.com/rss/articles/CBMi5gFBVV95cUxPTzRnUTUtZ0tLY3B4REVORTA5ZGhBSmxnMXlOV2MzdUZLNHNzOFhVYXBCSVRpUk9JSF93eTFkWG9OOU1pempoV05mcFRkMUdXNmJERnpBbmVzaVFsUEdwdjZEamNRRUY5WlIwUDZkVmd2UWpPX1JfSy1STTVrT3NqZE90MHA0ZlBmVkNHN2pSVFIwUzZ2ZTJUSzRQUndWZGxKeW1ralpLQVIwMlFvQzBKLWx1SUhMOU15SENhRDJxREluZjVQUkdsMVk0MTROa0VWS0ltUEZ4VTZYbG1EbU1GdDUtMzBQd9IB6wFBVV95cUxPT2lGTUlKUzk5MmlXZ2I4Y3JlMC15S1dUUkxnLUlldGtOLW9hS3dORjRFcC0yWk1TNW1sYXVIOEtjZV9ld1BLaGprbjZuMHNoeDJiUkc5QVJzZ3RDSFJCcU81T1NYaVpuWFZUVDVjU3hJR1l4Sk10Mm5vMW5nSUpHTkFGQmVBdnlKNVYwTzZJVmFWSEl1bi10RHFwVlhNVkVxWTlxSm1QWVhlRG92MHFNZ2ltaXpVQ0gzMVhEZ0paNzJ4S1o0a1h3QWtPUkJtblV3ZEc0bXRnT0JXLUFlS2pNQ3FvNE53VTFYOFNn?oc=5",
+          "score": 21,
+          "why": "Idea fit 21% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 8
+        }
+      ]
+    },
+    {
+      "industry": "Social Media",
+      "sub": "",
+      "count": 5,
+      "newestAgeDays": 158,
+      "medianAgeDays": 181,
+      "duplicateRate": 0.0,
+      "redirectLinkRate": 1.0,
+      "items": [
+        {
+          "title": "Meta launches AI-powered shopping tools across Instagram and Facebook - The Times of India",
+          "url": "https://news.google.com/rss/articles/CBMi4wFBVV95cUxQY05iZ2xRR1p4ZElRU0NqbVgxU3dDTnFNSWVkVVJDdlFEXzMwUUlMbm1Vb21NUlBwWVk2akhPdFg4S2diNGlzWWRNeE54Ry0yZldiX2kzRmE2bjgxMTB1RmRvYVlOTW1lM1lwWGJ2Y1E2V292TVVFMl9KWFMxS2p2LTQ1emZtM2Q2MzlrOFE1Wnd0enhSNmowZmY4VGtZMWhBLWN5YkpnbzdZOXA5aW5MUnptZHUxYjdZeVpBcU11cS1ycGdRcEQteXVZeDZJbF83dFR6Qm9raDlVRHh3aUhBVExhSdIB6AFBVV95cUxQVkp4MkZHSDZkbGJIMTFYa0ZTQ1lReFhldmRnUFRMM1FSa2NPamZsb0R0NDlJQ2hscUlrQ2MxYzNJS09Xa2t3anUxdnV0UnZveHd4MU9tZm0xOFJneVlxQjNCTU9ZS1Q2NGp4TXZxUGhxOVNvM1ZkdjROdk92ZXMwdDhTMGNUVmk0Y0hEZE12bVo3Rk8xOFl6Vm1SOXVaREZmR05yTnZmMVVDSTBIZEI0OXNfQ2wtY2NxQ3d6WUczeUl2aVVaSE9mdEw4YU9kQk9tQ2xMQTloeDRidExMZmt3ZGRuVUxfdGpK?oc=5",
+          "score": 42,
+          "why": "Idea fit 42% \u00b7 New technology \u2192 Integration service, template, or training.",
+          "ageDays": 181
+        },
+        {
+          "title": "Instagram shoppable reels launch: What it means for creator monetisation in India - Storyboard18",
+          "url": "https://news.google.com/rss/articles/CBMixgFBVV95cUxNYTBKZ2F3WFFZX0ZZZFZXa1dwMms1anN5aS11Tzl6OUQwajRrUExQQVBrWTBOaHByTmttcjdGT2FDVElwdlJVWUQ5ZTFYU1hxZVR0eDUwWkZJOVRidG93VTdKZnQ5d1h1TWZjUGZUc25EWFVqRDVyUTVKNVU0ZElFQTR1ekdDX0gzRVNkRjVXd2JIdDlHeE9MTDIyYmw2YkhLSWFBLUpGN2t6Q0dNNEhybGlvcWxXb1o1cHAtMVlsWDB3ZS1CQWfSAcsBQVVfeXFMUE9JMUFRUTh0dkpDZTMwSkFVeW03R1d4Y2xZMFZRUFIwdFJoUENpNllZQ1FMWW5CTHhGT2tpVzNKYThncDRkb1E5QXl5MnZlNHNnYjk2WDFQR2xYNW1Uc2hLMDZ0UFVPOUNhdk5tVzhzTHFrZ2pUSGJlSmpyWFFTd3RydUpYMzVOS1ZXbXlIMDY2bzBpLWpOYkVDZjlyaXV3ZmpHY0VpZkcya3dtbXlJUnNZTUR4emxKYnh5ZlVYWnpNY2JxQlU4NjZxOE0?oc=5",
+          "score": 34,
+          "why": "Idea fit 34% \u00b7 New technology \u2192 Integration service, template, or training.",
+          "ageDays": 180
+        },
+        {
+          "title": "Meta adds new Reels ad categories, creator and ad tools across apps - Social Samosa",
+          "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxNSzQxc19raW9Od1dsT05vVGpELU1BUTk2aV84VEM4dTE0dXJQUkt0Y3VOUGZUVkdNRjdpZ2Fzcjh3X3JUMmx5anVTOWNSZzVfRjlaYkdDdzYtYkoyZjNsY2JWRXBxdVpza2VzUFlHRnJwM0Jzb3JBZ0hWYnI1Q01LXzI2ZXdGbWlCS2loaFN30gGOAUFVX3lxTE1LNDFzX2tpb053V2xPTm9UakQtTUFROTZpXzhUQzh1MTR1clBSS3RjdU5QZlRWR01GN2lnYXNyOHdfclQybHlqdVM5Y1JnNV9GOVpiR0N3Ni1iSjJmM2xjYlZFcHF1WnNrZXNQWUdGcnAzQnNvckFnSFZicjVDTUtfMjZld0ZtaUJLaWhoU3c?oc=5",
+          "score": 32,
+          "why": "Idea fit 32% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 183
+        },
+        {
+          "title": "Meta adds AI shopping, creator tools and new Reels ad formats for brands - Buzzincontent",
+          "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxOZ2I1R1ZTdW5QQlczMWttREw1WFg5eXlxRUYwQi1HUmtvTzZvaU9QeGNaZTVYVjhXWjc4cDZrTkxreVZrVTl6NE1ndnVWS0RfN0ltYXVIMGwtd0VwOHBnVDhDWVhTaHVxcmRHd3JzNVYzQlU0MHRYMUh3OWhTNllMcVpkTFcwSm9tUnRXR1ZzckRyS1g3OGVsbm90X0xTdFNjX19IYUFkdXlzUlBIcGpNWVpSbHpwd9IBtgFBVV95cUxOZ2I1R1ZTdW5QQlczMWttREw1WFg5eXlxRUYwQi1HUmtvTzZvaU9QeGNaZTVYVjhXWjc4cDZrTkxreVZrVTl6NE1ndnVWS0RfN0ltYXVIMGwtd0VwOHBnVDhDWVhTaHVxcmRHd3JzNVYzQlU0MHRYMUh3OWhTNllMcVpkTFcwSm9tUnRXR1ZzckRyS1g3OGVsbm90X0xTdFNjX19IYUFkdXlzUlBIcGpNWVpSbHpwdw?oc=5",
+          "score": 32,
+          "why": "Idea fit 32% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 184
+        },
+        {
+          "title": "EXCLUSIVE: India's Zee sues Nykaa over alleged copyright misuse of songs on Instagram reels - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxPUnFoSzl1VGhLVXV0UUJTZHlaVW01Y3ZUSFdTNjFyTXRzMXBVbV9Cd1BzLTl3ZFBXSzVLRnE2QU9QTkc1UmJjbzNKYlZfNkk0ejJIS1FUeW4tajlUYTc0bEhJUHRFbi05WHd0SFJXam9rZEJlaDdnUGE0Z18xTlRjLVNvVTJBMXlOTER2d2hid2duY0tRUDZ0YUFzS1ZCSUJ3dEtxR1BXcXFXYzdNaUlQXzVSVjFiUQ?oc=5",
+          "score": 22,
+          "why": "Idea fit 22% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 158
+        }
+      ]
+    },
+    {
+      "industry": "Social Media",
+      "sub": "Short Video",
+      "count": 5,
+      "newestAgeDays": 673,
+      "medianAgeDays": 1208,
+      "duplicateRate": 0.0,
+      "redirectLinkRate": 1.0,
+      "items": [
+        {
+          "title": "YouTube Shorts is bringing a new breed of creators onto the platform: Satya Raghavan - Moneycontrol.com",
+          "url": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxOSkdkX0dFY2NPYlAtOS03di1sTlAxeGFRUkNDa3d0RFFkYXZXQ1lobDB1bFVJYjJTdTlTYXJUUEw1SldCbllpMmtnSEZNazlfbzJPXzZOU01CZ21sTzk0Y2dKOGhOYnRpU0NJSFo1dGVPLXpPRnp0VmY4VGRwYmF0SkdvOUhhSXA3WGVaeWFVeEwwN1dnV3BkYnAxTnZjSjZCUjlXMjVoVWtaTnZLMUcxZ2JCZTQ3NVMyeE5MMHd2YmZGeTBCelA0NTk0bTBPTW4tU2xPOVZR0gHbAUFVX3lxTE5Rcmp4M0xfMWJobUc3QVdEaXZGbmdKbjhtczd0UjlLRERLOExrMFFCRmFZWm9NNU5KSnhoVXBRTTVOX1lMTTZGS0VTYUxYNS0tWEtOeDlqLTFLdHc5d1ZPYy1WMEw4b0g5YzVWVE5yd3pHaFNKQldTNTYxRFp1TzByTDB5MjBFcmxZUkptWmtyTG05RUFsR1UyeEljQlRtUlJfTHlmM3hBbU80a05xTzhyUFN5c25NMEVCYmM0NWYzSWxCalhEdkRkVzJ1SFpBU0VIWFREbFJXTTZGYw?oc=5",
+          "score": 29,
+          "why": "Idea fit 29% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 1839
+        },
+        {
+          "title": "YouTube launches short video feature Shorts in India - MediaNama",
+          "url": "https://news.google.com/rss/articles/CBMidEFVX3lxTE5qZWFMQ3VCTDVfajF3aFdkTUFMX2d3V3cxLU9QSmJrbExMNVhHYlBOektlcEFxdzZnOGJsZDM3a2wyZzdMSWZpeGhLdExSWXNDdGJYbHVvQWYwLWUxX3NqTVVKbXFnMVdQSHE1MXBIamRuLTRW?oc=5",
+          "score": 29,
+          "why": "Idea fit 29% \u00b7 New technology \u2192 Integration service, template, or training.",
+          "ageDays": 2216
+        },
+        {
+          "title": "The ghosts of India's TikTok: What happens when a social media app is banned - BBC",
+          "url": "https://news.google.com/rss/articles/CBMikgFBVV95cUxPN2dFb0hCamgxU3dBajNqbVpfNVNwZEVBd0RSdlV3di14V3RQOFhKUE1BeThvd0dDZnJ1V2dqdDZCclFMSFp0TDhDQmRZTWF0Uk1mcWhQQU1LLXgzLUZvZXNIQzhLVURSZld5NG14aGhiNE1yaWVuYVN2cDBhbGUtVGRzamJobnI2dlZyWFk0LW05Zw?oc=5",
+          "score": 22,
+          "why": "Idea fit 22% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 673
+        },
+        {
+          "title": "YouTube Shorts to allow 3-minute videos starting October 15 - India Today",
+          "url": "https://news.google.com/rss/articles/CBMixAFBVV95cUxNX2JKcl9VdUw1dlJsUTdEOU00aTZnTDZweGpEYmJJSXRDaWViUElDR2dRWjFOVjRVUWJTWjRUTUlLYXcwY0l3ekY5cDItUlQyXzBOUXluWmlHTXZ2b1hadzVFZTRPdmJ0MDFNRUNWRHRoYmJhSGZWaVpROTNjXzFOOVpueDBzYXl5cXBDRWp2VEY3djVEczVOTTRuOW5NSGsyUVFQMVh4R3duSTh2YUx4dlpMR2tYT2JCYlc2NEdNNEhENXNE0gHKAUFVX3lxTE9kQi1LUDliZm5zNTMtR0JKcEdiNFR4VFJNenk5XzczTWJOdjh0a3VtRHVqLWxuZmtNUEg3M3lCLWhKa2hQOGdSVVphbDVnaW9RbTIxUU9OMW52ZlJjTUx6ZXh0UWpLU0FVdUdOcThQancxMjFPczVlbnhuMDBhNjhvR0RCd1drQjN0eGJ4akttNzVqOFIxdmJ2d1B3TXFMeXZXNlZ0R1Fmd0xfVERlVW1lRFhBWWRkdzVfNGxlSV83WmFucWJxcDZZRmc?oc=5",
+          "score": 22,
+          "why": "Idea fit 22% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 736
+        },
+        {
+          "title": "YouTube Shorts is fast catching up with Instagram Reels in India: Records 3940% growth in 2022 - Dazeinfo",
+          "url": "https://news.google.com/rss/articles/CBMimAFBVV95cUxQOFhuSTJxc1MwZFZDMVBfTVB3RUdOSXdONElrUEhOa0hqMFpRR2lqcm10V3RNelJUendIUlBlWm8yVHFWc3pPaWRrUXZRTzV5d0NYU3l0Rlo5Y3BHWDExcEdGb25ybURVU25wb1hraFN4OXVKbDVOYkUxOGcxM3lsaDY0clkyNER2NkFmR2loa3NtYmh3VGdONA?oc=5",
+          "score": 21,
+          "why": "Idea fit 21% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 1208
+        }
+      ]
+    },
+    {
+      "industry": "Gaming",
+      "sub": "",
+      "count": 5,
+      "newestAgeDays": 36,
+      "medianAgeDays": 180,
+      "duplicateRate": 0.0,
+      "redirectLinkRate": 1.0,
+      "items": [
+        {
+          "title": "Avatar Legends: The Fighting Game - Official Xbox Launch Trailer - IGN India",
+          "url": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxONFlxUmlaajlBYzNVNjlmMmI4TjF0Z3daSE82elJmVHZYM25JaHB3MWNaWld1MC1QZzMyMzVCbTBQbmRmd2RTOVdUUGIwTzlnN3RrbENaOHoyZTJBT1R5TjJiLU5TRy11ZkFDZXhkc2YxQ19FMVlqbEhSR19nQ0FZeFV0LWpDTkRyRW5KNzdBekY2cXpBcFZucWxuUlRSNDBDRS04WWtjWVRQRU5vOURITjB1OFo1VEo3ZHV5dHZNWkd2d214aF9ndmpwY2o4ZWlETjVTbUVB?oc=5",
+          "score": 28,
+          "why": "Idea fit 28% \u00b7 New technology \u2192 Integration service, template, or training.",
+          "ageDays": 36
+        },
+        {
+          "title": "How to play Resident Evil Requiem early on PS5, Xbox, PC, and Nintendo Switch 2 - The Times of India",
+          "url": "https://news.google.com/rss/articles/CBMi7wFBVV95cUxNSVRkRGRDakc3ZVNPQTZKblAxTHB3aWxoWWZpOVk5dEw3UFN4dkFiaUdPbkgxU1lqMjFiVDdlV3l6ai1UbGNTTm42WXlWVk1WSTljQXNBMzZUR2wxYndxSlBMV296dHFEdjdSWXhVQnpMTjAzOHQ2b2VuaVMzR0cyVm9xdmhmUEkySUVxT1I0VUR6ME5pRzZ3eFhaUmZpcWpRZlRpMEZIRFBiblg2MWt3alhSamZteWhCc3Z2SVNnSnB2UFJhcFJfSW1iMXpjV0IxX3BCVkplaFRfVGtLRktXcnVGQkw3UkVIeVJBeVRRNNIB9AFBVV95cUxOTHg4cGdKTGxGa3FVM2pwY2o5LTFwc1R1am5BY1E3VGZKY1J0SnJKbEliTUV1SzlOR0dicURtRWViZTJlMjRrMmE2cndpZHhqUzBHNzZheFlEcnlwWWdGVWxVaDhyTmRIRDNDNW9SUHhuMTRsdi1ubDRIbWtCMkgxZnlRZ3NMbHQydXJNakFDSlUtY2xoVllmNy13SGhOSWljUkNKeFZIbmZOcVVkQzFlM0V4T0w4clNDWHhGY2g1ZE50ZlJqeElMOGNrZ2VlWHFQQmphTUJ0OVlzZTJKaEo3TXBsTkxWOVA4ZGJyQVdHNGJUVzVr?oc=5",
+          "score": 21,
+          "why": "Idea fit 21% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 227
+        },
+        {
+          "title": "Best Xbox, PC, PS5, and Switch Video Games This Week (April 13-19) | Outlook Respawn - Outlook Respawn",
+          "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxQUkpLQVFFVGgxcGw0VTFQQVBzYnRiZlZjRU9UR0VlQ3QyWlVtempyNmtoM05Hd2pqdTdSeEZSeUJfVkVTY0RIcUpjazltaHFCWVdQNk5wOFk4dzFSQnYzNXBjWlFjSmdIZW9RVmxXSEd0ekYxbnh6Y2Y2WkJaNGRUWDJIUU11ckh1VjVOODhIU0tQU2NQNDFCdmRSSS1tTWN0ak5CdFZkQTF6Umx6X0txdWhVY0ZacjhDSlHSAccBQVVfeXFMUEoxZi13RnNHOHBlVDktT3M4Zk53a285YVRodFhOdnFTMGNFdGJ3Q25zZDNMdzVTY3FFOXJ2eC16dVh2UE80V2tPV19hdmp6WXJZOWZuRmh5MmIteHNpSE9ZdV91cmpCZVVDNGZ2akZMR3M2R2FBamoxWTBBX1NkelRuWVQ0ejZBQ0toNkZPeklvOUxmZktxdHVvVDJZWWxXUUxCT3hTQnFsRmI3d2JJeUhKVVl0RHRxRWlaMElWd3RpMWVpUUEyRQ?oc=5",
+          "score": 20,
+          "why": "Idea fit 20% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 180
+        },
+        {
+          "title": "Upcoming April 2026 games lineup confirmed: Starfield, Hades II and Pragmata to be available on PlayStati - The Times of India",
+          "url": "https://news.google.com/rss/articles/CBMiuwJBVV95cUxPMWo2ejZhc3p4Z0hYbFRxSmNTS3dSUk1tS1Z0X0VINGR0Q1RqemtySE8tLTUxZnJhS2t5eURESERKcUhsUElGcHRiVXUzNjNMZkpxTlZvU1lxNWdsX1RnT0VSeGFXUnN0S19nU3NWQU9uTnkyOHktMzVManVsOWZQczJlTnFST2ZZcVVXbG01QUZ2WHJsMDJfR3h1b2RsamlGY21CZ1k4OGMtcm9rZFRiMGw2TWFKTXFNdTQ2UV8tV0R4R0oxRkpuOEtXTFZqVWRNakNNUVRGMlN5QzM4dTFLaGl1UzlHcFFXcWVUNlQwSUd2eXNmUDhKRE04cjZYSFNVSGM2bHl2Vks2UXhxWFpOdTJXczdxbHh1RWZXMmFyMDBDMHlqTTk3UGNZcEtfeVl5dTdGbEdiQk5hMDTSAcACQVVfeXFMTjFMZC1pdkIzVEJsRE9hcHN4Q1pIenRWbEI0Tm1neGRjbldEYjdlb3pGYlFUT1JVZjFSeUdmVFhualNodHA1QXZ3UmRXem1aTjZzdEI4NkRpWDRONTh0alBYV2ZPXzhZaElTNjJCcl9wa1FWRjNxZml3MnQxWXY1WWhpcHFUSlFwczdtM2tjaWhJT2NZYVB1NjJmc0lrdWplT2VGSnBhSlhNc3p3eU5xZEw3eS1SeW9EendrXzdGenlkYy1LLXJ1V2w5aDdSYkw4TVh2Umx2aGRNZXBKWHVtMlBYczNFT1I3aFFfTnBaUDczSU9vUzhsQXpwcGFMUEs3bXl2U25Gc0RYYUdxZnhrbnBjeF9za0x2cjVDOGJsUE1NeC01ZUxleDc2Z1Vha0xrZmNxQlhLMGFCdDJUVGZhNnE?oc=5",
+          "score": 20,
+          "why": "Idea fit 20% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 192
+        },
+        {
+          "title": "PS5 Pro is expensive, Xbox is confused, Switch 2 has no official India retail: Which console to buy in India in 2026? - The Week",
+          "url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxQQWlsMEhNT0QyZ3gyZmt2QnlVcVMwVmhzQ2MxTE1PZUZfVnNlWWY1T19NZlpQTHlCaUptbWUtTm1KeXFnX250b2RLdkZVRTcyODJfcTR1NzM2ZWVBOXRmNkpoaGd3eXBuNlZtdzdmWjlmal9mckZHMVhCNjM0eEdVQUNiMkd1aXhvalV6WdIBkgFBVV95cUxQd3VUNUc2S0xpZFBKM0dLck9mZkd1VzNHVG9ZbkJDaXlUdlVEanpYMVZMakZYU1RZaW83bHQ2ZUgzcGVTaUZOaV85LTNNMzREUlJWbFZpbzBpcG5HSVAzd0UzV0k1dVROcXB6SDR0ZTgtQThVT2JlbjNzbXM1ZlM1a0F4UzBqTTAxVmMxLVg3SlBQUQ?oc=5",
+          "score": 20,
+          "why": "Idea fit 20% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 128
+        }
+      ]
+    },
+    {
+      "industry": "Gaming",
+      "sub": "Mobile",
+      "count": 5,
+      "newestAgeDays": 563,
+      "medianAgeDays": 1513,
+      "duplicateRate": 0.0,
+      "redirectLinkRate": 1.0,
+      "items": [
+        {
+          "title": "Full list of Chinese apps banned in India so far: PUBG Mobile, Garena Free Fire, TikTok and hundreds more - India Today",
+          "url": "https://news.google.com/rss/articles/CBMi1wFBVV95cUxQVFZfUTI2Q09IU2o0X0FiVkJKVlo2aWczQ1FJRDEzM2w4SWxxUk54Q1ByNnV1eUJsLWwxNjJMTnlrNGRDZy05YUxxVkxLd242c19Pb2MyRk9jbWFWUi1sSGVJOGt2US1PWUZmaGwxMC1ueGE1QXBtOUdIYmJzb0RhSUlCMW90RHFVQzRmaW5oeG9aQ1hvMTlfRXkxN3hJcm5jSEhwaEp4WjVmaTJyeUZPcXR1OUFQd3M5TjYyNERhTE1TaElKZ3V2d0dJNklqQVdGek53dXotZ9IB3AFBVV95cUxNbXdEYjhtSXg4LWszVlRuYm5ZbUw1VnhuNEI1OGNsbnRJaWxHTDJSemlPSVJwa1IwUTFqTzVINHFTTkdvdnVsWURlajZwbU1pdzRhaUtmdVJIbkZ5U1ZhQVJOSDhfYXZyTHk5am0wRUpJVjZzSVFmd256aHhNU0JqZ0ZmWVFjaHZVQmVyYW1fbEJOSWJUTUJpMWZaUC04Yml4NldpT2RacHkxakdISVR3NWJmVXR4bjFSM3VmUkFERmNxdnhnbWc4Rnl0WVozeGszLVN4SWFvQlZIcEtv?oc=5",
+          "score": 22,
+          "why": "Idea fit 22% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 1513
+        },
+        {
+          "title": "Not BGMI, Garena Free Fire emerges as India's most downloaded mobile game for October - India Today",
+          "url": "https://news.google.com/rss/articles/CBMi5gFBVV95cUxQeWVLemZtWjVLUmxZTjNiU0VYRHAxTFh3bVJzb1RBaFJGZFVvMzdqQ1dMdXJtMFdYNjRzSS1pejNPVE5GclRGcjdkQUtvQVJMLXhEV0RpZEpiMGY0V0tQYklyWDVtRWhmdW14WVhPV0Q5Z08ya1dQY3RONnczMG1TelVXRjM0dXNhWmFTXzBwa3RnbHdwakRZaUR1VnZTV3RxYUJRd3RreXQ1SGxfZlBiZFQ5V1RGZjhSZkNTMllzcXo4MmM0RUdyM3FFWFlZTE9PX2JyamJRdW9kWk91RkR2UVIwWWZTZ9IB6wFBVV95cUxQVFlGMEpZV1lIb3lDQlBIQ2hBQ1lJNlBEYl9WWHVpTVJuVjhPUFFLRkg0ZkJJTTUxQl82eUZnT2JtNk02V2Nidk9yc01fZkk5dmpvQTlfWmUyRjhzUzBBQXA3cndFcldMZHZZRE5WelVHOWR6OTdsU0NEWkQ5cjhhZmxXV2Nvemp3RFBNd0I0TlMyRE15YnlrU1VvMkMwdi1IVDJ2eDZPcFExZXFtVlRWY3l3Mkg0cjA4UjBwTGNCS0JjczBZbVk5UmQzbFN3Vl8taVpkLURjdUNJYVJwMTRtTmZ3VU4xTjJOZHZv?oc=5",
+          "score": 21,
+          "why": "Idea fit 21% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 1788
+        },
+        {
+          "title": "Garena Free Fire banned in India: Company said this! Also check Free Fire alternatives- BGMI and more - Zee Business",
+          "url": "https://news.google.com/rss/articles/CBMi3gFBVV95cUxOd0k0cHd0NzJkTlpWenRIZmFhbnZlQ25NWFFiSWV1QlZhVXNrOTFkcFJLWmRET2NyZDRuc1BKUEdPTDJmNkF5MjlDRUVTYWtvSGpGUHlic3VneEFaeWdxbEUyMW5kc0U3eGt2UHZZUGVBeHRSeXZZeXNsZXdFeUU3LUpNZWs2VmhCVkc2YVBROXBzSjlrMmRYTGM2LXo3QzZORVR2YkV5R09XaFJIQXFNenVYSVYtSEFsYnNEUTcwb3BXamEyd2xPbW9oMWl2NnRJd0l2NnRuaXREMU83eVE?oc=5",
+          "score": 21,
+          "why": "Idea fit 21% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 1697
+        },
+        {
+          "title": "PUBG Mobile Update 3.7 Part 2 is coming soon with new weapons and scope - Business Standard",
+          "url": "https://news.google.com/rss/articles/CBMi3wFBVV95cUxPWmxmb1VYajZ6amdVNFNiMGo1RjFXVUYtM3ZDRGtoN0JVMzVwdzYzSE9LdDlqdmlZUDVzYUhhRjZmM0F6aFZxUkM0dlB5WDlnM1ZvRzhyU2hHX29pU3VoT2xZQ1lva19kNktTSFNwS1JwbHhPTG5pT21MNngxRWR5NmEtUWdQb1lheDh3UjYxNWw5cFlnTlhOTUxidW1MUkFIckpXMHMzRmpPaXJmYjQ4QzJiSWcyMkxHTFI3TncxLUJLX1E3NU1SenJsUDNUSElQSUJPcW1mRmlxMVItZnNZ0gHkAUFVX3lxTE5BMkNfU1pPa0pUWkV0T3NnYWJJTkx5VXN0WTlDRDkxbUFhY2h0V2hzNTZYUmhFZEgwaUNMcnlzNm84b0VuWjZIc0NSMnBYVEtCSUtDZ2tWMHNTQ2NMdEtkSXNhUDQyc3hCMmFGX1JOUUE0V1J2bEdKN0p0UTRRTzVxQ2E1a1FibWRPdE1JaW12clpfODVBY2ZCWU9UYUtmT0tfZEt4Yy16MTBwY1JnVko0VTB5cXIyZ1hLWmRFNm1uM1JyNWstYTg0YzFVR3ZkN3pBYlNHNVQzLUFSNy1jVnB0a2RHVw?oc=5",
+          "score": 20,
+          "why": "Idea fit 20% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 563
+        },
+        {
+          "title": "BGMI vs Free Fire MAX: which battle royale is better in India? - SportsAdda",
+          "url": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxPT2N1ZG5JMUFSSUVnd1hBeWhNczNTbEhoeHFmUDB3eDd2TTZfMm5hWEUyRzhXRHlPNHpsZ0wxQ0t2Qk9LQlBQRWdUNnhkWU9OQ1RIelRSREZ5RERpdGd0LXZPZU1KeFJ1X01NT01FaTlFYnNETm1FU2Qxd3VOd2ctQlRhMFVveUVnNEpN?oc=5",
+          "score": 20,
+          "why": "Idea fit 20% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 926
+        }
+      ]
+    },
+    {
+      "industry": "Astrology",
+      "sub": "",
+      "count": 5,
+      "newestAgeDays": 1,
+      "medianAgeDays": 52,
+      "duplicateRate": 0.0,
+      "redirectLinkRate": 1.0,
+      "items": [
+        {
+          "title": "Best Astrology Apps in India: 10 Top-Rated Platforms Compared - The Assam Tribune",
+          "url": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxNdDAtTkhERGNEaFI5ODNkUGNzUUhnQWNfeVE4eXFYT3F2MkRjLWlMUGJOcUZsWFBLSUFTOF8yaGwxcVJleE9EenlPcThjbnpBRHptLVdPS3BsWm9rVzFYTXRBMG8yNEFRYW5FMUdZSWQtYXFLOHBqYVh6Z3NoZk5uNXJodzU0RmdHZE9GaHlnNGxiZ29iRFp3ekFzc3VjV2IxQVpFVzhmU1rSAagBQVVfeXFMTXQwLU5IRERjRGhSOTgzZFBjc1FIZ0FjX3lROHlxWE9xdjJEYy1pTFBiTnFGbFhQS0lBUzhfMmhsMXFSZXhPRHp5T3E4Y256QUR6bS1XT0twbFpva1cxWE10QTBvMjRBUWFuRTFHWUlkLWFxSzhwamFYemdzaGZObjVyaHc1NEZnR2RPRmh5ZzRsYmdvYkRad3pBc3N1Y1diMUFaRVc4ZlNa?oc=5",
+          "score": 28,
+          "why": "Idea fit 28% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 1
+        },
+        {
+          "title": "Top 5 Kundli Software Platforms in India: Astrology Meets Technology - MensXP",
+          "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxQSUxrRm40WWRMU1dZMmFFd201eVRuY0lPQ1ZpbVNDeklyMlpGTzBRLU9TaHBsTkE0WnhtYlFaYTZwcjU2XzZfOFU0VnpTUEZpZEJSNGd1M1pCTGJhaDZHYzY4MlhXYVBfVGVPZ2VJanZRcEwtZHpKWkNEdkhzMkdNN0luYzJDX2pyeVM1TVM1ZVZIcUc2SnlQY2kyV3Q1ZVZGM3V1M3FEVDVtQUJ4Q1F0bndGdGpoT3FzOUR3WTlB0gHDAUFVX3lxTE9wLUNGTjFfUEstNmdKRTV1ZHZNbDNzWmxwRU51MnJ2WnYzWWhGMjR6NFJCeFNLVjM5NDhXTUtxSEpxLVotXzlDel9fRG82amxJVTR1U05TWVdFZkxkbVQtTmtZbUY5ajNGcXM3TTd0WWNOVWZHU194eUo0czR1N1BsUGs1a0JXWi1HbXFocENEYktMZ0o3RnBwQi1hVGVjWUtkZHRuMVVmdkZ1NWthbjBhZEpVRndWOHdUY0R5RE56dzIyTQ?oc=5",
+          "score": 28,
+          "why": "Idea fit 28% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 52
+        },
+        {
+          "title": "Cancer Horoscope Today, July 25, 2026: Businesspeople can make a major decision now - The Times of India",
+          "url": "https://news.google.com/rss/articles/CBMi9AFBVV95cUxNdWYwdTJXTVVNS0hhMm95VHhqLXcxb0xsMURPZ21tWk1sVUpRbmZLZmlONTRhdlNsNjFWZVZ2RVF2UFBnYVFqanZsSUJ0UHhobmY4SFhCdEhMWHBjS180TjViQXliWU9nbTE1NnZqV3BjODNYby1GUEZ0ZEJYTHZ0VVRVYWYxUGl3SktiQzJmajM3YlVMQVRGRXdLQW1hTzZEMXV5WGwtd0cwZlAyX3FHbHd6YUk2amFLVThONUluUVVWYUstWlJMblZHb0NJMFQyaDE1cFFWd09sc2dsZ3IwWS03d0tWZEladXE3b1ppZjhlUmVG0gH6AUFVX3lxTFBtbS00bUM5UlRNal91T0dCWEZTMk9ia0huU2lUbnl3NzU5eXBqc2FYZWxmYV9HRzdDRnZ5WC10dmVGR0JIUjlQVlNCcWpBcE84bzlVTml2Tk9yN0FLMFFUZ1dleFc3akdYWXJxVDQ5Q09sMERLWmExUFlyWnNkQ3lreE95WTdhS3VUWm0yNGhkRE56LTFIQnBuVWNvVVBsRkN2VnFUQndZSHYtUi1ZQUZ5ajZSZng0d0UzWHlaamlxdGUxdnhUdEVFc2ZxNFF4TjZCamNVdHVPZ1BmUVVmczdITDI0QVFtTEtRd3hydTJsb3Y4UTFBOGJDcEE?oc=5",
+          "score": 21,
+          "why": "Idea fit 21% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 77
+        },
+        {
+          "title": "Daily Career Horoscope, July 04, 2026: Success, challenges, and breakthroughs; Know about your career - The Times of India",
+          "url": "https://news.google.com/rss/articles/CBMiiAJBVV95cUxPRXYzTHNwRF9laU0zVld1UDFnekotUVRLSEZhZVlyYVE2Nk1jc3FWdFlzaF9yRHZYUGpZUlBYZ2FVeXZYQmJHME5DYVBWS1pJd0dabUxfQlZVcmRzbmxzU2VRWGw3NDV5bFZFZXl6MU56UVZsdFVvbHpUWW5ybTJmSzYxNF9WdmZjZTZ0bF9sSXpETTk3SzF5cGpqTUlLU1UtRGo2blcyVzFRRTY4Y0JqRnRmUzk1aTNDdFBsU2hmTVpaQ0szX0VPREJKQTNaNWs4S3hDQ1A1a1k2eWdxZVlJWFh0WHlZS0piWnBfRzBnaGxjWV9pUFh4WnZJek9ZRGxWRzZLaG9ueEvSAY4CQVVfeXFMTW82ZHltWkVfY2MyU21GRTBUUTNBbWpsdmFEc2JyaXBZTG5VS1V5MnBuNjFtcm9qamJnaFJNNFhsTFFCYWF0bWhxMUYzNVRCRENtTGJlVlhyQVVEYVpHdFRVSC12eUJNS3RhX3ByVjRGZU5hd3h1OHh0RnYybzhUNS1uUTJla085UlNGU2FNc2FqNTVndDlwbWtaQzdDb2FaTnlRVldwWXljTmI1RmQ1ZGk0VEluOVRGVGNZWnltZWhMbmd1OWJZbG1VQjBKQl9sZEFfeTF3N1BQSWZlU1FuN2dpbnFUTVJvUmQ5VzdySXcyZEQtZEhvQXEyMGpHdno2WXNBVUJ0LThvMlRxQzhR?oc=5",
+          "score": 21,
+          "why": "Idea fit 21% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 98
+        },
+        {
+          "title": "Weekly Horoscope, September 20 to September 26, 2026: Read weekly astrological predictions - The Times of India",
+          "url": "https://news.google.com/rss/articles/CBMi_gFBVV95cUxNQ3VLZWdyNU13aTdRUGhrWTZWZHIxb2tNbXhqM0F6SkVFekE5Z2oweDExSmx0UFZHOGN3UWFWaVVvNUJ2Q3g4UXB4SEZIRHhyd0tPYm5CUGZPTDBXZVE5N3RBbmJ5Mi1XQ3hWZTZva29FWVRKUmUxQjdwQ2lfRkVXejBkZGlIQjAxRWZVOTc5WlhlVVBWVjJRT0d0LVRfR1pzdmQ3b2JLLWV0OFoyVHVCbml4cW14dzJnNDcxdFU0ckVPOGNqa3lrVmFqb1A1N2otemVxU1FmNEQ0MFBxaHFFQjNtTHlfbnhoWGRUMC03Z19CUmNaRktGcHNxcWl2QdIBgwJBVV95cUxQRmc5Vk1pRnVsUEJuckZsZTYtcUdMRVdWbFUtVV8zWDUxdVJxTEhickd5dkUwZGVKYV95bmJwX1o0MTFYTXpIR0psMjJKUkJiNF8tOGQ2OG9qTV9RMlVFdVB5MUNnbkZOVFZ2MHYtT1RXVnE3eC1IUXNjSU1oRWEzNGNHS2tKdDFOT3N2dTRyZDN1WHRBb1M0di1tNHZiMVg2aURiLVgwQVM4NXBkMjVlajlmajVDS2QyZ2xmTUo4Vl9OSW9tMWlXb2dPTEdkLTNXY2RmWFBFZnhZTU0zX3VFbEtIZmx5QVd4SUd6NGN0RENLSU9uZFBRYmV6aGJTTkZaMk9V?oc=5",
+          "score": 20,
+          "why": "Idea fit 20% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 20
+        }
+      ]
+    },
+    {
+      "industry": "Astrology",
+      "sub": "Vedic",
+      "count": 5,
+      "newestAgeDays": 32,
+      "medianAgeDays": 170,
+      "duplicateRate": 0.0,
+      "redirectLinkRate": 1.0,
+      "items": [
+        {
+          "title": "How today\u2019s planetary transits may bring wealth and career growth, as per a Vedic astrologer | Astrology - Hindustan Times",
+          "url": "https://news.google.com/rss/articles/CBMi9gFBVV95cUxNeFJPTlo3VnJZOVBfU2k3YXlvUHJSaE4xM1VDclo4YXhxQVBELXFpZTktN0NHbm0xQ2J5YTRDTnQ1NkpIdFVtT0JhZ3IwZDFZanVaNTVuUlNLNk5QVmhVT1U3cGxFcjIxLUMtVzNwR2J2SWwzeDJVUFk4ZUJGTFdsTVpLWHV6TzRRMzZkVDBvWmZHalhoSmhGb0NmTEtjVXg1S01uQTE0OVZfdmJVTHhXcjdBVTljM2ZnTWltMVBKYUZLN1VDYXJVajRaS1FVamJLSjlOMjVOZVR2aF9Od01XaVRXc3ByblA3eEVHMEFpeG5PajBtWnfSAfsBQVVfeXFMT0U1Q2gxYVhSaVRlazZoazgzRjFOUVhkeVVHN1BwTDN1Mk5ESnA3WXRmaTBFV0JYVExlWUZBMFpPYU1CVlc1Qi1iSVc5clMzWnVmeFZsYW45MHVGeWpvRVljbjFwd3lVT09kckZYaElzR1N3TmowOTg3dG1VSGQ3aV9RYW9MVDRiWGlOM0l4bmUwYmxBbEk2U3BwR0lqOHRKM1B6amlBbE14cmNFbGtxRTdVaUNZZW82U0t2QUVxblNSTzNGWER3T0pTQ0ZIc0FzLXVEUzZvZjF5bU9zSnY0TDFvc2ZyZGdoc1B3N0ZrOGxNa3JOeHUxdDc1UjQ?oc=5",
+          "score": 21,
+          "why": "Idea fit 21% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 170
+        },
+        {
+          "title": "Venus-Mars Zodiac War: Love Life Could Change Overnight For These Zodiac Signs - The Times of India",
+          "url": "https://news.google.com/rss/articles/CBMigAJBVV95cUxPSjlJeUc0RlNOS2FVTXJmOHR2ZmdsU05GSzJlMm9CT2xVZGdvc21yanlXTzdhUEFqSGFjYlZsRko4OHZNMF9FWDFDaEtHaGdPS0hfTHZBQXgzYlJKMWxLcGFBaUE4TGRlWEVjYzlYWEJtVnZuTVB3cjdYYmllaElIRVAzNVlFRmVFbHBvMVFVRjl4SFlKdHYyQnhoQzdaSVhONXh6UWdtRlVhWkRBTHFpdndoQnRLOHpNR3pCbUFMcWhRR3h4bU52YjFFaVZzU2NQeUdCeVp5d2J6aHJUcmMybXVhTG0tX0t1V3REOFZhSUw4RWEwZ2ltY2ZoY0VvM0hJ0gGGAkFVX3lxTE90OGFibDRscHZ6dVEtTEwxU01tTk1jMENVV0kyMEM2TFZ3dGFKVEota2M2ZXlTSjlUWnc0VmRNeDM1aGs1TXpvSmpnWERaWFU0TWNuWXNOTTQ4Vm9jUlBPYTcwVHM1MmtUVUxvYTJtZ25sV2c3S09XTG80M1N2WUlBRnpKRlJHYTk0UzBKMy1BRVVCN2FldEd4VmhPaG5pMzM4VVNtQ1gwYllybEN6QzlwWXUzODloN1RjZi1FWlVNU182T0Rhcko1MloxNThjY0RRa2hqQjdNWjBoZXN3Ml9xemh4YWJ5QzFtQnlpVXJ1LTh5VmJrSDB5M0hTZHlrdFU5Yml0SUE?oc=5",
+          "score": 21,
+          "why": "Idea fit 21% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 277
+        },
+        {
+          "title": "June 2026 transit effects on career: What to watch without panic - The Times of India",
+          "url": "https://news.google.com/rss/articles/CBMi5wFBVV95cUxNT0VQZzZLbXA3eEFITzcyTHdKNHAyMG1rNVhGX25hRzVYZ3VkcFpmbVlaMXBEVzNmYTVhLWRpWlA0eWdDNW9Hb3FYZlJNQVgxeFA4MUI3VEhrSVJSSnJPcmpaR1NuRERPM0hiNF9zRHBVNlVqdVNzT1JGbE9CZ1ZPLXI2VVpoOUhYNFBiN29zOV83MWUycm9YU1NKUV9OdFB1SWMxVFVDd0NIMnJzQzh6ZmVHOXhjSVlXZ3JZZWllcnRXWDZDMGZxS1RncFlVeXRBOE93UEIwaW9DeUdMOVRkTFF1TnE5eDjSAewBQVVfeXFMTm14d2tXbGZWOEw5SDdQemdScDlGaG9VNlFaYklCVmlvckVpSmJaOXEwT3hvMHpReVRmYk1FUThXRVdySUhfWGx2dExLSFZrODQyWXY5cFZUMURvMGN6RkthVWFzRlh6THN5UEdhX1JmLTBJME1ka2llcUZQZEFkMGNwWUVQVnZDcndvZGFqak4tM0s2dnN6OE1FaGdqSWNtc1A5em1GNW05TjlGUUFaN0lxUklEeEg3cFlqSncyOWNUZWFpQzRsSVZhUFN1X3RVY25LVEVsbS1ZNU95Zy05WkFjWFBiQmRBeXlUQkE?oc=5",
+          "score": 20,
+          "why": "Idea fit 20% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 126
+        },
+        {
+          "title": "AI Astrology vs Vedic Astrologer: What Technology Can and Cannot Interpret in 2026 - The Times of India",
+          "url": "https://news.google.com/rss/articles/CBMi_wFBVV95cUxPT010T2x3YXVuV2djY0lGQ0h5ZWRnbGd3eTdWQW5sMnRVdW5hMGNMUUI2amJoZjlpY1ZQT2dqVGJuYW81T1pZOWg5YXBXZmw4M2h5TVMtZ25nYzF2U1FSeHRpdHoyMTZlVkp0czZST1VJM0V4Tkt6cE9fMjJEX3dZMndFTUYzWHd4YW9IYVE1V2V6aWRob1JtaFhRSld0MV9CZkxra2xDTkt0M3R3ODFtQ1JFeHFVcUQwQl9lRmxiSGtISExtQk1pTlljMEdhZUVuZ0VGQ0M0MlVsMV95OWRXZC01OTRqbXA0Y1BIWGZhRzdxRGlHODZ2NW1Na0lNckHSAYQCQVVfeXFMTzNGY09qUWJwbm1PMFZ0S0c1c25LZlU5NlJPeVhSNkpmMGdsekdMQUtkSlF2STJDd0ZBcC1HUW9vMGJ4VFJ3X1FZUzRtQllEcWItREVYcEt4RW0xQ1ctOUdIZ1hITUM0NWtIZi1KcmdTdGpBaDgzR1RUdTdqV1Q0ejlROUp2WENYNkkzcUJlYTVvZGlZSkdfMldWSUt0QlFPY2ZmUVVSTkRFZTRIN3ZOandOd0UwUHJQbVdPMWp3bEpHZWkwM3Y0TzFzRUdiZUQ2VkpFZkl1cHRlQjd6Z0ppT0dKc1pSbGFSOEIyVzRfcUlkMmVKakhKYTRtdlJnOHZUZmlXN2c?oc=5",
+          "score": 20,
+          "why": "Idea fit 20% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 32
+        },
+        {
+          "title": "Top 5 Astrologers in India 2026: Meet the Most Accurate and Trusted Future Foretellers - Press Trust of India",
+          "url": "https://news.google.com/rss/articles/CBMiywFBVV95cUxOcFV1aG12MEQzZ3RSWHVlRTJScWFyb0daNVJxcGRlQ1hLanZNS3llcWFfaGRUSkNCeW9vUjFTRkdWV0w5RTRRVjkzUm5jME1VNnkzWVV1eHdhdHE3TU5uQVBUZjNDTk40WEJoNFp0T2xfd2RJOGdzYzhjNmR3MUJOR0FabG5FMFg3bmlyT3FOQkpYNTBHdkNzZjhtUGtxdDdGSkVBa0dFSFJSYnpUc1dWM0ZTRE13NU9IaVlESHhVcERidW1fTEdTdE5qMA?oc=5",
+          "score": 20,
+          "why": "Idea fit 20% \u00b7 Regulation change \u2192 Compliance checklist, audit, or training.",
+          "ageDays": 235
+        }
+      ]
+    }
+  ],
+  "manualReview": [
+    {
+      "industry": "Share Market",
+      "sub": "",
+      "title": "Reliance SEZ export duty clarity key under India's fuel tax rejig: Analysts - ET Auto",
+      "ageDays": 194,
+      "signalLabel": "opinion"
+    },
+    {
+      "industry": "Share Market",
+      "sub": "",
+      "title": "Windfall tax: $12 margin hit for Reliance; Govt rakes in Rs 1.3 lakh crore - Livemint",
+      "ageDays": 1558,
+      "signalLabel": "pricing"
+    },
+    {
+      "industry": "Share Market",
+      "sub": "Banking",
+      "title": "ICICI Bank, SBI: Foreign brokerages pick winners in the Indian banking pack - Business Standard",
+      "ageDays": 46,
+      "signalLabel": "opinion"
+    },
+    {
+      "industry": "IT",
+      "sub": "",
+      "title": "Google, Blackstone launch $5 billion AI cloud company to challenge Nvidia - Business Standard",
+      "ageDays": 144,
+      "signalLabel": "launch"
+    },
+    {
+      "industry": "IT",
+      "sub": "",
+      "title": "AM Intelligence Orders 9,000 NVIDIA Rubin GPUs to Launch Asia\u2019s First Frontier AI Cluster in Hyderabad - Indianweb2.com",
+      "ageDays": 46,
+      "signalLabel": "launch"
+    },
+    {
+      "industry": "IT",
+      "sub": "",
+      "title": "Nvidia releases AI model that can run on single GPU on a laptop or desktop - The Times of India",
+      "ageDays": 60,
+      "signalLabel": "launch"
+    },
+    {
+      "industry": "IT",
+      "sub": "",
+      "title": "Nvidia prepares AI \u2018inference\u2019 chip launch to counter rising challengers - Financial Times",
+      "ageDays": 211,
+      "signalLabel": "launch"
+    },
+    {
+      "industry": "IT",
+      "sub": "",
+      "title": "What is OpenAI and Broadcom\u2019s \u2018Jalape\u00f1o\u2019 AI chip, and why does it matter? - The Indian Express",
+      "ageDays": 106,
+      "signalLabel": "opinion"
+    },
+    {
+      "industry": "IT",
+      "sub": "AI",
+      "title": "Which Country Created ChatGPT, Gemini, Grok, DeepSeek and Other Major AI Tools? - Gizmo Times",
+      "ageDays": 25,
+      "signalLabel": "other"
+    },
+    {
+      "industry": "IT",
+      "sub": "AI",
+      "title": "Google's Gemini AI is coming to Mac, and it could have a feature ChatGPT and Claude are missing - The Times of India",
+      "ageDays": 204,
+      "signalLabel": "launch"
+    },
+    {
+      "industry": "IT",
+      "sub": "AI",
+      "title": "Enterprise AI Security: ChatGPT, Claude, Gemini and Copilot Compared - DQ",
+      "ageDays": 26,
+      "signalLabel": "opinion"
+    },
+    {
+      "industry": "IT",
+      "sub": "AI",
+      "title": "India\u2019s AI app race heats up as Claude surges and Gemini closes in on ChatGPT - The Economic Times",
+      "ageDays": 56,
+      "signalLabel": "other"
+    },
+    {
+      "industry": "IT",
+      "sub": "AI",
+      "title": "Study: 9 in 10 Indian SMEs Cannot Be Found by ChatGPT or Gemini - ANI News",
+      "ageDays": 128,
+      "signalLabel": "research"
+    },
+    {
+      "industry": "Medical",
+      "sub": "",
+      "title": "Wegovy pill: US FDA approval granted for oral version of weight loss drug - all you need to know - The Times of India",
+      "ageDays": 291,
+      "signalLabel": "approval"
+    },
+    {
+      "industry": "Medical",
+      "sub": "",
+      "title": "From Ozempic to Wegovy: Which weight loss drugs are really approved in India? - Livemint",
+      "ageDays": 300,
+      "signalLabel": "approval"
+    },
+    {
+      "industry": "Medical",
+      "sub": "",
+      "title": "Nozempic? A look at what will happen when GLP-1 drugs go off patent in some countries next year - Chemical & Engineering News",
+      "ageDays": 305,
+      "signalLabel": "other"
+    },
+    {
+      "industry": "Medical",
+      "sub": "Paediatrics",
+      "title": "India's childhood immunization program reduced deaths while reshaping educational outcomes - News-Medical",
+      "ageDays": 88,
+      "signalLabel": "research"
+    },
+    {
+      "industry": "Medical",
+      "sub": "Paediatrics",
+      "title": "Blue Lake restarts paediatric RSV vaccine study after FDA clinical hold - Clinical Trials Arena",
+      "ageDays": 320,
+      "signalLabel": "research"
+    },
+    {
+      "industry": "Medical",
+      "sub": "Cardiology",
+      "title": "New Expos\u00e9 Paints Sorry Picture of India\u2019s Medical Device Industry, Regulator Framework - The Wire Science",
+      "ageDays": 2875,
+      "signalLabel": "opinion"
+    },
+    {
+      "industry": "Medical",
+      "sub": "Cardiology",
+      "title": "What Medical Device Saved Mother Teresa's Life in 1991 - Medical Device and Diagnostic industry",
+      "ageDays": 942,
+      "signalLabel": "other"
+    }
+  ],
+  "summary": {
+    "queries": 16,
+    "items": 60,
+    "queriesReturning5": 10,
+    "medianAgeDays": 170,
+    "redirectLinkRate": 1.0,
+    "manualProductSignalRate": 0.4
+  }
+}

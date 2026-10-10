@@ -8,9 +8,9 @@ alwaysApply: true
 - Every new API endpoint gets validation and a basic Spring test.
 - Every new DB change is a Flyway migration in gyanwire-server/src/main/resources/db/migration/.
 - Active sequence is CURSOR_PLAN_FLOW_FIRST.md (S0–S16). Keep each change scoped to the named step. CURSOR_PLAN.md Steps 0–14 are history.
-- MODEL FREEZE: do not change the LLM model id, provider, LLM_* values, temperature, max tokens, or thinking/effort settings.
-- Do not add a model router, new model ids, Managed Agents, compaction, prompt-cache changes, hosted web-search tools, or an embedding model. Hybrid ranking uses Postgres full-text (S5). Embeddings are Phase 7.
-- New LLM features call the existing client only (LlmService today; LlmClient after S0). Same request shape, including temperature 0.2 and response_format json_object.
+- LLM_MODEL is the rollback model while llm.router.enabled is false. The tiered catalog is gpt-6-luna (LIGHT) and gpt-6.1-sol (MAIN and DEEP). Stage flags default false. Do not change temperature or response_format on the flag-off path.
+- Do not add another provider, Managed Agents, compaction, prompt-cache changes, hosted web-search tools, or an embedding model. Hybrid ranking uses Postgres full-text (S5). Embeddings are Phase 7. Do not call gpt-6-astra.
+- New LLM features call com.gyanwire.llm.LlmService with a tier. OpenAiClient is the only /chat/completions POST. Flag off keeps gpt-4o-mini, temperature 0.2, and response_format json_object. Flag on omits temperature and sends reasoning_effort.
 - New prompts are plain instructions plus JSON, validated with one retry, stored in src/main/resources/prompts/<name>.v1.txt. Do not add tool-calling or thinking parameters.
-- Log LLM calls to llm_calls. Logging must not change the completion request.
-- If a task seems to need a model change, add it to docs/PARKED_MODEL_WORK.md and stop.
+- Log LLM calls to llm_calls, including the model id. Logging must not change the completion request.
+- A new model id needs a bakeoff report first. Other parked items stay in docs/PARKED_MODEL_WORK.md.

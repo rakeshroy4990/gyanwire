@@ -7,6 +7,7 @@ import com.gyanwire.persistence.postgres.model.UsageEventEntity;
 import com.gyanwire.persistence.postgres.repository.PlanRepository;
 import com.gyanwire.persistence.postgres.repository.SubscriptionRepository;
 import com.gyanwire.persistence.postgres.repository.UsageEventRepository;
+import com.gyanwire.persistence.postgres.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,22 +27,26 @@ import java.util.UUID;
 public class UsageService {
 
     public static final int ANON_DAILY_SEARCH_LIMIT = 2;
+    public static final int UNLIMITED = Integer.MAX_VALUE;
     public static final String DEFAULT_PLAN_ID = "free";
 
     private final PlanRepository planRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final UsageEventRepository usageEventRepository;
+    private final UserRepository userRepository;
     private final FlowStore flowStore;
 
     public UsageService(
             PlanRepository planRepository,
             SubscriptionRepository subscriptionRepository,
             UsageEventRepository usageEventRepository,
+            UserRepository userRepository,
             FlowStore flowStore
     ) {
         this.planRepository = planRepository;
         this.subscriptionRepository = subscriptionRepository;
         this.usageEventRepository = usageEventRepository;
+        this.userRepository = userRepository;
         this.flowStore = flowStore;
     }
 
@@ -62,6 +67,7 @@ public class UsageService {
             anon.put("id", "anonymous");
             anon.put("name", "Anonymous");
             anon.put("dailySearchLimit", ANON_DAILY_SEARCH_LIMIT);
+            anon.put("allowsHighModel", false);
             return anon;
         }
         Map<String, Object> plan;
@@ -80,7 +86,20 @@ public class UsageService {
             bonus = 0;
         }
         plan.put("dailySearchLimit", ((Number) plan.get("dailySearchLimit")).intValue() + bonus);
+        if (isAdmin(userId)) {
+            plan.put("dailyIdeaLimit", UNLIMITED);
+        }
         return plan;
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isAdmin(UUID userId) {
+        if (userId == null) {
+            return false;
+        }
+        return userRepository.findActiveById(userId)
+                .map(user -> "admin".equalsIgnoreCase(user.getRole()))
+                .orElse(false);
     }
 
     @Transactional(readOnly = true)
@@ -160,7 +179,24 @@ public class UsageService {
         out.put("dailyIdeaLimit", plan.getDailyIdeaLimit());
         out.put("canRoadmap", plan.isCanRoadmap());
         out.put("projectLimit", plan.getProjectLimit());
+        out.put("maxPlanVariants", plan.getMaxPlanVariants());
+        out.put("allowsHighModel", plan.isAllowsHighModel());
         return out;
+    }
+
+    @Transactional(readOnly = true)
+    public boolean allowsHighModel(UUID userId) {
+        if (userId == null) {
+            return false;
+        }
+        return Boolean.TRUE.equals(resolveUserPlan(userId).get("allowsHighModel"));
+    }
+
+    @Transactional(readOnly = true)
+    public int maxPlanVariants(UUID userId) {
+        Map<String, Object> plan = resolveUserPlan(userId);
+        Object raw = plan.get("maxPlanVariants");
+        return raw instanceof Number n ? Math.max(1, n.intValue()) : 1;
     }
 
     private Map<String, Object> freePlanMap() {
@@ -177,6 +213,8 @@ public class UsageService {
             out.put("dailyIdeaLimit", 3);
             out.put("canRoadmap", false);
             out.put("projectLimit", 1);
+            out.put("maxPlanVariants", 1);
+            out.put("allowsHighModel", false);
             return out;
         });
     }

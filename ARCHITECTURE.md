@@ -30,7 +30,7 @@ It’s the site where you dump messy research thoughts and get the best pages fr
 - Not a medical diagnosis / clinical decision tool  
 - Not a filmic multi-act marketing scroll page (grammar is **live surface**)  
 - Steps 4–14 in `CURSOR_PLAN.md` are historical. The active sequence is `CURSOR_PLAN_FLOW_FIRST.md` (S0–S16), not shipped yet  
-- Model, provider, and `LLM_*` settings stay frozen until S16. Embeddings, routers, and agents are parked in `docs/PARKED_MODEL_WORK.md`  
+- Temperature stays `0.2` and responses stay JSON. `ModelRouter` is in place; embeddings and agents stay parked in `docs/PARKED_MODEL_WORK.md`  
 - Share Market ideas stay education/tools only (no tips or signals). Medical ideas stay education/admin/logistics only (no diagnosis or treatment claims)  
 - Not a store of exact salary, Aadhaar, PAN, or bank details
 
@@ -112,10 +112,13 @@ Search streams on `POST /api/search/stream` (`status`, `finding`, `done`, `error
 | `POST` | `/api/ideas/from-news` | S9 | `{ url, title, description, industry, sub }` → ranked ideas |
 | `GET` | `/api/ideas` | S9 | Saved ideas for the user |
 | `POST` | `/api/ideas/{id}/feedback` | S9 | Thumbs and reason |
-| `POST` | `/api/plans/skill` | S10 | 10% skill budget for an idea |
+| `POST` | `/api/plans/skill` | S10 | 10% skill budget for an idea (weeks include `taskType`, `sittings`, `baseHours`) |
 | `POST` | `/api/plans/weekly` | S11 | 12-week plan (Pro/Team) |
 | `POST` | `/api/plans/checkin` | S11 | `done` / `partly` / `not_done` |
 | `POST` / `GET` | `/api/plans/business-outline` | S11 | Nine-section outline. Markdown download |
+| `GET` | `/api/options` | Creative UI | Extended V12 catalog with `taskFit` speedup ranges (IndexedDB-cached) |
+| `POST` | `/api/plan/actuals` | Creative UI | Log actual hours for calibration |
+| `POST` | `/api/plan/variants/meter` | Creative UI | Gate multi-variant compare (`max_plan_variants`) |
 | MCP | `search_research`, `get_findings`, `generate_idea` | S14 | API key. Inputs treated as untrusted |
 
 Planned pages: `/profile`, `/plan`, `/roadmap`, a business-outline page, `/terms`, `/privacy`, `/refund`, `/contact`. The Idea button sits on each row in `ResultsPanel.vue`. Metering kinds: `search` (shipped), `brief` (1/day on Free), `idea` (Free 3/day, Pro 30, Team 150). Over limit → HTTP 402 `LIMIT_REACHED`. Weekly plan and outline require `can_roadmap`.
@@ -213,7 +216,7 @@ gyanwire-server/
     billing/       # Razorpay checkout + webhook
     usage/         # plan limits + /api/me/usage
     research/      # news + discover/scrape/pointers/LLM search
-    llm/           # LlmClient: the only /chat/completions call + llm_calls log
+    llm/           # OpenAiClient is the only /chat/completions POST. Flag off: LlmClient + gpt-4o-mini. Flag on: LlmService tiers Luna/Sol.
     persistence/   # JPA entities + repositories
     controller/    # industries, health, API envelope
   src/main/resources/db/migration/   # Flyway V1+
@@ -245,7 +248,9 @@ Chat message + industry (+ optional sub)
 
 **Score meaning in UI:** left number = list rank; amber badge = pointer match score (0–100).
 
-The only model HTTP call is `LlmClient.complete` (`com.gyanwire.llm.LlmClient`): `LLM_MODEL` / `LLM_BASE_URL` / `LLM_API_KEY`, temperature `0.2`, `response_format: json_object`. Each call is logged to `llm_calls`. Feature work does not change the request shape.
+With `llm.router.enabled=false` (the Cloud Run default), the only model HTTP call is still `LlmClient.complete`: temperature `0.2`, `response_format: json_object`, model `gpt-4o-mini`. `ModelRouter` can send `idea` and `outline` to `LLM_MODEL_HIGH` for Pro and Team; that slot stays equal to `gpt-4o-mini`.
+
+With the router on, callers pass a tier to `com.gyanwire.llm.LlmService`. `OpenAiClient` is the only `/chat/completions` POST. `LIGHT` is `gpt-6-luna` (effort low). `MAIN` and `DEEP` are both `gpt-6.1-sol` (medium and high). Those requests omit temperature and send `reasoning_effort`. `CostCalculator` writes `cost_inr` on `llm_calls` (V23). Over 80% of the ₹300 daily cap, `MAIN` drops to `LIGHT`. At 100%, optional stages return cache or a template. Anonymous gets no model call. Free stays on Luna. A shared plan draft is cached in `plan_cache` (V24). Stage flags default off, so a push does not change production answers until one stage is enabled.
 
 ### 4.4b Planned flow (S0–S16, not shipped)
 
@@ -328,7 +333,7 @@ Migrations run on Spring Boot startup (Flyway).
 | `VITE_GOOGLE_OAUTH_CLIENT_ID` | Google Sign-In |
 | `RAZORPAY_KEY_ID` / `KEY_SECRET` / `WEBHOOK_SECRET` | Billing |
 | `RAZORPAY_PLAN_PRO_MONTHLY` (etc.) | Razorpay plan ids |
-| `LLM_*` / `SEARXNG_URL` | Optional query sharpen / discovery. Frozen until S16: do not change model, base URL, or key as part of a feature step |
+| `LLM_*` / `SEARXNG_URL` | `LLM_MODEL` is the low model and the rollback value. `LLM_MODEL_HIGH` is idea and outline for Pro and Team. Temperature stays `0.2`. |
 | `VITE_BACKEND_URL` | API origin baked into the UI (`http://localhost:8080` local, Cloud Run in prod) |
 
 See `.env.example` for the full list.
@@ -363,7 +368,7 @@ Deploy helpers: Cloud Run / Firebase UI scripts under `scripts/`, `Dockerfile`, 
 6. **Skeleton loading in content** — never use the header as a status ticker.  
 7. **Scrollcraft taste on a tool** — forest/bone/amber, Fraunces + DM Sans; signature move = likely-search preview (`BRIEF.md`).  
 8. **Deterministic score, LLM for wording only** — idea rank, rupee amounts, and week lists come from code and the catalog. The current LLM may phrase titles, why-lines, briefs, and outline prose, and only from stripped fields (no name, email, or exact income). Same inputs produce the same ranking.  
-9. **Model freeze until S16** — do not change `LLM_MODEL`, provider, temperature (`0.2`), or `response_format`. No embeddings, router, or agent until `docs/PARKED_MODEL_WORK.md` says the start condition is met.
+9. **One client, two model slots** — temperature stays `0.2` and `response_format` stays `json_object`. `ModelRouter` picks the model. The bakeoff in `eval/reports/` decides whether `LLM_MODEL_HIGH` differs from `LLM_MODEL`.
 
 ---
 

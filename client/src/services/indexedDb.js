@@ -1,6 +1,8 @@
 const DB_NAME = 'gyanwire';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_INDUSTRIES = 'research_industries';
+const STORE_OPTIONS = 'plan_options';
+const STORE_VARIANTS = 'plan_variants';
 
 function openDb() {
   return new Promise((resolve, reject) => {
@@ -13,6 +15,12 @@ function openDb() {
       const db = request.result;
       if (!db.objectStoreNames.contains(STORE_INDUSTRIES)) {
         db.createObjectStore(STORE_INDUSTRIES, { keyPath: 'key' });
+      }
+      if (!db.objectStoreNames.contains(STORE_OPTIONS)) {
+        db.createObjectStore(STORE_OPTIONS, { keyPath: 'key' });
+      }
+      if (!db.objectStoreNames.contains(STORE_VARIANTS)) {
+        db.createObjectStore(STORE_VARIANTS, { keyPath: 'key' });
       }
     };
     request.onsuccess = () => resolve(request.result);
@@ -54,4 +62,15 @@ export async function idbPut(storeName, value) {
   }
 }
 
-export { STORE_INDUSTRIES };
+export async function idbDelete(storeName, key) {
+  const db = await openDb();
+  try {
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).delete(key);
+    await txDone(tx);
+  } finally {
+    db.close();
+  }
+}
+
+export { STORE_INDUSTRIES, STORE_OPTIONS, STORE_VARIANTS };

@@ -62,13 +62,19 @@ public final class SignalSchemas {
         signal.put("geography", blob.contains("india") ? "India" : "global");
         signal.put("sector", industry == null ? "" : industry);
         signal.put("industry", industry == null ? "" : industry);
-        signal.put("magnitude", 2);
+        int magnitude = switch (event) {
+            case "regulation", "govt_scheme" -> 4;
+            case "funding", "tech_release", "skills_gap", "supply_disruption" -> 3;
+            case "price_move", "consumer_trend", "infrastructure", "data_release" -> 3;
+            default -> 2;
+        };
+        signal.put("magnitude", magnitude);
         signal.put("direction", "neutral");
-        signal.put("time_horizon_days", 90);
+        signal.put("time_horizon_days", event.equals("regulation") || event.equals("govt_scheme") ? 45 : 90);
         signal.put("who_is_affected", new ArrayList<String>());
         signal.put("new_capability", null);
         signal.put("new_constraint", null);
-        signal.put("evidence_quality", 0.4);
+        signal.put("evidence_quality", "other".equals(event) ? 0.4 : 0.55);
         return signal;
     }
 }

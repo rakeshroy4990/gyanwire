@@ -17,8 +17,11 @@
     "db:up": "docker-compose up -d postgres",
     "db:down": "docker-compose down",
     "test": "cd gyanwire-server && ./gradlew test",
+    "test:client": "vitest run",
     "test:e2e": "playwright test",
-    "test:gyanwire-server": "cd gyanwire-server && ./gradlew test"
+    "test:gyanwire-server": "cd gyanwire-server && ./gradlew test",
+    "eval:llm": "cd gyanwire-server && ./gradlew evalLlm",
+    "news:ingest": "bash scripts/news-ingest.sh"
   },
   "dependencies": {
     "pinia": "^4.0.3",
@@ -26,9 +29,10 @@
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@vitejs/plugin-vue": "^6.0.9",
     "concurrently": "^9.1.2",
     "vite": "^6.2.0",
-    "@playwright/test": "^1.55.0"
+    "vitest": "^3.2.7"
   }
 }

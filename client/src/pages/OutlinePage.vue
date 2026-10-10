@@ -28,18 +28,24 @@ function download() {
 </script>
 
 <template>
-  <main class="page legal-page">
-    <h1>Business outline</h1>
+  <main class="account-page">
+    <header class="account-page__hero">
+      <p class="account-page__kicker">Business outline</p>
+      <h1>One-page outline</h1>
+      <p>Numbers come from your skill plan. Prose may be rewritten, but rupees stay as computed.</p>
+    </header>
     <PageSkeleton v-if="loading" variant="facts" :rows="8" label="Loading outline" />
     <template v-else>
       <p v-if="error" class="form-error">{{ error }}</p>
-      <dl v-if="outline">
+      <dl v-if="outline" class="account-facts">
         <template v-for="(value, key) in outline" :key="key">
           <dt>{{ key }}</dt>
           <dd>{{ value }}</dd>
         </template>
       </dl>
-      <button type="button" class="btn btn--primary" @click="download">Download Markdown</button>
+      <div class="account-actions">
+        <button type="button" class="btn btn--primary" @click="download">Download Markdown</button>
+      </div>
     </template>
   </main>
 </template>

@@ -14,7 +14,7 @@ function linkable(url) {
 }
 
 watch(() => [props.industry, props.results.length], async () => {
-  if (!props.industry || !props.results.length) {
+  if (!props.industry || props.industry === 'All' || !props.results.length) {
     mode.value = null;
     return;
   }

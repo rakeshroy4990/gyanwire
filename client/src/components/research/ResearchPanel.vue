@@ -53,28 +53,19 @@ function onThoughtsKeydown(event) {
         <template v-if="greetingName">Welcome back, {{ greetingName }}.</template>
         <template v-else>Messy notes in. Ranked findings out.</template>
       </h1>
-      <p class="search-section__lede">
-        Research like a chat: keep asking, keep the thread, and findings stay under each question.
-      </p>
     </header>
 
-    <ol class="guide-steps" aria-label="How to use Gyanwire">
-      <li class="guide-steps__item" :class="{ 'is-done': Boolean(industry) }">
-        <span class="guide-steps__num">1</span>
-        <span>Pick industry</span>
-      </li>
-      <li class="guide-steps__item" :class="{ 'is-done': thoughts.trim().length >= 8 || hasThread }">
-        <span class="guide-steps__num">2</span>
-        <span>Ask in chat</span>
-      </li>
-      <li class="guide-steps__item" :class="{ 'is-done': hasThread }">
-        <span class="guide-steps__num">3</span>
-        <span>Read findings</span>
-      </li>
-    </ol>
-
-    <div class="industry-label">Research industries</div>
+    <div class="industry-label">Industry</div>
     <div class="topics topics--industries" role="group" aria-label="Research industries">
+      <button
+        type="button"
+        class="category"
+        :class="{ 'is-active': industry === 'All' }"
+        :aria-pressed="industry === 'All'"
+        @click="emit('select-industry', 'All')"
+      >
+        All
+      </button>
       <button
         v-for="item in catalog"
         :key="item.name"
@@ -88,7 +79,7 @@ function onThoughtsKeydown(event) {
       </button>
     </div>
 
-    <div v-if="industry" class="subpanel">
+    <div v-if="industry && industry !== 'All'" class="subpanel">
       <div class="industry-label">
         Narrow in <span>{{ industry }}</span>
       </div>
@@ -109,8 +100,8 @@ function onThoughtsKeydown(event) {
 
     <div id="research-chat" class="research-chat">
       <div class="composer">
-        <label class="composer__label" for="research-thoughts">
-          {{ hasThread ? 'Continue the research chat' : 'Start a research chat' }}
+        <label class="sr-only" for="research-thoughts">
+          {{ hasThread ? 'Continue research chat' : 'Research question' }}
         </label>
         <textarea
           id="research-thoughts"
@@ -118,16 +109,14 @@ function onThoughtsKeydown(event) {
           rows="3"
           maxlength="2000"
           :placeholder="hasThread
-            ? 'Ask a follow-up… (Enter to send, Shift+Enter for a new line)'
-            : 'Example: CDSCO pathway for Class B SaMD… (Enter to send)'"
+            ? 'Ask a follow-up…'
+            : 'Ask a research question…'"
           @input="emit('update:thoughts', $event.target.value)"
           @keydown="onThoughtsKeydown"
         />
 
         <div class="composer__footer">
-          <p class="composer__note">
-            Your questions stay in this thread. Findings attach under each one.
-          </p>
+          <p v-if="searchesLeftLabel" class="usage-meter" aria-live="polite">{{ searchesLeftLabel }}</p>
           <div class="composer__actions">
             <button type="button" class="btn btn--ghost" @click="emit('clear')">
               New chat
@@ -148,23 +137,13 @@ function onThoughtsKeydown(event) {
       </div>
 
       <p
-        class="query-hint"
-        :class="{ 'query-hint--live': Boolean(queryPreview) }"
+        v-if="queryPreview"
+        class="query-hint query-hint--live"
         aria-live="polite"
       >
-        <template v-if="queryPreview">
-          <span class="query-hint__label">Likely search</span>
-          {{ queryPreview }}
-        </template>
-        <template v-else-if="hasThread">
-          Type a follow-up above. Earlier questions and findings stay below.
-        </template>
-        <template v-else>
-          Start typing. A live search preview appears here before you commit.
-        </template>
+        <span class="query-hint__label">Likely search</span>
+        {{ queryPreview }}
       </p>
-
-      <p v-if="searchesLeftLabel" class="usage-meter" aria-live="polite">{{ searchesLeftLabel }}</p>
 
       <div v-if="limitReached" class="upgrade-prompt" role="alert">
         <p>{{ limitMessage || 'Daily search limit reached.' }}</p>
@@ -173,9 +152,9 @@ function onThoughtsKeydown(event) {
         </RouterLink>
       </div>
 
-      <p v-if="industry === 'Share Market'" class="disclaimer">Informational only. Not investment advice or a recommendation to buy or sell.</p>
+      <p v-if="industry === 'Share Market'" class="disclaimer">Informational only. Not investment advice.</p>
       <p v-else-if="industry === 'Medical'" class="disclaimer">Research aid, not a diagnosis or treatment.</p>
-      <p v-else-if="industry === 'Astrology'" class="disclaimer">Cultural and educational context, not a health or financial prediction.</p>
+      <p v-else-if="industry === 'Astrology'" class="disclaimer">For cultural context, not prediction.</p>
       <p v-if="formError" class="form-error" role="alert">{{ formError }}</p>
 
       <div v-if="hasThread" class="chat-thread" aria-live="polite">

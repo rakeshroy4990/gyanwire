@@ -1,0 +1,60 @@
+{
+  "date" : "2026-10-10",
+  "usdToInr" : 84.0,
+  "temperature" : 0.2,
+  "responseFormat" : "json_object",
+  "tasks" : {
+    "idea" : {
+      "low" : {
+        "model" : "gpt-4o-mini",
+        "ok" : true,
+        "status" : 200,
+        "quality" : 0.4,
+        "tokensIn" : 431,
+        "tokensOut" : 201,
+        "latencyMs" : 2864,
+        "costInr" : 0.016,
+        "qualityPerRupee" : 25.7052888631836
+      },
+      "high" : {
+        "model" : "gpt-5.4",
+        "ok" : true,
+        "status" : 200,
+        "quality" : 0.425,
+        "tokensIn" : 430,
+        "tokensOut" : 310,
+        "latencyMs" : 7435,
+        "costInr" : 0.481,
+        "qualityPerRupee" : 0.8837596173840715
+      }
+    },
+    "outline" : {
+      "low" : {
+        "model" : "gpt-4o-mini",
+        "ok" : true,
+        "status" : 200,
+        "quality" : 1.0,
+        "tokensIn" : 208,
+        "tokensOut" : 204,
+        "latencyMs" : 3042,
+        "costInr" : 0.013,
+        "qualityPerRupee" : 77.50496031746032
+      },
+      "high" : {
+        "model" : "gpt-5.4",
+        "ok" : true,
+        "status" : 200,
+        "quality" : 1.0,
+        "tokensIn" : 207,
+        "tokensOut" : 170,
+        "latencyMs" : 2720,
+        "costInr" : 0.258,
+        "qualityPerRupee" : 3.8809329762874993
+      }
+    }
+  },
+  "useFlagshipForHighFeatures" : false,
+  "qualityFloor" : 0.8,
+  "decision" : "Keep idea and outline on gpt-4o-mini. gpt-5.4 is the newest same-provider model that accepts temperature 0.2 and json_object (gpt-6-astra rejects temperature 0.2). It scored 0.425 vs 0.400 on ideas and tied the outline at 1.0, which does not clear the 0.8 floor, and its quality per rupee is lower. LLM_MODEL stays the rollback value.",
+  "notes" : "Prices: gpt-4o-mini $0.15/$0.60 per 1M tokens, gpt-5.4 $2.50/$15 per 1M, converted at 84 INR per USD."
+}

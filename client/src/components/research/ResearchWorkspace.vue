@@ -1,57 +1,17 @@
 <script setup>
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuth } from '../../composables/useAuth.js';
 import { useResearch } from '../../composables/useResearch.js';
 import { useProduct } from '../../composables/useProduct.js';
+import { rememberIdeaSource } from '../../services/ideaSource.js';
 import ResearchPanel from './ResearchPanel.vue';
 import ResultsPanel from './ResultsPanel.vue';
-import IdeaCard from './IdeaCard.vue';
-import IndustryStrip from './IndustryStrip.vue';
 
+const router = useRouter();
 const { isAuthenticated, greetingName, openLoginPopup } = useAuth();
 const product = useProduct();
-const ideaItem = ref(null);
 const claim = ref('');
-
-onMounted(() => {
-  window.addEventListener('keydown', onDialogKey);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('keydown', onDialogKey);
-  document.body.classList.remove('app-dialog-open');
-});
-
-function onIdea(item) {
-  if (!isAuthenticated.value) {
-    openLoginPopup();
-    return;
-  }
-  ideaItem.value = { ...item, industry: industry.value };
-}
-
-watch(ideaItem, (value) => {
-  document.body.classList.toggle('app-dialog-open', Boolean(value));
-});
-
-function onDialogKey(event) {
-  if (event.key === 'Escape' && ideaItem.value) {
-    ideaItem.value = null;
-  }
-}
-
-async function onFeedback(body) {
-  await product.feedback(body);
-}
-
-async function onClaim(sentence) {
-  try {
-    const data = await product.claim(sentence);
-    claim.value = data?.stance || '';
-  } catch (err) {
-    claim.value = err.message;
-  }
-}
 
 const {
   catalog,
@@ -64,6 +24,8 @@ const {
   hasThread,
   browseResults,
   browseSub,
+  browseFreshness,
+  browseNote,
   showBrowseResults,
   emptyMessage,
   showEmpty,
@@ -78,6 +40,52 @@ const {
   limitMessage,
   upgradeUrl,
 } = useResearch();
+
+async function onIdea(item) {
+  if (!isAuthenticated.value) {
+    openLoginPopup();
+    return;
+  }
+  const scopedIndustry = industry.value && industry.value !== 'All'
+    ? industry.value
+    : (item.industry || '');
+  const src = await rememberIdeaSource({
+    url: item.url || '',
+    title: item.title || '',
+    description: item.whyIdea || item.description || item.why || '',
+    industry: scopedIndustry,
+    ideaCount: item.ideaCount,
+    signalType: item.signalType || '',
+    whyIdea: item.whyIdea || '',
+  });
+  router.push({
+    name: 'idea',
+    query: src ? { src } : {
+      url: item.url || '',
+      title: item.title || '',
+      description: (item.description || item.why || '').slice(0, 1500),
+      industry: scopedIndustry,
+      ideaCount: item.ideaCount ? String(item.ideaCount) : '',
+    },
+  });
+}
+
+async function onFeedback(body) {
+  if (body?.signalType) {
+    await product.newsFeedback(body);
+    return;
+  }
+  await product.feedback(body);
+}
+
+async function onClaim(sentence) {
+  try {
+    const data = await product.claim(sentence);
+    claim.value = data?.stance || '';
+  } catch (err) {
+    claim.value = err.message;
+  }
+}
 </script>
 
 <template>
@@ -111,6 +119,8 @@ const {
       v-if="!hasThread"
       :results="browseResults"
       :results-sub="browseSub"
+      :freshness="browseFreshness"
+      :note="browseNote"
       :empty-message="emptyMessage"
       :show-empty="showEmpty && !isLoading"
       :show-results="showBrowseResults"
@@ -119,17 +129,6 @@ const {
       @idea="onIdea"
       @feedback="onFeedback"
     />
-    <IndustryStrip
-      v-if="!isLoading || hasThread"
-      :industry="industry"
-      :results="hasThread ? [] : browseResults"
-    />
     <p v-if="claim" class="disclaimer">Claim check: {{ claim }}</p>
-    <IdeaCard
-      v-if="ideaItem"
-      :item="ideaItem"
-      :industry="ideaItem.industry || industry"
-      @close="ideaItem = null"
-    />
   </main>
 </template>

@@ -25,9 +25,12 @@ const page = computed(() => pages[route.meta.page] || pages.terms);
 </script>
 
 <template>
-  <main class="page legal-page">
-    <p class="disclaimer">REVIEW WITH LAWYER</p>
-    <h1>{{ page.title }}</h1>
-    <p>{{ page.body }}</p>
+  <main class="account-page">
+    <header class="account-page__hero legal-page">
+      <p class="account-page__kicker">Legal</p>
+      <p class="disclaimer">REVIEW WITH LAWYER</p>
+      <h1>{{ page.title }}</h1>
+      <p>{{ page.body }}</p>
+    </header>
   </main>
 </template>

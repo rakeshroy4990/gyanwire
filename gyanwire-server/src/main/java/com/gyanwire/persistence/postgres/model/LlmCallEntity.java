@@ -25,6 +25,30 @@ public class LlmCallEntity {
     @Column(name = "prompt_version", nullable = false)
     private String promptVersion;
 
+    @Column(name = "model")
+    private String model;
+
+    @Column(name = "stage")
+    private String stage;
+
+    @Column(name = "tier")
+    private String tier;
+
+    @Column(name = "plan_code")
+    private String planCode;
+
+    @Column(name = "ip_hash")
+    private String ipHash;
+
+    @Column(name = "cached_input_tokens", nullable = false)
+    private Integer cachedInputTokens = 0;
+
+    @Column(name = "cost_inr", precision = 12, scale = 6)
+    private java.math.BigDecimal costInr;
+
+    @Column(name = "escalated_from")
+    private String escalatedFrom;
+
     @Column(name = "tokens_in")
     private Integer tokensIn;
 
@@ -47,6 +71,9 @@ public class LlmCallEntity {
         }
         if (createdAt == null) {
             createdAt = Instant.now();
+        }
+        if (cachedInputTokens == null) {
+            cachedInputTokens = 0;
         }
     }
 
@@ -80,6 +107,70 @@ public class LlmCallEntity {
 
     public void setPromptVersion(String promptVersion) {
         this.promptVersion = promptVersion;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public void setModel(String model) {
+        this.model = model;
+    }
+
+    public String getStage() {
+        return stage;
+    }
+
+    public void setStage(String stage) {
+        this.stage = stage;
+    }
+
+    public String getTier() {
+        return tier;
+    }
+
+    public void setTier(String tier) {
+        this.tier = tier;
+    }
+
+    public String getPlanCode() {
+        return planCode;
+    }
+
+    public void setPlanCode(String planCode) {
+        this.planCode = planCode;
+    }
+
+    public String getIpHash() {
+        return ipHash;
+    }
+
+    public void setIpHash(String ipHash) {
+        this.ipHash = ipHash;
+    }
+
+    public Integer getCachedInputTokens() {
+        return cachedInputTokens;
+    }
+
+    public void setCachedInputTokens(Integer cachedInputTokens) {
+        this.cachedInputTokens = cachedInputTokens;
+    }
+
+    public java.math.BigDecimal getCostInr() {
+        return costInr;
+    }
+
+    public void setCostInr(java.math.BigDecimal costInr) {
+        this.costInr = costInr;
+    }
+
+    public String getEscalatedFrom() {
+        return escalatedFrom;
+    }
+
+    public void setEscalatedFrom(String escalatedFrom) {
+        this.escalatedFrom = escalatedFrom;
     }
 
     public Integer getTokensIn() {

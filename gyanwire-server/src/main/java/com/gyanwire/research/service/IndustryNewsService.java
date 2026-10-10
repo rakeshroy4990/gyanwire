@@ -2,6 +2,9 @@ package com.gyanwire.research.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gyanwire.ideas.FindingIdeaPotential;
+import com.gyanwire.ideas.IdeaVariety;
+import com.gyanwire.ideas.PatternMatcher;
 import com.gyanwire.research.ResearchException;
 import com.gyanwire.research.engine.CuriosityRank;
 import com.gyanwire.research.engine.DiscoverService;
@@ -36,16 +39,18 @@ public class IndustryNewsService {
 
     private final ObjectMapper mapper;
     private final DiscoverService discoverService;
+    private final PatternMatcher patternMatcher;
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8)).build();
     private Map<String, JsonNode> byName = Map.of();
 
-    public IndustryNewsService(ObjectMapper mapper, DiscoverService discoverService) {
+    public IndustryNewsService(ObjectMapper mapper, DiscoverService discoverService, PatternMatcher patternMatcher) {
         this.mapper = mapper;
         this.discoverService = discoverService;
+        this.patternMatcher = patternMatcher;
     }
 
     @PostConstruct
-    void load() throws Exception {
+    public void load() throws Exception {
         JsonNode root = mapper.readTree(new ClassPathResource("industry-news.json").getInputStream());
         Map<String, JsonNode> map = new LinkedHashMap<>();
         for (JsonNode node : root) {
@@ -95,11 +100,7 @@ public class IndustryNewsService {
                     item.put("category", category);
                     item.put("sub", activeSub);
                     item.put("why", item.getOrDefault("why", active.path("why").asText()));
-                    item.put("score", CuriosityRank.boost(item));
-                    String curiosityWhy = CuriosityRank.why(String.valueOf(item.get("title")) + " " + item.get("description"));
-                    if (!curiosityWhy.isBlank()) {
-                        item.put("why", curiosityWhy);
-                    }
+                    applyIdeaScore(item, category);
                     results.add(item);
                 }
             } catch (Exception ignored) {}
@@ -121,24 +122,34 @@ public class IndustryNewsService {
                     row.put("url", item.get("url"));
                     row.put("description", item.getOrDefault("description", active.path("why").asText()));
                     row.put("why", active.path("why").asText());
-                    row.put("score", Math.max(58, 92 - results.size() * 6));
                     row.put("source", item.getOrDefault("source", "web"));
                     row.put("category", category);
                     row.put("sub", activeSub);
-                    row.put("score", CuriosityRank.boost(row));
+                    applyIdeaScore(row, category);
                     results.add(row);
                 }
             } catch (Exception ignored) {}
         }
 
         results = IndiaSupport.sortIndiaFirst(results, r -> host(String.valueOf(r.get("url"))));
-        results.sort((a, b) -> Integer.compare(CuriosityRank.boost(b), CuriosityRank.boost(a)));
-        List<Map<String, Object>> ordered = results.subList(0, Math.min(limit, results.size()));
+        List<Map<String, Object>> scored = new ArrayList<>();
+        for (Map<String, Object> item : results) {
+            Map<String, Object> copy = new HashMap<>(item);
+            applyIdeaScore(copy, category);
+            int ideaScore = copy.get("score") instanceof Number n ? n.intValue() : 0;
+            if (ideaScore <= 0) {
+                continue;
+            }
+            scored.add(copy);
+        }
+        scored.sort((a, b) -> Integer.compare(
+                ((Number) b.getOrDefault("score", 0)).intValue(),
+                ((Number) a.getOrDefault("score", 0)).intValue()));
+        List<Map<String, Object>> ordered = scored.subList(0, Math.min(limit, scored.size()));
         List<Map<String, Object>> withIds = new ArrayList<>();
         for (int i = 0; i < ordered.size(); i++) {
             Map<String, Object> copy = new HashMap<>(ordered.get(i));
             copy.put("id", "n-" + (i + 1));
-            copy.put("score", CuriosityRank.boost(copy));
             withIds.add(copy);
         }
 
@@ -216,6 +227,32 @@ public class IndustryNewsService {
             items.add(row);
         }
         return items;
+    }
+
+    private void applyIdeaScore(Map<String, Object> item, String industry) {
+        FindingIdeaPotential.Result idea = FindingIdeaPotential.score(
+                String.valueOf(item.getOrDefault("title", "")),
+                String.valueOf(item.getOrDefault("description", "")),
+                industry,
+                "working",
+                patternMatcher.all()
+        );
+        item.put("score", idea.score());
+        item.put("ideaDrivers", idea.drivers());
+        item.put("ideaPatterns", idea.patternIds());
+        item.put("eventType", idea.eventType());
+        if (idea.score() > 0) {
+            String title = String.valueOf(item.getOrDefault("title", ""));
+            String description = String.valueOf(item.getOrDefault("description", ""));
+            item.put("ideaCount", IdeaVariety.formatsFor(
+                    idea.eventType(),
+                    patternMatcher.shapesFor(idea.patternIds()),
+                    title + "\n" + description,
+                    idea.score()).size());
+        }
+        if (idea.score() > 0 && idea.why() != null && !idea.why().isBlank()) {
+            item.put("why", idea.why());
+        }
     }
 
     private static boolean isGeneric(String title, List<String> blockGeneric) {

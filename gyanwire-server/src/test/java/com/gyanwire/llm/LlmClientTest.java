@@ -47,6 +47,7 @@ class LlmClientTest {
         assertThat(row.getPromptVersion()).isEqualTo("query-sharpen.v0");
         assertThat(row.getTokensIn()).isEqualTo(11);
         assertThat(row.getTokensOut()).isEqualTo(4);
+        assertThat(row.getModel()).isEqualTo("gpt-4o-mini");
         assertThat(row.getLatencyMs()).isNotNegative();
     }
 
@@ -93,6 +94,50 @@ class LlmClientTest {
         );
 
         assertThat(client.complete(null, "query-sharpen", "query-sharpen.v0", "s", "u")).isNull();
+    }
+
+    @Test
+    void highTierUsesFlagshipOnlyForIdeaAndOutline() throws Exception {
+        LlmCallRepository calls = mock(LlmCallRepository.class);
+        when(calls.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        AtomicReference<String> body = new AtomicReference<>();
+        LlmClient client = new LlmClient(
+                "sk-test",
+                "https://api.openai.com/v1",
+                "gpt-4o-mini",
+                "gpt-5.4",
+                mapper,
+                calls,
+                (uri, jsonBody, apiKey) -> {
+                    body.set(jsonBody);
+                    return new LlmClient.LlmHttpResult(200, "{\"choices\":[{\"message\":{\"content\":\"{\\\"ok\\\":true}\"}}]}");
+                },
+                userId -> true
+        );
+
+        client.complete(java.util.UUID.randomUUID(), "idea", "idea.v1", "system", "user");
+        assertThat(mapper.readTree(body.get()).path("model").asText()).isEqualTo("gpt-5.4");
+        assertThat(mapper.readTree(body.get()).path("temperature").asDouble()).isEqualTo(0.2);
+        assertThat(mapper.readTree(body.get()).path("response_format").path("type").asText()).isEqualTo("json_object");
+
+        client.complete(java.util.UUID.randomUUID(), "query-sharpen", "query-sharpen.v1", "system", "user");
+        assertThat(mapper.readTree(body.get()).path("model").asText()).isEqualTo("gpt-4o-mini");
+
+        LlmClient denied = new LlmClient(
+                "sk-test",
+                "https://api.openai.com/v1",
+                "gpt-4o-mini",
+                "gpt-5.4",
+                mapper,
+                calls,
+                (uri, jsonBody, apiKey) -> {
+                    body.set(jsonBody);
+                    return new LlmClient.LlmHttpResult(200, "{\"choices\":[{\"message\":{\"content\":\"{\\\"ok\\\":true}\"}}]}");
+                },
+                userId -> false
+        );
+        denied.complete(java.util.UUID.randomUUID(), "outline", "outline.v1", "system", "user");
+        assertThat(mapper.readTree(body.get()).path("model").asText()).isEqualTo("gpt-4o-mini");
     }
 
     private LlmClient client(LlmCallRepository calls, LlmClient.LlmTransport transport) {

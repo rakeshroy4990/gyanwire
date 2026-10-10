@@ -1,0 +1,9 @@
+ALTER TABLE llm_calls ADD COLUMN IF NOT EXISTS stage TEXT;
+ALTER TABLE llm_calls ADD COLUMN IF NOT EXISTS tier TEXT;
+ALTER TABLE llm_calls ADD COLUMN IF NOT EXISTS plan_code TEXT;
+ALTER TABLE llm_calls ADD COLUMN IF NOT EXISTS ip_hash TEXT;
+ALTER TABLE llm_calls ADD COLUMN IF NOT EXISTS cached_input_tokens INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE llm_calls ADD COLUMN IF NOT EXISTS cost_inr NUMERIC(12, 6);
+ALTER TABLE llm_calls ADD COLUMN IF NOT EXISTS escalated_from TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_llm_calls_stage_created ON llm_calls (stage, created_at);

@@ -30,19 +30,47 @@ if [[ -n "${JWT_SECRET:-}" && -z "${APP_AUTH_JWT_SECRET:-}" ]]; then
   export APP_AUTH_JWT_SECRET="$JWT_SECRET"
 fi
 
+# PIDs listening on a TCP port (one per line).
+listen_pids() {
+  lsof -nP -tiTCP:"$1" -sTCP:LISTEN 2>/dev/null || true
+}
+
+# Stop leftover Spring Boot / bootRun JVMs from prior runs (often survive Ctrl+C).
+stop_stale_api() {
+  local pids
+  pids="$(pgrep -f 'com\.gyanwire\.GyanwireApplication' 2>/dev/null || true)"
+  if [[ -z "$pids" ]]; then
+    return 0
+  fi
+  echo "Stopping stale GyanwireApplication: $(echo "$pids" | tr '\n' ' ')"
+  # shellcheck disable=SC2086
+  kill $pids 2>/dev/null || true
+  sleep 0.5
+  pids="$(pgrep -f 'com\.gyanwire\.GyanwireApplication' 2>/dev/null || true)"
+  if [[ -n "$pids" ]]; then
+    # shellcheck disable=SC2086
+    kill -9 $pids 2>/dev/null || true
+  fi
+}
+
 kill_port() {
   local port="$1"
   local attempt
   local pids
 
-  for attempt in 1 2 3; do
-    pids="$(lsof -nP -tiTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)"
+  pids="$(listen_pids "$port")"
+  if [[ -z "$pids" ]]; then
+    echo "Port $port is free."
+    return 0
+  fi
+
+  echo "Port $port is occupied by: $(echo "$pids" | tr '\n' ' ')"
+  for attempt in 1 2 3 4 5; do
+    pids="$(listen_pids "$port")"
     if [[ -z "$pids" ]]; then
       echo "Port $port is free."
       return 0
     fi
-
-    echo "Port $port is occupied by: $pids"
     if [[ "$attempt" -eq 1 ]]; then
       echo "Killing process(es) on port $port..."
       # shellcheck disable=SC2086
@@ -52,10 +80,10 @@ kill_port() {
       # shellcheck disable=SC2086
       kill -9 $pids 2>/dev/null || true
     fi
-    sleep 0.5
+    sleep 0.4
   done
 
-  if lsof -nP -tiTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1; then
+  if [[ -n "$(listen_pids "$port")" ]]; then
     echo "Could not free port $port." >&2
     exit 1
   fi
@@ -64,6 +92,7 @@ kill_port() {
 }
 
 echo "Gyanwire → UI :$UI_PORT  API :$API_PORT"
+stop_stale_api
 kill_port "$UI_PORT"
 kill_port "$API_PORT"
 

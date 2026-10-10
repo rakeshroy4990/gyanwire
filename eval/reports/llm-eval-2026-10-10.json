@@ -1,0 +1,9 @@
+{
+  "date" : "2026-10-10",
+  "queries" : 35,
+  "schemaPassRate" : 1.0,
+  "top3Overlap" : 0.952,
+  "messyGate" : true,
+  "weekRules" : true,
+  "pass" : true
+}

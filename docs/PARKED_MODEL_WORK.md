@@ -4,8 +4,8 @@ Do not start these until S16 in `CURSOR_PLAN_FLOW_FIRST.md` is done and `eval/re
 
 | # | Item | Start condition | Notes |
 |---|---|---|---|
-| P1 | Choose new model(s). Run `evalSearch` plus idea and brief evals side by side. Decide on quality per rupee. | Flow complete, baseline stored | |
-| P2 | Add `ModelRouter` (task → model) and per-plan model limits. | P1 decision | |
+| P1 | Choose new model(s). Run `evalSearch` plus idea and brief evals side by side. Decide on quality per rupee. | S16 done, baseline stored | Done 2026-10-10. `gpt-6-astra` rejects temperature `0.2`. `gpt-5.4` accepts it. Idea 0.425 vs 0.400, outline tied at 1.0, quality per rupee worse. Stay on `gpt-4o-mini`. Report: `eval/reports/model-bakeoff-2026-10-10.json`. |
+| P2 | Add `ModelRouter` (task → model) and per-plan model limits. | P1 decision | Done. `idea` and `outline` use `LLM_MODEL_HIGH` for Pro and Team. Other features and other plans use `LLM_MODEL`. High slot currently equals the low model. |
 | P3 | Embeddings + pgvector + reranker. Compare against the S5 full-text hybrid. | P1, eval ready | |
 | P4 | Provider-native structured outputs or tool use, where that beats JSON-in-prompt. | P2 | Current client uses `response_format: json_object` and temperature `0.2`. Leave both until this item. |
 | P5 | Prompt caching, cache diagnostics, conversation compaction, effort per plan. | P2 | |

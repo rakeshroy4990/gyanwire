@@ -35,10 +35,15 @@ public final class FitFilter {
         if (containsAny(blob, "gambling", "casino", "betting odds")) {
             return new Decision(false, "gambling");
         }
-        if ("Share Market".equals(industry) && !containsAny(blob, "education", "course", "tool", "explainer", "tracker", "learn")) {
+        if ("Share Market".equals(industry) && !containsAny(blob,
+                "education", "course", "tool", "explainer", "tracker", "learn",
+                "checklist", "template", "briefing", "newsletter", "workshop",
+                "calculator", "guide", "dashboard", "alert", "training")) {
             return new Decision(false, "share-market-scope");
         }
-        if ("Medical".equals(industry) && !containsAny(blob, "education", "admin", "logistics", "records", "training", "clinic ops")) {
+        if ("Medical".equals(industry) && !containsAny(blob,
+                "education", "admin", "logistics", "records", "training", "clinic ops",
+                "checklist", "template", "scheduling", "intake")) {
             return new Decision(false, "medical-scope");
         }
         if (capitalAvailable >= 0 && capitalNeeded > 3L * capitalAvailable) {

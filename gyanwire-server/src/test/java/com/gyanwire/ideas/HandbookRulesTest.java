@@ -64,6 +64,7 @@ class HandbookRulesTest {
     void skillBudgetIsAWeeklyPathForOneNewsIdea() {
         List<SkillBudgetPlanner.Item> catalog = List.of(
                 new SkillBudgetPlanner.Item("vscode", "VS Code", 0, "free", "tools", null, 0, 5, true),
+                new SkillBudgetPlanner.Item("notion-free", "Notion free", 0, "free", "tools", null, 0, 4, true),
                 new SkillBudgetPlanner.Item("sheets", "Google Sheets", 0, "free", "tools", null, 0, 5, true),
                 new SkillBudgetPlanner.Item("yt-python", "Python for beginners", 0, "free", "learning", null, 0, 5, true),
                 new SkillBudgetPlanner.Item("swayam", "SWAYAM starter course", 0, "free", "learning", null, 0, 4, true),
@@ -73,6 +74,7 @@ class HandbookRulesTest {
         );
         Map<String, List<String>> skills = Map.of(
                 "vscode", List.of("code"),
+                "notion-free", List.of("notes"),
                 "sheets", List.of("sheets"),
                 "yt-python", List.of("python"),
                 "swayam", List.of("learning"),
@@ -95,15 +97,55 @@ class HandbookRulesTest {
         assertThat(freePath.budget().total()).isZero();
         assertThat(freePath.budget().lines()).hasSizeLessThanOrEqualTo(4);
         assertThat(freePath.budget().lines()).extracting(SkillBudgetPlanner.Line::id)
-                .contains("yt-python", "meetup")
-                .doesNotContain("paid", "domain", "swayam", "sheets");
+                .contains("yt-python", "meetup", "vscode")
+                .doesNotContain("paid", "domain", "swayam", "sheets", "notion-free");
         assertThat(freePath.weeks()).hasSize(12);
         assertThat(freePath.weeks()).allSatisfy(week -> {
             assertThat(week.goal()).contains("Python tutoring for IT");
             assertThat(week.toolName()).isNotBlank();
             assertThat(week.tasks()).hasSize(3);
+            assertThat(week.taskType()).isNotBlank();
+            assertThat(week.sittings()).isGreaterThanOrEqualTo(1);
+            assertThat(week.baseHours()).isGreaterThan(0);
+            assertThat(week.phase()).isNotBlank();
         });
         assertThat(freePath.weeks().get(0).toolName()).isEqualTo("Python for beginners");
+        assertThat(freePath.weeks().get(0).taskType()).isEqualTo("learning");
+        assertThat(freePath.weeks().stream().filter(w -> "build".equals(w.phase())).findFirst())
+                .get()
+                .extracting(SkillBudgetPlanner.WeekStep::toolName)
+                .isEqualTo("VS Code");
+
+        String sebiNews = "Sebi’s CAS guidelines likely within a week, says chief Tuhin Kanta Pandey";
+        String sebiIdea = "Online course on Sebi’s CAS guidelines likely within a week, says chief Tuhin Kanta";
+        assertThat(SkillBudgetPlanner.shortLabel(sebiIdea, sebiNews))
+                .isEqualTo("online course on Sebi’s CAS guidelines likely within a week");
+        SkillBudgetPlanner.Path sebiPath = SkillBudgetPlanner.path(
+                sebiIdea,
+                sebiNews,
+                sebiIdea + " " + sebiNews,
+                "learn",
+                0,
+                10,
+                false,
+                catalog,
+                skills,
+                Set.of(),
+                LocalDate.now());
+        assertThat(sebiPath.weeks().get(0).goal()).isEqualTo(
+                "Write the offer for online course on Sebi’s CAS guidelines likely within a week");
+        assertThat(sebiPath.weeks().get(0).goal()).doesNotContain("from “");
+        assertThat(sebiPath.goal()).doesNotContain("from the news");
+        assertThat(sebiPath.budget().lines()).extracting(SkillBudgetPlanner.Line::id)
+                .contains("notion-free")
+                .doesNotContain("vscode");
+        assertThat(sebiPath.weeks().stream().filter(w -> "build".equals(w.phase())).map(SkillBudgetPlanner.WeekStep::toolName))
+                .isNotEmpty()
+                .allMatch(name -> !"VS Code".equals(name));
+        assertThat(sebiPath.weeks().stream().filter(w -> "build".equals(w.phase())).findFirst())
+                .get()
+                .extracting(SkillBudgetPlanner.WeekStep::toolName)
+                .isEqualTo("Notion free");
 
         SkillBudgetPlanner.Path paidPath = SkillBudgetPlanner.path(
                 "Python tutoring for IT",
@@ -198,6 +240,6 @@ class HandbookRulesTest {
         Map<String, Object> signal = SignalSchemas.fallback("SEBI circular for brokers", "Share Market");
         assertThat(signal.get("event_type")).isEqualTo("regulation");
         assertThat(signal.get("industry")).isEqualTo("Share Market");
-        assertThat(signal.get("magnitude")).isEqualTo(2);
+        assertThat(signal.get("magnitude")).isEqualTo(4);
     }
 }

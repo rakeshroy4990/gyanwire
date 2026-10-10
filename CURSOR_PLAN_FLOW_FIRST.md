@@ -341,6 +341,8 @@ totals never exceed the budget.
 
 **Acceptance:** the plan total never exceeds the budget, and the student path uses free resources first.
 
+Creative UI + What-If Simulator (Trail map, Gear pack, Fuel gauge, tool swaps): see `CURSOR_PLAN_CREATIVE_UI.md`.
+
 ### S11 — Weekly planner + business outline
 
 **Prompt:**
