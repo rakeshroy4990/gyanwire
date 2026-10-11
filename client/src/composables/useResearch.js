@@ -1,8 +1,19 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
+import { useRoute } from 'vue-router';
 import { useUiStore } from '../stores/ui.store.js';
+import { useProfileStore } from '../stores/profile.store.js';
 import { apiUrl } from '../services/apiBase.js';
 import { loadResearchIndustries } from '../services/industries.service.js';
+import { withoutFyiNews } from '../services/newsFyi.js';
+import { readNdjson } from '../services/newsStream.js';
+import {
+  clearResearchReturn,
+  consumeResearchHome,
+  loadResearchWorkspace,
+  saveResearchWorkspace,
+} from '../services/researchWorkspace.js';
+import { useAuth } from './useAuth.js';
 import { useUsage } from './useUsage.js';
 
 const ALL_INDUSTRY = 'All';
@@ -53,7 +64,7 @@ function findingScore(item) {
   return Number.isFinite(n) ? n : 0;
 }
 
-/** Keep only findings with a business-idea score, highest first. */
+/** Keep only findings with a business-idea score, highest first. Drop FYI briefs. */
 function mapResults(payload) {
   const list = Array.isArray(payload?.results)
     ? payload.results
@@ -62,7 +73,7 @@ function mapResults(payload) {
       : Array.isArray(payload)
         ? payload
         : [];
-  const mapped = list.map((item) => ({
+  const mapped = withoutFyiNews(list).map((item) => ({
     ...item,
     host: item.source || hostname(item.url),
     score: item.opportunityScore ?? item.score,
@@ -74,6 +85,12 @@ function mapResults(payload) {
   return mapped
     .filter((item) => findingScore(item) > 0)
     .sort((a, b) => findingScore(b) - findingScore(a));
+}
+
+function mapStreamItem(item) {
+  if (!item || typeof item !== 'object') return null;
+  const [row] = mapResults({ results: [item], freshness: 'stream' });
+  return row || null;
 }
 
 async function readSearchStream(response, turnId, scope, usage, thread) {
@@ -117,30 +134,49 @@ async function readSearchStream(response, turnId, scope, usage, thread) {
   }
 }
 
+function countryName(code, countries) {
+  if (!code) return '';
+  const match = (countries || []).find((item) => item?.code === code);
+  return match?.name || code;
+}
+
 function makeId() {
   return `turn_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
 export function useResearch() {
   const ui = useUiStore();
+  const route = useRoute();
   const { homeNonce } = storeToRefs(ui);
+  const { isAuthenticated } = useAuth();
+  const profileStore = useProfileStore();
   const usage = useUsage();
+  const savedWorkspace = consumeResearchHome() ? null : loadResearchWorkspace();
+  /** False after the user picks an industry chip. Home resets to All while this stays true. */
+  const followProfile = ref(savedWorkspace ? savedWorkspace.followProfile : true);
   const catalog = ref(FALLBACK_CATALOG);
-  const industry = ref(ALL_INDUSTRY);
-  const subcategory = ref(null);
-  const thoughts = ref('');
+  const industry = ref(savedWorkspace?.industry || ALL_INDUSTRY);
+  const subcategory = ref(savedWorkspace?.subcategory ?? null);
+  const thoughts = ref(savedWorkspace?.thoughts || '');
   const formError = ref('');
   const isLoading = ref(false);
   /** Chat turns: each research question keeps its findings underneath. */
-  const thread = ref([]);
+  const thread = ref(savedWorkspace?.thread || []);
   /** Browse-mode product news (shown only when the chat thread is empty). */
-  const browseResults = ref([]);
-  const browseSub = ref('');
-  const browseFreshness = ref('');
-  const browseNote = ref('');
-  const emptyMessage = ref('Pick an industry for product news, or start a research chat.');
-  const showEmpty = ref(true);
+  const browseResults = ref(withoutFyiNews(savedWorkspace?.browseResults || []));
+  const browseSub = ref(savedWorkspace?.browseSub || '');
+  const browseFreshness = ref(savedWorkspace?.browseFreshness || '');
+  const browseNote = ref(savedWorkspace?.browseNote || '');
+  const browseCountries = ref(savedWorkspace?.browseCountries || []);
+  /** Null means worldwide, with India still ranked first. */
+  const country = ref(savedWorkspace?.country || null);
+  const emptyMessage = ref(
+    savedWorkspace?.emptyMessage || 'Pick an industry for product news, or start a research chat.',
+  );
+  const showEmpty = ref(savedWorkspace ? savedWorkspace.showEmpty : true);
   let newsRequestId = 0;
+  let newsAbort = null;
+  let persistReady = false;
 
   const isAllIndustry = computed(() => !industry.value || industry.value === ALL_INDUSTRY);
 
@@ -177,10 +213,82 @@ export function useResearch() {
     });
   }
 
+  watch(
+    () => (typeof route.query.q === 'string' ? route.query.q : ''),
+    (q) => {
+      const text = q.trim().slice(0, 2000);
+      if (!text) return;
+      thoughts.value = text;
+      scrollComposerIntoView();
+    },
+    { immediate: true },
+  );
+
   function scrollTurnIntoView(turnId) {
     nextTick(() => {
       document.getElementById(`turn-${turnId}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
+  }
+
+  function applyHomeFeed() {
+    if (!followProfile.value || hasThread.value) return;
+    industry.value = ALL_INDUSTRY;
+    subcategory.value = null;
+    loadNewsFeed({ industryName: ALL_INDUSTRY });
+  }
+
+  function applyBrowseMeta(data, scoped, sub) {
+    const label = data?.label || scoped || 'Product news';
+    const scope = sub ? `${scoped} · ${sub}` : scoped;
+    browseCountries.value = Array.isArray(data?.countries) ? data.countries : [];
+    browseFreshness.value = data?.freshness || '';
+    browseNote.value = data?.message || '';
+    const place = countryName(country.value, browseCountries.value);
+    const scopeLine = scoped
+      ? `5 latest ${label}${sub ? ` · ${scope}` : ''}`
+      : 'Top searched product news';
+    browseSub.value = place
+      ? `${place} · ${scopeLine}`
+      : `Worldwide, India first · ${scopeLine}`;
+    return place;
+  }
+
+  function settleBrowse(data, scoped, place) {
+    showEmpty.value = browseResults.value.length === 0;
+    const warming = data?.freshness === 'warming_up' && browseResults.value.length === 0;
+    emptyMessage.value = warming
+      ? 'Fetching the latest news...'
+      : browseResults.value.length
+        ? 'Pick an industry for product news, or start a research chat.'
+        : place
+          ? `No findings for ${place} yet.`
+          : scoped
+            ? `No product news for ${scoped} yet.`
+            : 'No product news yet.';
+  }
+
+  async function readDefaultNews(response, requestId, scoped, sub) {
+    let frame = {};
+    await readNdjson(response, async (event) => {
+      if (requestId !== newsRequestId) return;
+      if (event?.type === 'meta') {
+        frame = event;
+        applyBrowseMeta(event, scoped, sub);
+      } else if (event?.type === 'item') {
+        const row = mapStreamItem(event.item);
+        if (!row) return;
+        const key = row.url || row.id;
+        if (key && browseResults.value.some((item) => (item.url || item.id) === key)) return;
+        browseResults.value = [...browseResults.value, row];
+        await nextTick();
+      } else if (event?.type === 'error') {
+        throw new Error(event.message || 'Could not load product news.');
+      } else if (event?.type === 'done') {
+        frame = { ...frame, returned: event.returned };
+      }
+    });
+    if (requestId !== newsRequestId) return;
+    settleBrowse(frame, scoped, countryName(country.value, browseCountries.value));
   }
 
   async function loadNewsFeed({ industryName = null, sub = null } = {}) {
@@ -189,9 +297,14 @@ export function useResearch() {
 
     const scoped = industryName && industryName !== ALL_INDUSTRY ? industryName : null;
     const requestId = ++newsRequestId;
+    newsAbort?.abort();
+    const controller = new AbortController();
+    newsAbort = controller;
     isLoading.value = true;
     browseResults.value = [];
     browseSub.value = sub || scoped || 'Loading…';
+    browseFreshness.value = '';
+    browseNote.value = '';
     showEmpty.value = false;
 
     try {
@@ -200,29 +313,33 @@ export function useResearch() {
         path = `/api/news/${encodeURIComponent(scoped)}?limit=5&intent=products&window=14d`;
         if (sub) path += `&sub=${encodeURIComponent(sub)}`;
       }
-      const res = await fetch(apiUrl(path), { credentials: 'include' });
-      const payload = await res.json();
+      if (country.value) path += `&country=${encodeURIComponent(country.value)}`;
+      const res = await fetch(apiUrl(path), {
+        credentials: 'include',
+        cache: 'no-store',
+        signal: controller.signal,
+        headers: { Accept: scoped ? 'application/json' : 'application/x-ndjson, application/json' },
+      });
       if (requestId !== newsRequestId) return;
-      if (!res.ok || !payload.success) {
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
         throw new Error(payload.message || 'Could not load product news.');
       }
-      const label = payload.data?.label || scoped || 'Product news';
-      const scope = sub ? `${scoped} · ${sub}` : scoped;
-      browseResults.value = mapResults(payload.data);
-      browseFreshness.value = payload.data?.freshness || '';
-      browseNote.value = payload.data?.message || '';
-      browseSub.value = scoped
-        ? `5 latest ${label}${sub ? ` · ${scope}` : ''}`
-        : 'Top searched product news';
-      showEmpty.value = browseResults.value.length === 0;
-      const warming = payload.data?.freshness === 'warming_up' && browseResults.value.length === 0;
-      emptyMessage.value = warming
-        ? 'Fetching the latest news...'
-        : browseResults.value.length
-          ? 'Pick an industry for product news, or start a research chat.'
-          : 'No product news yet.';
-    } catch (error) {
+      const contentType = res.headers.get('content-type') || '';
+      if (!scoped && contentType.includes('ndjson')) {
+        await readDefaultNews(res, requestId, scoped, sub);
+        return;
+      }
+      const payload = await res.json();
       if (requestId !== newsRequestId) return;
+      if (!payload.success) {
+        throw new Error(payload.message || 'Could not load product news.');
+      }
+      browseResults.value = mapResults(payload.data);
+      const place = applyBrowseMeta(payload.data, scoped, sub);
+      settleBrowse(payload.data, scoped, place);
+    } catch (error) {
+      if (error?.name === 'AbortError' || requestId !== newsRequestId) return;
       browseResults.value = [];
       browseSub.value = '';
       browseFreshness.value = '';
@@ -237,6 +354,7 @@ export function useResearch() {
   }
 
   function selectIndustry(name) {
+    followProfile.value = false;
     if (industry.value === name) {
       if (name === ALL_INDUSTRY) return;
       industry.value = ALL_INDUSTRY;
@@ -251,7 +369,20 @@ export function useResearch() {
     if (!hasThread.value) loadNewsFeed({ industryName: name });
   }
 
+  function selectCountry(code) {
+    if (!code && !country.value) return;
+    const next = code && country.value !== code ? code : null;
+    country.value = next;
+    if (!hasThread.value) {
+      loadNewsFeed({
+        industryName: industry.value,
+        sub: isAllIndustry.value ? null : subcategory.value,
+      });
+    }
+  }
+
   function selectSub(name) {
+    followProfile.value = false;
     if (isAllIndustry.value) return;
     if (subcategory.value === name) {
       subcategory.value = null;
@@ -373,17 +504,42 @@ export function useResearch() {
     }
   }
 
+  function persistWorkspace() {
+    if (!persistReady) return;
+    saveResearchWorkspace({
+      industry: industry.value,
+      subcategory: subcategory.value,
+      thoughts: thoughts.value,
+      thread: thread.value,
+      browseResults: browseResults.value,
+      browseSub: browseSub.value,
+      browseFreshness: browseFreshness.value,
+      browseNote: browseNote.value,
+      browseCountries: browseCountries.value,
+      country: country.value,
+      emptyMessage: emptyMessage.value,
+      showEmpty: showEmpty.value,
+      followProfile: followProfile.value,
+    });
+  }
+
   function clearForm() {
-    industry.value = ALL_INDUSTRY;
+    consumeResearchHome();
+    clearResearchReturn();
+    followProfile.value = true;
     subcategory.value = null;
     thoughts.value = '';
     formError.value = '';
     thread.value = [];
     browseResults.value = [];
     browseSub.value = '';
+    browseFreshness.value = '';
+    browseNote.value = '';
+    browseCountries.value = [];
+    country.value = null;
     showEmpty.value = true;
     usage.clearLimitPrompt();
-    loadNewsFeed({ industryName: ALL_INDUSTRY });
+    applyHomeFeed();
   }
 
   function goHomeWorkspace() {
@@ -394,6 +550,14 @@ export function useResearch() {
   watch(homeNonce, (value, previous) => {
     if (value !== previous) goHomeWorkspace();
   });
+
+  watch(
+    [industry, subcategory, thoughts, thread, browseResults, browseSub, browseFreshness, browseNote, browseCountries, country, emptyMessage, showEmpty, followProfile],
+    persistWorkspace,
+    { deep: true },
+  );
+
+  persistReady = true;
 
   onMounted(async () => {
     try {
@@ -406,9 +570,25 @@ export function useResearch() {
     } catch {
       // keep FALLBACK_CATALOG
     }
-    industry.value = ALL_INDUSTRY;
-    subcategory.value = null;
-    loadNewsFeed({ industryName: ALL_INDUSTRY });
+    // Manual industry picks restore; still refresh so FYI cannot stick from sessionStorage.
+    if (savedWorkspace && !followProfile.value) {
+      persistWorkspace();
+      if (!hasThread.value) {
+        await loadNewsFeed({ industryName: industry.value, sub: subcategory.value });
+      }
+      return;
+    }
+    applyHomeFeed();
+  });
+
+  watch(isAuthenticated, (signedIn, wasSignedIn) => {
+    if (!signedIn) {
+      followProfile.value = true;
+      profileStore.setProfile(null);
+    } else if (!wasSignedIn) {
+      followProfile.value = true;
+    }
+    if (followProfile.value && !hasThread.value) applyHomeFeed();
   });
 
   return {
@@ -424,6 +604,8 @@ export function useResearch() {
     browseSub,
     browseFreshness,
     browseNote,
+    browseCountries,
+    country,
     showBrowseResults,
     emptyMessage,
     showEmpty,
@@ -431,6 +613,7 @@ export function useResearch() {
     queryPreview,
     selectIndustry,
     selectSub,
+    selectCountry,
     runSearch,
     clearForm,
     searchesLeftLabel: usage.searchesLeftLabel,

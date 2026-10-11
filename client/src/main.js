@@ -3,6 +3,7 @@ import { createPinia } from 'pinia';
 import App from './App.vue';
 import { router } from './router/index.js';
 import { useAuthSessionStore } from './stores/authSession.store.js';
+import { useUiStore } from './stores/ui.store.js';
 import { bootstrapAuthSession } from './services/auth.service.js';
 import { ensureIndustriesCached } from './services/industries.service.js';
 import { ensureOptionsCached } from './services/optionCatalog.service.js';
@@ -15,6 +16,7 @@ app.use(router);
 
 const authSession = useAuthSessionStore(pinia);
 authSession.hydrateFromStorage();
+useUiStore(pinia).hydrateTheme();
 
 // Warm research industries into IndexedDB on startup (skip network if already cached).
 ensureIndustriesCached();

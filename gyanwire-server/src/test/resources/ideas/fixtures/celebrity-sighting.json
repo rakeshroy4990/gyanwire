@@ -1,0 +1,31 @@
+{
+  "id": "celebrity-sighting",
+  "article": {
+    "title": "Actor spotted at a Mumbai restaurant opening",
+    "text": "A film actor attended the opening night of a restaurant in Bandra. Guests took photos. The restaurant did not announce a new menu, price, or expansion."
+  },
+  "profile": { "hoursPerWeek": 8, "skills": [] },
+  "signals": {
+    "headline": "Actor spotted at a Mumbai restaurant opening",
+    "eventType": "other",
+    "entities": ["the actor", "Bandra restaurant"],
+    "confirmedFacts": ["The actor attended a restaurant opening in Mumbai"],
+    "unconfirmedClaims": [],
+    "indiaRelevance": "low",
+    "timeWindow": { "urgency": "evergreen" },
+    "affectedGroups": ["fans of the actor"]
+  },
+  "gate": {
+    "proceed": false,
+    "reason": "A celebrity appearance does not create a specific pain or buying moment for a defined customer.",
+    "confidence": 0.18,
+    "suggestions": [
+      "A launch, price change, or rule that names who in India has to act this month.",
+      "News that creates a dated buying moment, a shortage, or a new compliance task."
+    ]
+  },
+  "expect": {
+    "proceed": false,
+    "suggestions": true
+  }
+}

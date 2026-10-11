@@ -126,6 +126,39 @@ class NewsEngineTest {
     }
 
     @Test
+    void fyiHeadlinesAreCategorisedAndDroppedFromRank() {
+        assertThat(SignalRules.detect(
+                "FIIs dump Indian stocks for eight straight weeks: Is a reversal on the cards or more pain ahead?"))
+                .isEqualTo("fyi");
+        assertThat(SignalRules.detect(
+                "National Formulary of India lists drugs not approved by CDSCO, DCGI seeks explanation from IPC"))
+                .isEqualTo("fyi");
+        assertThat(SignalRules.detect("CDSCO approves a paediatric heart valve for clinics"))
+                .isEqualTo("approval");
+        assertThat(SignalRules.detect(
+                "Brent commands a war premium as Middle East supply risks keep oil"))
+                .isEqualTo("fyi");
+        assertThat(SignalRules.detect("HPCL launches a prepaid fuel card for truck fleets"))
+                .isEqualTo("launch");
+        assertThat(SignalRules.actionability("fyi")).isZero();
+
+        Instant now = Instant.parse("2026-10-10T00:00:00Z");
+        NewsRanker.Ranked ranked = NewsRanker.rank(List.of(
+                row("FIIs dump Indian stocks for eight straight weeks: Is a reversal on the cards or more pain ahead?",
+                        now, false, 80, "fyi", "a.com"),
+                row("National Formulary of India lists drugs not approved by CDSCO, DCGI seeks explanation from IPC",
+                        now, false, 75, "approval", "b.com"),
+                row("Sebi notifies new settlement rule; unveils formula, fast-track route. Check details",
+                        now, false, 72, "launch", "d.com"),
+                row("Broker cuts fees on equity delivery", now, false, 66, "pricing", "c.com"),
+                row("Brent commands a war premium as Middle East supply risks keep oil",
+                        now, false, 90, "other", "e.com")
+        ), 5, "products", 0, 0, 0, 40);
+        assertThat(ranked.items()).extracting(NewsRow::title).containsExactly("Broker cuts fees on equity delivery");
+        assertThat(ranked.items()).noneMatch(item -> SignalRules.isFyi(item.signalType()));
+    }
+
+    @Test
     void rankHidesWeakScoresAndMixesSignals() {
         Instant now = Instant.parse("2026-10-10T00:00:00Z");
         List<NewsRow> pool = List.of(
@@ -156,13 +189,72 @@ class NewsEngineTest {
         assertThat(order.items().get(0).title()).isEqualTo("India");
 
         NewsRanker.Ranked sameStory = NewsRanker.rank(List.of(
-                row("Sebi’s CAS guidelines likely within a week, says chief Tuhin Kanta Pandey", now, false, 70, "regulation", "a.com"),
-                row("Sebi’s CAS guidelines likely within a week, says chief Tuhin Kanta Pandey", now, false, 68, "regulation", "b.com"),
+                row("HPCL launches a prepaid fuel card for truck fleets", now, false, 70, "launch", "a.com"),
+                row("HPCL launches a prepaid fuel card for truck fleets", now, false, 68, "launch", "b.com"),
                 row("Broker cuts fees on equity delivery", now, false, 66, "pricing", "c.com")
         ), 5, "products", 0, 0, 0, 40);
         assertThat(sameStory.items()).extracting(NewsRow::title).containsExactly(
-                "Sebi’s CAS guidelines likely within a week, says chief Tuhin Kanta Pandey",
+                "HPCL launches a prepaid fuel card for truck fleets",
                 "Broker cuts fees on equity delivery");
+    }
+
+    @Test
+    void rankShowsNewestFirstEvenWhenOlderScoreIsHigher() {
+        Instant now = Instant.parse("2026-10-10T00:00:00Z");
+        NewsRow olderHigh = row("Older funding story", now.minus(Duration.ofDays(2)), false, 79, "funding", "uk.com");
+        olderHigh.country("GB");
+        NewsRow newerLower = row("Newer cash squeeze", now.minus(Duration.ofDays(1)), false, 55, "regulation", "in.com");
+        newerLower.country("IN");
+        NewsRanker.Ranked ranked = NewsRanker.rank(List.of(olderHigh, newerLower), 2, "products", 0, 0, 0, 40);
+        assertThat(ranked.items()).extracting(NewsRow::title).containsExactly(
+                "Newer cash squeeze",
+                "Older funding story");
+    }
+
+    @Test
+    void worldwideListLeadsWithIndiaAndKeepsOtherCountries() {
+        Instant now = Instant.parse("2026-10-10T00:00:00Z");
+        List<NewsRow> pool = new ArrayList<>();
+        String[][] indiaRows = {
+                {"Exchange opens a new trading desk", "launch", "90"},
+                {"Clinic raises a seed round", "funding", "89"},
+                {"Regulator clears a heart device", "approval", "88"},
+                {"Broker cuts delivery fees", "pricing", "87"},
+        };
+        int domain = 0;
+        for (String[] spec : indiaRows) {
+            NewsRow india = row(spec[0], now, false, Integer.parseInt(spec[2]), spec[1], "in" + domain + ".com");
+            india.country("IN");
+            pool.add(india);
+            domain++;
+        }
+        NewsRow australia = row("Sydney lab limits smart glasses", now, false, 70, "launch", "au.com");
+        australia.country("AU");
+        NewsRow britain = row("London watchdog probes a platform", now, false, 60, "funding", "uk.com");
+        britain.country("GB");
+        pool.add(australia);
+        pool.add(britain);
+        NewsRanker.Ranked ranked = NewsRanker.rank(pool, 5, "products", 8, 0, 0, 40);
+        assertThat(ranked.items()).hasSize(5);
+        assertThat(ranked.items().get(0).country()).isEqualTo("IN");
+        assertThat(ranked.items().stream().filter(item -> "IN".equals(item.country())).count()).isEqualTo(3);
+        assertThat(ranked.items()).extracting(NewsRow::country).contains("AU", "GB");
+    }
+
+    @Test
+    void refreshRulesScoresUncapsStoredFiftyFive() {
+        Instant now = Instant.parse("2026-10-10T00:00:00Z");
+        NewsRow capped = row("Acme launches paediatric vitamin drops", now, false, 55, "launch", "a.com");
+        capped.scoredBy("rules").specificity(80).indiaRelevance(80);
+        NewsRow llm = row("Funded clinic SaaS", now, false, 55, "funding", "b.com");
+        llm.scoredBy("llm").specificity(80).indiaRelevance(80);
+
+        NewsProperties.Rank rank = new NewsProperties.Rank();
+        rank.setRulesCap(100);
+        NewsQueryService.refreshRulesScores(List.of(capped, llm), rank, now);
+
+        assertThat(capped.opportunityScore()).isGreaterThan(55);
+        assertThat(llm.opportunityScore()).isEqualTo(55);
     }
 
     private static NewsStore.SourceRow source(String name, boolean enabled) {

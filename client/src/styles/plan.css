@@ -1,8 +1,8 @@
 /* Plan to finish — creative shell + what-if (CURSOR_PLAN_CREATIVE_UI.md) */
 :root {
-  --plan-track: rgba(26, 32, 24, 0.12);
+  --plan-track: color-mix(in oklab, var(--ink) 12%, transparent);
   --plan-track-strong: rgba(31, 122, 77, 0.35);
-  --plan-ghost: rgba(26, 32, 24, 0.22);
+  --plan-ghost: color-mix(in oklab, var(--ink) 22%, transparent);
   --plan-band: var(--accent);
   --plan-band-soft: var(--accent-soft);
   --plan-sheet-bg: var(--canvas);
@@ -295,7 +295,7 @@
   height: 2.15rem;
   border-radius: 50%;
   border: 1px solid var(--line);
-  background: #ffffff;
+  background: var(--surface);
   display: grid;
   place-items: center;
   font-size: 0.78rem;
@@ -669,7 +669,7 @@
   height: 2.15rem;
   border-radius: 50%;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--surface);
   display: grid;
   place-items: center;
   font-size: 0.78rem;
@@ -731,7 +731,7 @@
 .plan-sheet__backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(26, 32, 24, 0.28);
+  background: color-mix(in oklab, var(--ink) 28%, transparent);
   opacity: 0;
   transition: opacity 220ms var(--ease);
 }
@@ -845,7 +845,7 @@
 .plan-drawer__backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(26, 32, 24, 0.32);
+  background: color-mix(in oklab, var(--ink) 32%, transparent);
 }
 
 .plan-drawer__panel {
@@ -881,7 +881,7 @@
 .plan-option:hover,
 .plan-option.is-selected {
   border-color: var(--good);
-  background: #fff;
+  background: var(--surface);
 }
 
 .plan-option__top {
@@ -1106,7 +1106,7 @@
 
 .plan-vot select:focus {
   outline: none;
-  border-color: rgba(232, 184, 109, 0.45);
+  border-color: color-mix(in oklab, var(--accent) 45%, transparent);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
@@ -1122,7 +1122,7 @@
   padding: var(--space-4);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: linear-gradient(160deg, var(--canvas-lift), #fff 55%);
+  background: linear-gradient(160deg, var(--canvas-lift), var(--surface) 55%);
   width: min(100%, 22rem);
 }
 
@@ -1245,7 +1245,7 @@
   height: 1.75rem;
   border-radius: 50%;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--surface);
   display: grid;
   place-items: center;
   font-size: 0.72rem;
@@ -1257,7 +1257,7 @@
 .plan-story__node.is-lit .plan-story__dot {
   background: var(--plan-node);
   border-color: transparent;
-  color: #fff;
+  color: var(--accent-ink);
 }
 
 .plan-story__node.is-active .plan-story__dot {
@@ -1394,7 +1394,7 @@
   padding: 0.28rem 0.7rem;
   font-size: 0.82rem;
   color: var(--ink-soft);
-  background: #fff;
+  background: var(--surface);
   transition: background 220ms var(--ease), color 220ms var(--ease), border-color 220ms var(--ease);
 }
 

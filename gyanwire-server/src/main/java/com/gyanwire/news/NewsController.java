@@ -1,11 +1,13 @@
 package com.gyanwire.news;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gyanwire.auth.security.AuthUserPrincipal;
 import com.gyanwire.controller.dto.StandardApiResponse;
 import com.gyanwire.research.ResearchException;
 import com.gyanwire.service.ResearchIndustryService;
 import com.gyanwire.usage.UsageService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
@@ -29,22 +33,41 @@ public class NewsController {
     private final NewsQueryService news;
     private final NewsStore store;
     private final ResearchIndustryService industries;
+    private final ObjectMapper mapper;
 
-    public NewsController(NewsQueryService news, NewsStore store, ResearchIndustryService industries) {
+    public NewsController(
+            NewsQueryService news,
+            NewsStore store,
+            ResearchIndustryService industries,
+            ObjectMapper mapper
+    ) {
         this.news = news;
         this.store = store;
         this.industries = industries;
+        this.mapper = mapper;
     }
 
-    @GetMapping("/api/news/default")
-    public ResponseEntity<StandardApiResponse<Map<String, Object>>> defaults(
-            @RequestParam(value = "limit", defaultValue = "5") int limit
-    ) {
-        Map<String, Object> data = new LinkedHashMap<>(news.defaults(limit));
-        data.put("intent", "products");
-        data.put("engine", "gyanwire");
-        data.put("usedLlm", false);
-        return ResponseEntity.ok(StandardApiResponse.success("Product news ready.", data));
+    @GetMapping(value = "/api/news/default", produces = "application/x-ndjson")
+    public void defaults(
+            @RequestParam(value = "limit", defaultValue = "5") int limit,
+            @RequestParam(value = "country", required = false) String country,
+            HttpServletResponse response
+    ) throws IOException {
+        String code = countryCode(country);
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentType("application/x-ndjson");
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.setBufferSize(64);
+        response.setHeader("X-Accel-Buffering", "no");
+        response.setHeader("Cache-Control", "no-cache, no-transform");
+        response.setHeader("X-Content-Type-Options", "nosniff");
+        NewsNdjson.writeDefault(response.getOutputStream(), mapper, () -> news.defaults(limit, code), () -> {
+            try {
+                response.flushBuffer();
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
+            }
+        });
     }
 
     @GetMapping("/api/news/{industry}")
@@ -53,7 +76,8 @@ public class NewsController {
             @RequestParam(value = "sub", required = false) String sub,
             @RequestParam(value = "limit", defaultValue = "5") int limit,
             @RequestParam(value = "intent", defaultValue = "products") String intent,
-            @RequestParam(value = "window", defaultValue = "14d") String window
+            @RequestParam(value = "window", defaultValue = "14d") String window,
+            @RequestParam(value = "country", required = false) String country
     ) {
         String decoded = URLDecoder.decode(industry, StandardCharsets.UTF_8);
         List<String> names = industries.listCatalog().stream().map(item -> item.getName()).toList();
@@ -70,7 +94,7 @@ public class NewsController {
             throw new ResearchException("Pick a valid sub-combination for this industry.", "UNKNOWN_SUB", 400);
         }
         int days = NewsTexts.windowToken(window, 14);
-        Map<String, Object> data = new LinkedHashMap<>(news.industry(decoded, subTrim, limit, intent, days));
+        Map<String, Object> data = new LinkedHashMap<>(news.industry(decoded, subTrim, limit, intent, days, countryCode(country)));
         data.put("intent", intent);
         data.put("engine", "gyanwire");
         data.put("usedLlm", false);
@@ -109,6 +133,14 @@ public class NewsController {
         String anon = userId == null ? UsageService.hashIp(request.getRemoteAddr()) : null;
         store.saveFeedback(itemId, userId, anon, vote, reason, industry, signal);
         return ResponseEntity.ok(StandardApiResponse.success("Thanks.", Map.of("vote", vote)));
+    }
+
+    private static String countryCode(String country) {
+        try {
+            return CountrySignals.normalize(country);
+        } catch (IllegalArgumentException ex) {
+            throw new ResearchException("Pick a country from the list.", "UNKNOWN_COUNTRY", 400);
+        }
     }
 
     private static String text(Object value) {

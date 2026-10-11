@@ -2,7 +2,7 @@
 import { reactive } from 'vue';
 import FindingsSkeleton from './FindingsSkeleton.vue';
 
-defineProps({
+const props = defineProps({
   results: { type: Array, default: () => [] },
   resultsSub: { type: String, default: '' },
   emptyMessage: { type: String, default: 'Findings will settle here after you research.' },
@@ -15,9 +15,12 @@ defineProps({
   showIdeas: { type: Boolean, default: false },
   freshness: { type: String, default: '' },
   note: { type: String, default: '' },
+  returnKey: { type: String, default: '' },
+  countries: { type: Array, default: () => [] },
+  country: { type: String, default: null },
 });
 
-const emit = defineEmits(['idea', 'feedback']);
+const emit = defineEmits(['idea', 'feedback', 'select-country']);
 const votes = reactive({});
 
 function vote(item, value, reason) {
@@ -43,6 +46,7 @@ function signalLabel(signal) {
     shortage: 'Shortage',
     research: 'Research',
     opinion: 'Opinion',
+    fyi: 'FYI',
   };
   return labels[signal] || '';
 }
@@ -73,6 +77,12 @@ function ideaCount(item) {
   const n = Number(item?.ideaCount);
   return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
 }
+
+function isReturned(item) {
+  const key = props.returnKey;
+  if (!key) return false;
+  return String(item?.id || '') === key || item?.url === key;
+}
 </script>
 
 <template>
@@ -81,19 +91,47 @@ function ideaCount(item) {
     :class="{ 'results-section--embedded': embedded }"
     :aria-labelledby="embedded ? undefined : 'resultsTitle'"
   >
-    <div v-if="!isLoading || (embedded && results.length)" class="results-section__head">
+    <div v-if="!embedded || !isLoading || results.length" class="results-section__head">
       <h2 :id="embedded ? undefined : 'resultsTitle'" class="results-section__h">
         {{ heading }}
       </h2>
       <p class="results-sub">{{ resultsSub || (embedded ? '' : 'Waiting for a search') }}</p>
+      <div
+        v-if="!embedded"
+        class="topics topics--subs findings-countries"
+        role="group"
+        aria-label="Country"
+      >
+        <button
+          type="button"
+          class="category"
+          :class="{ 'is-active': !country }"
+          :aria-pressed="!country"
+          @click="emit('select-country', null)"
+        >
+          All
+        </button>
+        <button
+          v-for="item in countries"
+          :key="item.code"
+          type="button"
+          class="category"
+          :class="{ 'is-active': country === item.code }"
+          :aria-pressed="country === item.code"
+          @click="emit('select-country', item.code)"
+        >
+          {{ item.name }}
+        </button>
+      </div>
       <p v-if="freshnessText(freshness)" class="results-banner">{{ freshnessText(freshness) }}</p>
       <p v-else-if="note" class="results-banner">{{ note }}</p>
     </div>
 
     <FindingsSkeleton
-      v-if="isLoading && (!embedded || results.length === 0)"
+      v-if="isLoading && results.length === 0"
       :embedded="embedded"
       :rows="embedded ? 3 : 5"
+      :show-head="embedded"
     />
 
     <div v-else-if="showEmpty" class="empty" :class="{ 'empty--embedded': embedded }">
@@ -101,12 +139,15 @@ function ideaCount(item) {
       <p>{{ emptyMessage }}</p>
     </div>
 
-    <ol v-else-if="!isLoading || embedded" v-show="showResults || results.length" class="results">
+    <ol v-else v-show="showResults || results.length" class="results">
       <li
         v-for="(item, index) in results"
         :id="item.id ? `finding-${item.id}` : undefined"
         :key="item.url + index"
         class="result"
+        :class="{ 'result--return': isReturned(item) }"
+        :data-finding-id="item.id != null && item.id !== '' ? String(item.id) : undefined"
+        :data-finding-url="item.url || undefined"
         :style="{ animationDelay: `${index * 45}ms` }"
       >
         <div class="result__rank" aria-hidden="true">{{ index + 1 }}</div>
@@ -114,6 +155,7 @@ function ideaCount(item) {
           <h3 class="result__title">
             <time v-if="item.ageLabel || articleDate(item)" class="result__date" :datetime="item.publishedAt || undefined">{{ item.ageLabel || articleDate(item) }}</time>
             <span v-if="signalLabel(item.signalType)" class="signal-chip">{{ signalLabel(item.signalType) }}</span>
+            <span v-if="item.countryName" class="country-chip">{{ item.countryName }}</span>
             <a :href="item.url" target="_blank" rel="noopener noreferrer">{{ item.title }}</a>
           </h3>
           <p class="result__url">{{ item.host }}</p>
@@ -166,9 +208,10 @@ function ideaCount(item) {
       </li>
     </ol>
     <FindingsSkeleton
-      v-if="isLoading && embedded && results.length"
+      v-if="isLoading && results.length"
       :embedded="embedded"
       :rows="1"
+      :show-head="false"
     />
   </section>
 </template>

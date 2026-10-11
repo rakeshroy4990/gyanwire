@@ -1,6 +1,8 @@
 package com.gyanwire.api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gyanwire.auth.security.AuthUserPrincipal;
+import com.gyanwire.ideas.IdeaNdjson;
 import com.gyanwire.ideas.IdeaService;
 import com.gyanwire.persistence.FlowStore;
 import com.gyanwire.plans.LearningPlanService;
@@ -10,6 +12,7 @@ import com.gyanwire.referrals.ReferralService;
 import com.gyanwire.research.ResearchException;
 import com.gyanwire.sources.SourcePackService;
 import com.gyanwire.controller.dto.StandardApiResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -31,6 +34,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
 
@@ -45,6 +51,7 @@ public class ProductController {
     private final ReferralService referrals;
     private final FlowStore store;
     private final McpService mcp;
+    private final ObjectMapper mapper;
 
     public ProductController(
             ProfileService profiles,
@@ -54,7 +61,8 @@ public class ProductController {
             SourcePackService packs,
             ReferralService referrals,
             FlowStore store,
-            McpService mcp
+            McpService mcp,
+            ObjectMapper mapper
     ) {
         this.profiles = profiles;
         this.ideas = ideas;
@@ -64,6 +72,7 @@ public class ProductController {
         this.referrals = referrals;
         this.store = store;
         this.mcp = mcp;
+        this.mapper = mapper;
     }
 
     @GetMapping("/api/me/profile")
@@ -82,13 +91,27 @@ public class ProductController {
         return ResponseEntity.ok(StandardApiResponse.success("Profile deleted.", Map.of("deleted", true)));
     }
 
-    @PostMapping("/api/ideas/from-news")
-    public ResponseEntity<StandardApiResponse<Map<String, Object>>> fromNews(@RequestBody Map<String, Object> body) {
+    @PostMapping(value = "/api/ideas/from-news", produces = "application/x-ndjson")
+    public void fromNews(@RequestBody Map<String, Object> body, HttpServletResponse response) throws IOException {
         String url = String.valueOf(body.getOrDefault("url", "")).trim();
         if (url.length() < 8 || !url.startsWith("http")) {
             throw new ResearchException("Send a news url.", "VALIDATION_ERROR", 400);
         }
-        return ResponseEntity.ok(StandardApiResponse.success("Ideas ready.", ideas.fromNews(requireUser().id(), body)));
+        UUID userId = requireUser().id();
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentType("application/x-ndjson");
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.setBufferSize(64);
+        response.setHeader("X-Accel-Buffering", "no");
+        response.setHeader("Cache-Control", "no-cache, no-transform");
+        response.setHeader("X-Content-Type-Options", "nosniff");
+        IdeaNdjson.write(response.getOutputStream(), mapper, () -> ideas.fromNews(userId, body), () -> {
+            try {
+                response.flushBuffer();
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
+            }
+        });
     }
 
     @GetMapping("/api/ideas")
@@ -105,6 +128,15 @@ public class ProductController {
         Boolean tried = body.get("tried") instanceof Boolean b ? b : null;
         ideas.feedback(requireUser().id(), id, feedback, tried);
         return ResponseEntity.ok(StandardApiResponse.success("Saved.", Map.of("id", id.toString())));
+    }
+
+    @PostMapping("/api/ideas/{id}/launch-plan")
+    public ResponseEntity<StandardApiResponse<Map<String, Object>>> launchPlan(
+            @PathVariable UUID id,
+            @RequestBody(required = false) Map<String, Object> body
+    ) {
+        boolean force = body != null && (Boolean.TRUE.equals(body.get("force")) || "true".equalsIgnoreCase(String.valueOf(body.get("force"))));
+        return ResponseEntity.ok(StandardApiResponse.success("Launch plan ready.", ideas.launchPlan(requireUser().id(), id, force)));
     }
 
     @PostMapping("/api/plans/skill")

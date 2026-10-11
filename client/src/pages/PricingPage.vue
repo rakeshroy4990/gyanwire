@@ -127,7 +127,7 @@ function onSelect(planId) {
         >
           {{ plan.id === 'student' && !offers.student ? 'Checkout disabled' : `Choose ${plan.name}` }}
         </button>
-        <RouterLink v-else class="btn btn--ghost" to="/">
+        <RouterLink v-else class="btn btn--ghost" :to="{ name: 'research' }">
           Continue free
         </RouterLink>
       </article>

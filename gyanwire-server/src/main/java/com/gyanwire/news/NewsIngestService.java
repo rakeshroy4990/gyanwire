@@ -63,7 +63,7 @@ public class NewsIngestService {
         String url = source.urlTemplate();
         String itemSub = source.sub();
         if ("search_feed".equals(source.kind())) {
-            NewsStore.PackRow pack = store.claimPack(industry, sub);
+            NewsStore.PackRow pack = store.claimPack(industry, sub, source.region());
             if (pack == null) {
                 store.logRun(source.id(), industry, 0, 0, 0, 1, "no_pack", null);
                 return;
@@ -145,6 +145,10 @@ public class NewsIngestService {
                     .simhash(NewsTexts.simhash(title))
                     .language(NewsTexts.languageOf(title));
             classifier.applyRules(row, item.snippet(), now);
+            row.country(CountrySignals.detect(
+                    title + " " + (item.snippet() == null ? "" : item.snippet()),
+                    source.region(),
+                    row.domain()));
             if (!store.insert(row)) {
                 store.appendCoveredBy(link.url(), source.name());
                 deduped++;

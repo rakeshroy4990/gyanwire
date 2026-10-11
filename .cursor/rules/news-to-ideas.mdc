@@ -1,0 +1,13 @@
+---
+description: When a news item is clicked or supplied, follow the news-to-ideas skill before answering.
+alwaysApply: true
+---
+
+When the user clicks a news item, pastes a news article, or gives a news URL and wants ideas, opportunities, startups, or what can be built from it:
+
+1. Read `.cursor/skills/news-to-ideas/SKILL.md` and follow it exactly before drafting any idea.
+2. Run Step 5 searches with `.cursor/skills/news-to-ideas/scripts/github_search.py`. Do not name a GitHub repo from memory.
+3. Write the run record from `.cursor/skills/news-to-ideas/scripts/validate_flow.py` and execute:
+   `python3 .cursor/skills/news-to-ideas/scripts/validate_flow.py run.json`
+4. Show ideas only after that command prints `OK`. `FAIL` means this news item skipped the skill. Fix the record and run the command again.
+5. Stop at ideas. A plan is a separate request for a numbered idea.

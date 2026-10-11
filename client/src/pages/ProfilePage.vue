@@ -175,7 +175,7 @@ async function submitProfile() {
     });
     apply(data);
     editing.value = false;
-    setNotice('Profile saved. Ideas and plans will use these answers.');
+    setNotice('Profile saved. Home findings will follow this industry.');
   } catch (err) {
     setNotice(err.message, true);
   }
@@ -231,7 +231,8 @@ async function onDelete() {
       <p class="account-page__kicker">Account</p>
       <h1>Profile</h1>
       <p>
-        These answers shape the ideas, budgets, and weekly plans we suggest.
+        Your industry chooses the findings on the home page.
+        The other answers shape ideas, budgets, and weekly plans.
         We store a band, never an exact salary.
       </p>
     </header>

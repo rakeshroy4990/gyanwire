@@ -1,10 +1,14 @@
 <script setup>
-import { onMounted, onUnmounted, watch } from 'vue';
+import { computed, onMounted, onUnmounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import AppHeader from './components/layout/AppHeader.vue';
+import ThemeSwitch from './components/layout/ThemeSwitch.vue';
 import LoginModal from './components/auth/LoginModal.vue';
 import RegisterModal from './components/auth/RegisterModal.vue';
 import { useAuth } from './composables/useAuth.js';
 
+const route = useRoute();
+const showChrome = computed(() => route.meta.bare !== true);
 const { isAnyPopupOpen, closePopup } = useAuth();
 
 watch(isAnyPopupOpen, (open) => {
@@ -22,9 +26,14 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
 </script>
 
 <template>
-  <AppHeader />
-  <RouterView />
-  <footer class="site-footer">
+  <AppHeader v-if="showChrome" />
+  <ThemeSwitch v-else class="theme-switch--landing" />
+  <RouterView v-slot="{ Component }">
+    <KeepAlive include="ResearchPage">
+      <component :is="Component" />
+    </KeepAlive>
+  </RouterView>
+  <footer v-if="showChrome" class="site-footer">
     <RouterLink to="/terms">Terms</RouterLink>
     <RouterLink to="/privacy">Privacy</RouterLink>
     <RouterLink to="/refund">Refunds</RouterLink>

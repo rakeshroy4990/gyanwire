@@ -66,6 +66,15 @@ tasks.register('evalLlm', JavaExec) {
     workingDir = file("${project.projectDir}/..")
 }
 
+tasks.register('evalIdeaPipeline', JavaExec) {
+    group = 'verification'
+    description = 'Replay idea-pipeline fixtures and print a pass/fail table'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.gyanwire.ideas.pipeline.IdeaPipelineEval'
+    workingDir = file("${project.projectDir}/..")
+    dependsOn tasks.named('testClasses')
+}
+
 tasks.register('evalNewsBaseline', JavaExec) {
     group = 'verification'
     description = 'Record current news quality into eval/news-baseline.json'

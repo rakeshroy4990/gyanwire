@@ -36,9 +36,11 @@ public class NewsQueryService {
         this.environment = environment;
     }
 
-    public Map<String, Object> industry(String industry, String sub, int limit, String intent, int windowDays) {
+    public Map<String, Object> industry(String industry, String sub, int limit, String intent, int windowDays, String country) {
         int take = Math.max(1, Math.min(limit, 10));
-        String key = industry + "|" + (sub == null ? "" : sub) + "|" + take + "|" + intent + "|" + windowDays;
+        String code = country == null || country.isBlank() ? null : country;
+        String key = industry + "|" + (sub == null ? "" : sub) + "|" + take + "|" + intent + "|" + windowDays
+                + "|" + (code == null ? "" : code);
         Cached cached = cache.get(key);
         if (cached != null && cached.expires().isAfter(Instant.now())) {
             return cached.body();
@@ -67,42 +69,97 @@ public class NewsQueryService {
                 }
             }
         }
-        FreshnessGate.Result gated = FreshnessGate.select(rows, take, windows, now);
-        String freshness = forced != null ? forced : gated.freshness();
-        NewsProperties.Rank rank = properties.getRank();
-        NewsRanker.Ranked ranked = NewsRanker.rank(
-                gated.items(), take, intent, rank.getIndiaBoost(), rank.getIntentBoost(), rank.getIntentDemote(), rank.getMinScore());
-        Map<String, Object> body = payload(industry, sub, take, freshness, ranked, now);
-        if (forced == null && !ranked.items().isEmpty()) {
+        refreshRulesScores(rows, now);
+        Prepared prepared = prepare(rows, take, windows, now, intent, code);
+        String freshness = forced != null ? forced : prepared.freshness();
+        Map<String, Object> body = payload(industry, sub, take, freshness, prepared.ranked(), now, code, prepared.countries());
+        if (forced == null && !prepared.ranked().items().isEmpty()) {
             cache.put(key, new Cached(body, now.plusSeconds(Math.max(properties.getRank().getCacheSeconds(), 1))));
         }
         return body;
     }
 
-    public Map<String, Object> defaults(int limit) {
+    public Map<String, Object> defaults(int limit, String country) {
+        Instant now = Instant.now();
+        String code = country == null || country.isBlank() ? null : country;
         List<NewsRow> pooled = new ArrayList<>();
-        pooled.addAll(store.eligible("Share Market", "IT", Instant.now().minus(Duration.ofDays(60)), false));
-        pooled.addAll(store.eligible("Share Market", "EV", Instant.now().minus(Duration.ofDays(60)), false));
-        pooled.addAll(store.eligible("Medical", "Cardiology", Instant.now().minus(Duration.ofDays(60)), false));
-        pooled.addAll(store.eligible("Medical", "Gynecology", Instant.now().minus(Duration.ofDays(60)), false));
+        pooled.addAll(store.eligible("Share Market", "IT", now.minus(Duration.ofDays(60)), false));
+        pooled.addAll(store.eligible("Share Market", "EV", now.minus(Duration.ofDays(60)), false));
+        pooled.addAll(store.eligible("Medical", "Cardiology", now.minus(Duration.ofDays(60)), false));
+        pooled.addAll(store.eligible("Medical", "Gynecology", now.minus(Duration.ofDays(60)), false));
         if (pooled.isEmpty()) {
-            Map<String, Object> filled = industry("Share Market", null, limit, "products", 14);
+            Map<String, Object> filled = industry("Share Market", null, limit, "products", 14, code);
             filled.put("category", "Default");
             filled.put("label", "Top searched product news");
             filled.put("isDefaultNews", true);
             return filled;
         }
-        FreshnessGate.Result gated = FreshnessGate.select(pooled, limit, windows(14), Instant.now());
-        NewsProperties.Rank rank = properties.getRank();
-        NewsRanker.Ranked ranked = NewsRanker.rank(
-                gated.items(), limit, "products", rank.getIndiaBoost(), rank.getIntentBoost(), rank.getIntentDemote(), rank.getMinScore());
-        Map<String, Object> body = payload("Default", null, limit, gated.freshness(), ranked, Instant.now());
+        refreshRulesScores(pooled, now);
+        Prepared prepared = prepare(pooled, limit, windows(14), now, "products", code);
+        Map<String, Object> body = payload("Default", null, limit, prepared.freshness(), prepared.ranked(), now, code, prepared.countries());
         body.put("label", "Top searched product news");
         body.put("isDefaultNews", true);
         return body;
     }
 
-    private Map<String, Object> payload(String industry, String sub, int limit, String freshness, NewsRanker.Ranked ranked, Instant now) {
+    /**
+     * Re-applies the current rules cap to stored rule scores so a config change
+     * (e.g. rules-cap 55 → 100) shows up without re-ingest. LLM scores stay as stored.
+     */
+    static void refreshRulesScores(List<NewsRow> rows, NewsProperties.Rank rank, Instant now) {
+        if (rows == null || rows.isEmpty() || rank == null) {
+            return;
+        }
+        for (NewsRow row : rows) {
+            if (row == null || "llm".equals(row.scoredBy())) {
+                continue;
+            }
+            String detected = SignalRules.detect(row.title());
+            if (SignalRules.isFyi(detected) || "other".equals(row.signalType()) || row.signalType() == null) {
+                row.signalType(detected);
+                if (SignalRules.isFyi(detected)) {
+                    row.whyIdea(SignalRules.whyIdea(detected, row.industry()));
+                }
+            }
+            OpportunityScorer.Parts parts = OpportunityScorer.score(
+                    rank,
+                    row.signalType(),
+                    row.specificity(),
+                    row.indiaRelevance(),
+                    SignalRules.actionability(row.signalType()),
+                    row.publishedAt(),
+                    now,
+                    true);
+            row.opportunityScore(parts.total());
+        }
+    }
+
+    private void refreshRulesScores(List<NewsRow> rows, Instant now) {
+        refreshRulesScores(rows, properties.getRank(), now);
+    }
+
+    private Prepared prepare(List<NewsRow> rows, int take, int[] windows, Instant now, String intent, String country) {
+        CountrySignals.assignMissing(rows);
+        List<Map<String, Object>> countries = new ArrayList<>(CountrySignals.options(rows));
+        CountrySignals.ensureOption(countries, country);
+        List<NewsRow> scoped = CountrySignals.matching(rows, country);
+        FreshnessGate.Result gated = FreshnessGate.select(scoped, take, windows, now);
+        NewsProperties.Rank rank = properties.getRank();
+        NewsRanker.Ranked ranked = NewsRanker.rank(
+                gated.items(), take, intent, rank.getIndiaBoost(), rank.getIntentBoost(), rank.getIntentDemote(), rank.getMinScore());
+        return new Prepared(gated.freshness(), ranked, countries);
+    }
+
+    private Map<String, Object> payload(
+            String industry,
+            String sub,
+            int limit,
+            String freshness,
+            NewsRanker.Ranked ranked,
+            Instant now,
+            String country,
+            List<Map<String, Object>> countries
+    ) {
         List<Map<String, Object>> items = new ArrayList<>();
         int index = 1;
         for (NewsRow row : ranked.items()) {
@@ -126,6 +183,8 @@ public class NewsQueryService {
             item.put("sample", row.sample());
             item.put("industry", row.industry());
             item.put("sub", row.sub());
+            item.put("country", row.country());
+            item.put("countryName", CountrySignals.name(row.country()));
             items.add(item);
             index++;
         }
@@ -141,9 +200,18 @@ public class NewsQueryService {
         body.put("sub", sub);
         body.put("label", label);
         body.put("query", industry);
-        body.put("regionPreference", "India first");
+        body.put("regionPreference", "Worldwide, India prioritized");
+        body.put("country", country);
+        body.put("countryName", CountrySignals.name(country));
+        body.put("countries", countries == null ? List.of() : countries);
         body.put("isDefaultNews", false);
+        if (country != null && items.isEmpty()) {
+            body.put("message", "No findings for " + CountrySignals.name(country) + " right now.");
+        }
         return body;
+    }
+
+    private record Prepared(String freshness, NewsRanker.Ranked ranked, List<Map<String, Object>> countries) {
     }
 
     private int[] windows(int requested) {

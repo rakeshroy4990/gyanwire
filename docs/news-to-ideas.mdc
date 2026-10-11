@@ -1,0 +1,16 @@
+---
+description: Mandatory workflow for turning news (link or text) into business ideas with GitHub-backed projects
+alwaysApply: true
+---
+
+# News → Business Ideas (applies to every model)
+
+Whenever the user gives a news URL or pasted news text and asks for ideas, opportunities, startups, or "what can be built from this":
+
+1. Read `.cursor/skills/news-to-ideas/SKILL.md` in full before answering. Do not work from memory of it.
+2. Follow its pipeline in order: ingest → summarise → signal tree → score and pick at most 5 ideas → one subagent per idea → live GitHub search → combine → output in the exact format.
+3. Output ideas only. Never produce a plan, roadmap, budget, or tech design unless the user asks in a separate request.
+4. Every GitHub project must come from a live API call in this run. If unavailable, write "GitHub unverified".
+5. Categorise each project as open-source, open-source-copyleft, source-available, or paid, and record which download source was used (package registry, Docker, release assets, or stars/forks as a proxy).
+6. If the news URL is blocked or empty, use syndicated or official sources and say so, or ask for pasted text.
+7. This rule is model-agnostic. Do not switch or recommend switching models as part of this flow.

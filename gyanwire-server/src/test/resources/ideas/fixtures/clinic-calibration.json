@@ -1,0 +1,100 @@
+{
+  "id": "clinic-calibration",
+  "article": {
+    "title": "Labs told to file calibration logs by 1 November",
+    "text": "A regulator reminded diagnostic labs in India to upload calibration logs by 1 November. Clinic owners who miss the date can be asked to pause testing. The notice is published and the deadline is stated."
+  },
+  "profile": { "hoursPerWeek": 15, "skills": ["operations", "filing"] },
+  "signals": {
+    "headline": "Labs told to file calibration logs by 1 November",
+    "eventType": "regulation",
+    "entities": ["diagnostic labs", "calibration logs"],
+    "confirmedFacts": [
+      "Labs must upload calibration logs by 1 November",
+      "The notice is published"
+    ],
+    "unconfirmedClaims": [],
+    "indiaRelevance": "high",
+    "timeWindow": { "startsAt": "2026-11-01", "urgency": "days" },
+    "affectedGroups": ["diagnostic lab owners", "clinic managers who run testing"]
+  },
+  "gate": {
+    "proceed": true,
+    "reason": "Lab owners have a dated filing task and will pay to avoid a pause in testing.",
+    "confidence": 0.86,
+    "suggestions": []
+  },
+  "ideas": [
+    {
+      "angleType": "b2b_service",
+      "title": "File calibration logs for labs before 1 November",
+      "oneLiner": "A done-for-you filing service for labs that will miss the date.",
+      "customer": {
+        "who": "Owners of small diagnostic labs that upload reports themselves",
+        "where": "Tier-2 cities in India"
+      },
+      "trigger": "The notice gives a 1 November deadline and names labs that can be paused.",
+      "whyTheyPay": "A paused lab loses a day of tests, which costs more than a filing session.",
+      "whyNow": "The window is days, and the notice is already published.",
+      "product": "Collect the lab's last calibration sheets and file them in the required format before the deadline. Leave an operations checklist the filing owner can repeat next quarter.",
+      "revenueModel": {
+        "type": "service",
+        "price": "₹6,000 per lab",
+        "rationale": "A few hours of form-filling plus a follow-up is worth about six thousand rupees against a day of lost tests."
+      },
+      "firstWeek": [
+        "Turn the notice into a one-page checklist of files a lab must have.",
+        "Call eight labs that posted hiring ads this month and offer the filing.",
+        "Complete one sample filing and record how long it took."
+      ],
+      "validationTest": {
+        "action": "Pitch eight diagnostic labs",
+        "successMetric": "2 labs pay a deposit in 7 days"
+      },
+      "risks": ["Labs may already have a consultant on retainer."],
+      "buildEffort": "weeks",
+      "dependsOnUnconfirmed": false
+    },
+    {
+      "angleType": "education_or_training",
+      "title": "A two-hour workshop on the calibration upload",
+      "oneLiner": "A live workshop that walks lab staff through the new upload.",
+      "customer": {
+        "who": "Lab technicians who file quality paperwork",
+        "where": "WhatsApp groups for diagnostic labs"
+      },
+      "trigger": "Staff must learn the upload steps before the published November date.",
+      "whyTheyPay": "They would rather spend an evening in a workshop than guess at the portal.",
+      "whyNow": "The deadline is days away, so a workshop this week still helps.",
+      "product": "Host a two-hour live session that screenshares the upload and answers staff questions. Send the recording only to people who attended.",
+      "revenueModel": {
+        "type": "ads",
+        "price": "",
+        "rationale": "A free live session can carry a lab-supplier sponsor because the audience is already the buyer."
+      },
+      "firstWeek": [
+        "Outline the upload in ten slides from the published notice.",
+        "Post the session link in two lab staff groups.",
+        "Run the session once ten people have signed up."
+      ],
+      "validationTest": {
+        "action": "Open paid seats for the workshop",
+        "successMetric": "10 signups in 7 days"
+      },
+      "risks": ["The portal steps may differ by state."],
+      "buildEffort": "hours",
+      "dependsOnUnconfirmed": false
+    }
+  ],
+  "expect": {
+    "proceed": true,
+    "eventType": "regulation",
+    "distinctAngles": true,
+    "minIdeas": 2,
+    "maxIdeas": 5,
+    "scoresDiffer": true,
+    "reasonsPresent": true,
+    "b2bPresent": true,
+    "unconfirmedTagged": false
+  }
+}

@@ -16,7 +16,7 @@ import java.util.Set;
 public final class NewsTexts {
 
     public static final Set<String> SIGNALS = Set.of(
-            "launch", "funding", "approval", "regulation", "pricing", "shortage", "research", "opinion", "other"
+            "launch", "funding", "approval", "regulation", "pricing", "shortage", "research", "opinion", "fyi", "other"
     );
 
     private NewsTexts() {
@@ -161,6 +161,7 @@ public final class NewsTexts {
             case "shortage" -> "A shortage or recall";
             case "research" -> "A research note";
             case "opinion" -> "An opinion piece";
+            case "fyi" -> "An FYI update";
             default -> "A news item";
         };
         String host = domain == null || domain.isBlank() ? "the publisher" : domain;

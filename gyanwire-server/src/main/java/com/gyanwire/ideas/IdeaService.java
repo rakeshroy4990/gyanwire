@@ -10,19 +10,30 @@ import com.gyanwire.profile.ProfileService;
 import com.gyanwire.research.brief.LanguageDetector;
 import com.gyanwire.research.engine.LlmService;
 import com.gyanwire.usage.UsageService;
+import com.gyanwire.ideas.pipeline.AngleType;
+import com.gyanwire.ideas.pipeline.IdeaPipelineProperties;
+import com.gyanwire.ideas.pipeline.OpportunityPipeline;
+import com.gyanwire.ideas.pipeline.SocialMediaIdea;
+import com.gyanwire.news.SignalRules;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 public class IdeaService {
 
-    static final String PROMPT_VERSION = "idea.v1";
+    private static final Logger log = LoggerFactory.getLogger(IdeaService.class);
+
+    static final String PROMPT_VERSION = "idea.v2";
 
     private final FlowStore store;
     private final ProfileService profiles;
@@ -31,6 +42,8 @@ public class IdeaService {
     private final LlmService llmService;
     private final PatternMatcher patterns;
     private final ObjectMapper mapper;
+    private final IdeaPipelineProperties pipelineProperties;
+    private final OpportunityPipeline opportunityPipeline;
 
     public IdeaService(
             FlowStore store,
@@ -39,7 +52,9 @@ public class IdeaService {
             LlmClient llmClient,
             LlmService llmService,
             PatternMatcher patterns,
-            ObjectMapper mapper
+            ObjectMapper mapper,
+            IdeaPipelineProperties pipelineProperties,
+            OpportunityPipeline opportunityPipeline
     ) {
         this.store = store;
         this.profiles = profiles;
@@ -48,6 +63,8 @@ public class IdeaService {
         this.llmService = llmService;
         this.patterns = patterns;
         this.mapper = mapper;
+        this.pipelineProperties = pipelineProperties;
+        this.opportunityPipeline = opportunityPipeline;
     }
 
     public Map<String, Object> fromNews(UUID userId, Map<String, Object> body) {
@@ -73,8 +90,16 @@ public class IdeaService {
             description = whyIdea + "\n" + description;
         }
         boolean force = Boolean.TRUE.equals(body.get("force")) || "true".equalsIgnoreCase(String.valueOf(body.get("force")));
-        String urlHash = DigestDeduper.urlHash(url);
         Map<String, Object> profile = profiles.ensureStarter(userId, industry);
+        if (isFyiNews(signalType, title, description)) {
+            log.info("ideas.fromNews path=fyi title={}", shortTitle(title));
+            return fyiResponse();
+        }
+        String urlHash = DigestDeduper.urlHash(url);
+        if (pipelineProperties.isPipelineEnabled()) {
+            log.info("ideas.fromNews path=pipeline force={} title={}", force, shortTitle(title));
+            return opportunityPipeline.fromNews(userId, body, profile);
+        }
         String persona = String.valueOf(profile.getOrDefault("persona", "working"));
         String key = userId + ":" + urlHash + ":" + PROMPT_VERSION + ":" + persona
                 + ":" + profile.getOrDefault("incomeBand", "0")
@@ -82,12 +107,18 @@ public class IdeaService {
         List<String> formats = formatsForNews(title, description, industry);
         UUID existing = force ? null : store.findIdeaRun(key);
         if (existing != null) {
-            List<Map<String, Object>> cached = IdeaVariety.diversify(
-                    new ArrayList<>(store.listIdeasForRun(userId, existing)), title, industry, formats);
-            persistVariety(userId, existing, title, industry, profile, cached);
+            List<Map<String, Object>> cached = withSocialIdea(
+                    userId, existing, title, description, industry,
+                    dedupeByPatternId(new ArrayList<>(store.listIdeasForRun(userId, existing))));
             cached.sort((a, b) -> Integer.compare(ideaScore(b), ideaScore(a)));
-            return Map.of("runId", existing.toString(), "ideas", cached, "cached", true);
+            log.info(
+                    "ideas.fromNews path=classic cached=true runId={} ideas={} title={}",
+                    existing, cached.size(), shortTitle(title));
+            return response(existing, cached, true, null, null);
         }
+        log.info(
+                "ideas.fromNews path=classic cached=false force={} title={}",
+                force, shortTitle(title));
         Map<String, Object> signal = signalFor(userId, urlHash, title + "\n" + description, industry);
         if (!signalType.isBlank()) {
             signal.put("event_type", eventForNews(signalType));
@@ -98,9 +129,8 @@ public class IdeaService {
             signal.put("new_capability", whyIdea);
         }
         List<PatternMatcher.Pattern> matched = patterns.match(String.valueOf(signal.getOrDefault("event_type", "other")));
-        List<Map<String, Object>> drafts = IdeaVariety.diversify(
-                draftIdeas(userId, title, description, industry, profile, signal, matched, formats),
-                title, industry, formats);
+        DraftResult drafted = draftIdeas(userId, title, description, industry, profile, signal, matched, formats);
+        List<Map<String, Object>> drafts = dedupeByPatternId(drafted.ideas());
         UUID runId = UUID.randomUUID();
         try {
             store.insertIdeaRun(runId, userId, url, urlHash, title, industry, mapper.writeValueAsString(signal), PROMPT_VERSION, key);
@@ -111,14 +141,20 @@ public class IdeaService {
         int capitalAvailable = FitFilter.capitalCeiling(String.valueOf(profile.getOrDefault("capitalBand", "0")));
         boolean raised = FitFilter.capitalRaised(persona, String.valueOf(profile.get("capitalBand")));
         int hoursAvailable = profile.get("hoursPerWeek") instanceof Number n ? n.intValue() : 10;
+        Set<String> knownPatternIds = new LinkedHashSet<>();
+        for (PatternMatcher.Pattern pattern : matched) {
+            knownPatternIds.add(pattern.id());
+        }
         for (Map<String, Object> draft : drafts) {
-            draft.remove("_formatRewritten");
             String text = String.valueOf(draft.getOrDefault("offer", "")) + " " + draft.getOrDefault("whyNow", "") + " " + draft.getOrDefault("title", "");
             int capitalNeeded = draft.get("capitalNeededInr") instanceof Number c ? c.intValue() : 0;
             int hoursNeeded = draft.get("hoursPerWeek") instanceof Number h ? h.intValue() : 5;
             boolean legal = Boolean.TRUE.equals(draft.get("legalityFlag"));
             FitFilter.Decision decision = FitFilter.decide(industry, persona, text, capitalNeeded, capitalAvailable, raised, hoursNeeded, hoursAvailable, legal);
             if (!decision.keep()) {
+                log.info(
+                        "ideas.fromNews FitFilter drop reason={} title={}",
+                        decision.reason(), shortTitle(String.valueOf(draft.getOrDefault("title", ""))));
                 continue;
             }
             IdeaScorer.Result scored = IdeaScorer.score(persona, inputs(signal, profile, draft));
@@ -126,13 +162,18 @@ public class IdeaService {
             Map<String, Object> bodyJson = new LinkedHashMap<>(draft);
             bodyJson.put("drivers", scored.drivers());
             bodyJson.put("disclaimer", disclaimer(industry));
+            String[] patternIds = patternIdsForInsert(draft, knownPatternIds, matched);
             try {
                 store.insertIdea(
                         ideaId, runId, userId, scored.score(), mapper.writeValueAsString(scored.parts()),
                         String.valueOf(draft.get("title")), String.valueOf(draft.get("whyNow")),
                         mapper.writeValueAsString(bodyJson),
-                        matched.stream().map(PatternMatcher.Pattern::id).toArray(String[]::new));
-            } catch (Exception ignored) {
+                        patternIds);
+            } catch (Exception ex) {
+                log.warn(
+                        "ideas.fromNews insertIdea failed title={} error={}",
+                        shortTitle(String.valueOf(draft.getOrDefault("title", ""))),
+                        shortText(ex.getMessage(), 160));
                 continue;
             }
             Map<String, Object> row = new LinkedHashMap<>(bodyJson);
@@ -142,89 +183,140 @@ public class IdeaService {
             saved.add(row);
         }
         usage.recordUsage(userId, null, "idea", java.math.BigDecimal.ZERO);
-        saved.sort((a, b) -> Integer.compare(ideaScore(b), ideaScore(a)));
-        return Map.of("runId", runId.toString(), "ideas", saved, "cached", false);
+        List<Map<String, Object>> withSocial = withSocialIdea(userId, runId, title, description, industry, saved);
+        withSocial.sort((a, b) -> Integer.compare(ideaScore(b), ideaScore(a)));
+        log.info(
+                "ideas.fromNews path=classic cached=false runId={} ideas={} formats={} title={}",
+                runId, withSocial.size(), formats.size(), shortTitle(title));
+        return response(runId, withSocial, false, null, drafted.raw());
+    }
+
+    /**
+     * Classic path has no angle pipeline. Always put a social media idea first so
+     * Share Market and other industries still get YouTube / Instagram / LinkedIn.
+     */
+    private List<Map<String, Object>> withSocialIdea(
+            UUID userId,
+            UUID runId,
+            String title,
+            String description,
+            String industry,
+            List<Map<String, Object>> ideas
+    ) {
+        List<Map<String, Object>> out = ideas == null ? new ArrayList<>() : new ArrayList<>(ideas);
+        if (SocialMediaIdea.presentRows(out)) {
+            return out;
+        }
+        Map<String, Object> social = SocialMediaIdea.asRow(title, description, industry);
+        UUID ideaId = UUID.randomUUID();
+        try {
+            store.insertIdea(
+                    ideaId,
+                    runId,
+                    userId,
+                    ideaScore(social),
+                    "{}",
+                    String.valueOf(social.get("title")),
+                    String.valueOf(social.get("whyNow")),
+                    mapper.writeValueAsString(social),
+                    new String[]{AngleType.comparison_content.name()});
+            social.put("id", ideaId.toString());
+            out.add(0, social);
+        } catch (Exception ex) {
+            log.warn(
+                    "ideas.fromNews social insert failed title={} error={}",
+                    shortTitle(title), shortText(ex.getMessage(), 160));
+            social.put("id", ideaId.toString());
+            out.add(0, social);
+        }
+        return out;
+    }
+
+    private Map<String, Object> response(
+            UUID runId,
+            List<Map<String, Object>> ideas,
+            boolean cached,
+            String emptyReason,
+            Object rawLlm
+    ) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("runId", runId == null ? "" : runId.toString());
+        body.put("ideas", ideas);
+        body.put("cached", cached);
+        if (emptyReason != null && !emptyReason.isBlank()) {
+            body.put("emptyReason", emptyReason);
+        }
+        if (rawLlm != null) {
+            body.put("rawLlm", rawLlm);
+        }
+        return body;
+    }
+
+    /**
+     * Keep the first idea for each pattern_id. Ideas without a pattern_id are kept as-is.
+     * Never rewrites title, offer, or price.
+     */
+    static List<Map<String, Object>> dedupeByPatternId(List<Map<String, Object>> drafts) {
+        List<Map<String, Object>> out = new ArrayList<>();
+        Set<String> seen = new LinkedHashSet<>();
+        if (drafts == null) {
+            return out;
+        }
+        for (Map<String, Object> draft : drafts) {
+            if (draft == null) {
+                continue;
+            }
+            String patternId = patternIdOf(draft);
+            if (patternId != null && !patternId.isBlank()) {
+                draft.put("pattern_id", patternId);
+                if (!seen.add(patternId)) {
+                    continue;
+                }
+            }
+            out.add(draft);
+        }
+        return out;
+    }
+
+    private static String patternIdOf(Map<String, Object> draft) {
+        Object value = draft.get("pattern_id");
+        if (value == null || String.valueOf(value).isBlank() || "null".equalsIgnoreCase(String.valueOf(value))) {
+            value = draft.get("patternId");
+        }
+        if (value == null) {
+            return "";
+        }
+        String id = String.valueOf(value).trim();
+        return "null".equalsIgnoreCase(id) ? "" : id;
+    }
+
+    private static String[] patternIdsForInsert(
+            Map<String, Object> draft,
+            Set<String> knownPatternIds,
+            List<PatternMatcher.Pattern> matched
+    ) {
+        String patternId = patternIdOf(draft);
+        if (!patternId.isBlank() && (knownPatternIds.isEmpty() || knownPatternIds.contains(patternId))) {
+            return new String[]{patternId};
+        }
+        return matched.stream().map(PatternMatcher.Pattern::id).toArray(String[]::new);
+    }
+
+    private static String shortTitle(String title) {
+        return shortText(title, 80);
+    }
+
+    private static String shortText(String text, int max) {
+        if (text == null || text.isBlank()) {
+            return "-";
+        }
+        String cleaned = text.replace('\n', ' ').trim();
+        return cleaned.length() > max ? cleaned.substring(0, max) + "…" : cleaned;
     }
 
     private static int ideaScore(Map<String, Object> idea) {
         Object value = idea == null ? null : idea.get("score");
         return value instanceof Number n ? n.intValue() : 0;
-    }
-
-    /**
-     * Writes format rewrites back onto a cached run so a later plan uses the varied title.
-     */
-    private void persistVariety(
-            UUID userId,
-            UUID runId,
-            String newsTitle,
-            String industry,
-            Map<String, Object> profile,
-            List<Map<String, Object>> ideas
-    ) {
-        Map<String, Object> signal = SignalSchemas.fallback(newsTitle, industry);
-        List<PatternMatcher.Pattern> matched = patterns.match(String.valueOf(signal.getOrDefault("event_type", "other")));
-        String[] patternIds = matched.stream().map(PatternMatcher.Pattern::id).toArray(String[]::new);
-        for (Map<String, Object> row : ideas) {
-            boolean rewritten = Boolean.TRUE.equals(row.remove("_formatRewritten"));
-            Object id = row.get("id");
-            if (id == null || String.valueOf(id).isBlank()) {
-                insertVariedIdea(userId, runId, industry, profile, signal, row, patternIds);
-                continue;
-            }
-            if (!rewritten) {
-                continue;
-            }
-            IdeaScorer.Result scored = IdeaScorer.score(String.valueOf(profile.getOrDefault("persona", "working")), inputs(signal, profile, row));
-            row.put("score", scored.score());
-            row.put("drivers", scored.drivers());
-            row.putIfAbsent("disclaimer", disclaimer(industry));
-            String why = String.valueOf(row.getOrDefault("whyNow", row.getOrDefault("why", "")));
-            row.put("why", why);
-            try {
-                store.updateIdeaContent(
-                        userId, UUID.fromString(String.valueOf(id)), scored.score(),
-                        mapper.writeValueAsString(scored.parts()),
-                        String.valueOf(row.get("title")), why, bodyJson(row));
-            } catch (Exception ignored) {
-                // The response still shows the varied idea if the write fails.
-            }
-        }
-    }
-
-    private void insertVariedIdea(
-            UUID userId,
-            UUID runId,
-            String industry,
-            Map<String, Object> profile,
-            Map<String, Object> signal,
-            Map<String, Object> row,
-            String[] patternIds
-    ) {
-        IdeaScorer.Result scored = IdeaScorer.score(String.valueOf(profile.getOrDefault("persona", "working")), inputs(signal, profile, row));
-        UUID ideaId = UUID.randomUUID();
-        row.put("drivers", scored.drivers());
-        row.put("disclaimer", disclaimer(industry));
-        row.put("score", scored.score());
-        String why = String.valueOf(row.getOrDefault("whyNow", row.getOrDefault("why", "")));
-        row.put("why", why);
-        try {
-            store.insertIdea(
-                    ideaId, runId, userId, scored.score(), mapper.writeValueAsString(scored.parts()),
-                    String.valueOf(row.get("title")), why, bodyJson(row), patternIds);
-            row.put("id", ideaId.toString());
-        } catch (Exception ignored) {
-            row.remove("id");
-        }
-    }
-
-    private String bodyJson(Map<String, Object> row) throws Exception {
-        Map<String, Object> copy = new LinkedHashMap<>(row);
-        copy.remove("id");
-        copy.remove("score");
-        copy.remove("why");
-        copy.remove("_formatRewritten");
-        return mapper.writeValueAsString(copy);
     }
 
     public List<Map<String, Object>> list(UUID userId) {
@@ -233,6 +325,10 @@ public class IdeaService {
 
     public void feedback(UUID userId, UUID ideaId, Integer feedback, Boolean tried) {
         store.feedbackIdea(userId, ideaId, feedback, tried);
+    }
+
+    public Map<String, Object> launchPlan(UUID userId, UUID ideaId, boolean force) {
+        return opportunityPipeline.launchPlan(userId, ideaId, force);
     }
 
     private static String eventForNews(String signalType) {
@@ -244,6 +340,31 @@ public class IdeaService {
             case "shortage" -> "supply_disruption";
             default -> "other";
         };
+    }
+
+    private static boolean isFyiNews(String signalType, String title, String description) {
+        if (SignalRules.isFyi(signalType)) {
+            return true;
+        }
+        String blob = ((title == null ? "" : title) + " " + (description == null ? "" : description))
+                .toLowerCase(Locale.ROOT);
+        return SignalRules.isFyi(SignalRules.detect(blob));
+    }
+
+    private static Map<String, Object> fyiResponse() {
+        Map<String, Object> gate = new LinkedHashMap<>();
+        gate.put("proceed", false);
+        gate.put("reason", "This news is FYI only — it does not create a specific buyer or buying moment for a small team.");
+        gate.put("confidence", 0.9);
+        gate.put("suggestions", List.of(
+                "A product launch that names who must adopt it",
+                "A price change, shortage, approval, or rule with a clear compliance date"));
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("ideas", List.of());
+        body.put("cached", false);
+        body.put("gate", gate);
+        body.put("emptyReason", "FYI only — no business idea from this item.");
+        return body;
     }
 
     private Map<String, Object> signalFor(UUID userId, String urlHash, String text, String industry) {
@@ -287,7 +408,7 @@ public class IdeaService {
                 potential.score());
     }
 
-    private List<Map<String, Object>> draftIdeas(
+    private DraftResult draftIdeas(
             UUID userId,
             String title,
             String description,
@@ -318,7 +439,7 @@ public class IdeaService {
                     userId,
                     PROMPT_VERSION,
                     "idea",
-                    LlmService.prompt("idea.v1.txt"),
+                    LlmService.prompt("idea.v2.txt"),
                     user,
                     json -> json != null && json.path("ideas").isArray() && !json.path("ideas").isEmpty()
                             ? null
@@ -331,41 +452,32 @@ public class IdeaService {
                     row.putIfAbsent("whyNow", idea.path("why_now").asText(title));
                     row.putIfAbsent("capitalNeededInr", idea.path("capital_needed_inr").asInt(0));
                     row.putIfAbsent("hoursPerWeek", idea.path("hours_per_week").asInt(5));
+                    String patternId = idea.path("pattern_id").asText("").trim();
+                    if (patternId.isBlank()) {
+                        patternId = idea.path("patternId").asText("").trim();
+                    }
+                    if (!patternId.isBlank()) {
+                        row.put("pattern_id", patternId);
+                    }
                     rows.add(row);
                 }
-                return rows;
+                return new DraftResult(rows, "", node);
             }
-        } catch (Exception ignored) {
-            // template below
+            log.warn("ideas.fromNews LLM returned no ideas title={}", shortTitle(title));
+            return new DraftResult(List.of(), "The model did not return usable ideas for this article.", node);
+        } catch (Exception ex) {
+            log.warn(
+                    "ideas.fromNews LLM failed title={} error={}",
+                    shortTitle(title), shortText(ex.getMessage(), 160));
+            return new DraftResult(List.of(), "Could not generate ideas from the model.", null);
         }
-        List<Map<String, Object>> fallback = new ArrayList<>();
-        List<PatternMatcher.Pattern> use = matched.isEmpty()
-                ? List.of(new PatternMatcher.Pattern("P6", "Consumer shift", List.of("other"), "A small service"))
-                : matched;
-        for (PatternMatcher.Pattern pattern : use) {
-            Map<String, Object> row = new LinkedHashMap<>();
-            String whyIdea = String.valueOf(signal.getOrDefault("why_idea", "")).trim();
-            if ("null".equals(whyIdea)) {
-                whyIdea = "";
-            }
-            row.put("title", pattern.name() + " for " + industry);
-            row.put("whyNow", whyIdea.isBlank() ? "Why now: " + title : whyIdea);
-            row.put("offer", whyIdea.isBlank()
-                    ? pattern.ideaShape() + ". Education and tools only where the industry requires it."
-                    : whyIdea);
-            row.put("segment", "People already following this news");
-            row.put("capitalNeededInr", 0);
-            row.put("hoursPerWeek", 5);
-            row.put("confidence", 0.5);
-            row.put("confidenceNote", "estimate");
-            fallback.add(row);
-        }
-        return fallback;
+    }
+
+    private record DraftResult(List<Map<String, Object>> ideas, String emptyReason, Object raw) {
     }
 
     private static IdeaScorer.Inputs inputs(Map<String, Object> signal, Map<String, Object> profile, Map<String, Object> draft) {
         String industry = String.valueOf(signal.getOrDefault("industry", profile.getOrDefault("industry", "")));
-        String persona = String.valueOf(profile.getOrDefault("persona", "working"));
         String ideaText = String.valueOf(draft.getOrDefault("title", "")) + " "
                 + draft.getOrDefault("offer", "") + " "
                 + draft.getOrDefault("whyNow", "") + " "

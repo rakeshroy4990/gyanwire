@@ -1,5 +1,6 @@
 import { useAuthSessionStore } from '../stores/authSession.store.js';
 import { useAuthFormStore } from '../stores/authForm.store.js';
+import { useProfileStore } from '../stores/profile.store.js';
 import { useUiStore } from '../stores/ui.store.js';
 import { apiUrl } from './apiBase.js';
 import { requestGoogleSignInAccessToken } from './googleSignIn.service.js';
@@ -58,6 +59,7 @@ export async function bootstrapAuthSession() {
   }
 
   authSession.clearSession();
+  useProfileStore().setProfile(null);
   return false;
 }
 
@@ -169,6 +171,7 @@ export async function logoutUser() {
     // still clear local session
   }
   authSession.clearSession();
+  useProfileStore().setProfile(null);
 }
 
 export function openLoginPopup(infoMessage = '') {

@@ -31,6 +31,8 @@ public final class NewsRow {
     private boolean sample;
     private String scoredBy;
     private String language = "en";
+    private String country;
+    private String sourceRegion;
     private boolean weakSignal;
 
     public UUID id() { return id; }
@@ -86,6 +88,10 @@ public final class NewsRow {
     public NewsRow scoredBy(String scoredBy) { this.scoredBy = scoredBy; return this; }
     public String language() { return language; }
     public NewsRow language(String language) { this.language = language; return this; }
+    public String country() { return country; }
+    public NewsRow country(String country) { this.country = country; return this; }
+    public String sourceRegion() { return sourceRegion; }
+    public NewsRow sourceRegion(String sourceRegion) { this.sourceRegion = sourceRegion; return this; }
     public boolean weakSignal() { return weakSignal; }
     public NewsRow weakSignal(boolean weakSignal) { this.weakSignal = weakSignal; return this; }
 }

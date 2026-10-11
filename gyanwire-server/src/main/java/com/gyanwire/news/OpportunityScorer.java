@@ -58,6 +58,7 @@ public final class OpportunityScorer {
             case "regulation" -> 0.9;
             case "research" -> 0.45;
             case "opinion" -> 0.2;
+            case "fyi" -> 0.0;
             default -> 0.35;
         };
         return (int) Math.round(max * factor);

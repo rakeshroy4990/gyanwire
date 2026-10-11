@@ -14,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -22,12 +23,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -63,6 +66,43 @@ class NewsControllerTest {
     }
 
     @Test
+    void defaultNewsStreamsNdjson() throws Exception {
+        when(news.defaults(eq(5), isNull())).thenReturn(Map.of(
+                "results", List.of(
+                        Map.of("title", "First launch", "url", "https://a.example/1", "opportunityScore", 80),
+                        Map.of("title", "Second launch", "url", "https://a.example/2", "opportunityScore", 70)
+                ),
+                "freshness", "last 7 days",
+                "requested", 5,
+                "returned", 2,
+                "label", "Top searched product news",
+                "message", "Two signals",
+                "isDefaultNews", true,
+                "category", "Default"
+        ));
+
+        String body = mvc.perform(get("/api/news/default")
+                        .param("limit", "5")
+                        .param("intent", "products")
+                        .accept(MediaType.parseMediaType("application/x-ndjson")))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Accel-Buffering", "no"))
+                .andExpect(header().string("Content-Type", org.hamcrest.Matchers.containsString("application/x-ndjson")))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String[] lines = body.split("\n");
+        assertThat(lines).hasSize(5);
+        assertThat(lines[0]).contains("\"type\":\"open\"");
+        assertThat(lines[1]).contains("\"type\":\"meta\"");
+        assertThat(lines[1]).doesNotContain("\"results\"");
+        assertThat(lines[2]).contains("\"type\":\"item\"").contains("First launch");
+        assertThat(lines[3]).contains("\"type\":\"item\"").contains("Second launch");
+        assertThat(lines[4]).contains("\"type\":\"done\"").contains("\"returned\":2");
+    }
+
+    @Test
     void unknownIndustryIsRejected() throws Exception {
         when(industries.listCatalog()).thenReturn(List.of(catalog()));
         mvc.perform(get("/api/news/NotARealIndustry"))
@@ -73,7 +113,7 @@ class NewsControllerTest {
     @Test
     void emptyIndustryReportsWarmingUp() throws Exception {
         when(industries.listCatalog()).thenReturn(List.of(catalog()));
-        when(news.industry(eq("Medical"), isNull(), eq(5), eq("products"), eq(14)))
+        when(news.industry(eq("Medical"), isNull(), eq(5), eq("products"), eq(14), isNull()))
                 .thenReturn(Map.of(
                         "results", List.of(),
                         "freshness", "warming_up",
@@ -90,7 +130,7 @@ class NewsControllerTest {
     @Test
     void widenedWindowIsLabelled() throws Exception {
         when(industries.listCatalog()).thenReturn(List.of(catalog()));
-        when(news.industry(eq("Medical"), eq("Paediatrics"), eq(5), eq("products"), eq(14)))
+        when(news.industry(eq("Medical"), eq("Paediatrics"), eq(5), eq("products"), eq(14), isNull()))
                 .thenReturn(Map.of(
                         "results", List.of(Map.of("title", "A launch", "opportunityScore", 70)),
                         "freshness", "last 30 days",
@@ -102,6 +142,29 @@ class NewsControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.freshness").value("last 30 days"))
                 .andExpect(jsonPath("$.data.results[0].opportunityScore").value(70));
+    }
+
+    @Test
+    void unknownCountryIsRejected() throws Exception {
+        when(industries.listCatalog()).thenReturn(List.of(catalog()));
+        mvc.perform(get("/api/news/Medical").param("country", "ZZ"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("UNKNOWN_COUNTRY"));
+    }
+
+    @Test
+    void countryFilterIsApplied() throws Exception {
+        when(industries.listCatalog()).thenReturn(List.of(catalog()));
+        when(news.industry(eq("Medical"), isNull(), eq(5), eq("products"), eq(14), eq("US")))
+                .thenReturn(Map.of(
+                        "results", List.of(),
+                        "country", "US",
+                        "regionPreference", "Worldwide, India prioritized"
+                ));
+        mvc.perform(get("/api/news/Medical").param("country", "us"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.country").value("US"))
+                .andExpect(jsonPath("$.data.regionPreference").value("Worldwide, India prioritized"));
     }
 
     @Test

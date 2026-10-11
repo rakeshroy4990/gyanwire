@@ -4,6 +4,7 @@ import { RouterLink, useRouter } from 'vue-router';
 import { useAuth } from '../../composables/useAuth.js';
 import { useBilling } from '../../composables/useBilling.js';
 import { useUiStore } from '../../stores/ui.store.js';
+import ThemeSwitch from './ThemeSwitch.vue';
 
 const {
   isAuthenticated,
@@ -23,7 +24,7 @@ const ui = useUiStore();
 async function goHome() {
   menuOpen.value = false;
   ui.requestHome();
-  if (router.currentRoute.value.path !== '/') {
+  if (router.currentRoute.value.name !== 'research') {
     await router.push({ name: 'research' });
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -52,7 +53,7 @@ async function onCancel() {
       <div class="site-header__leading">
         <RouterLink
           class="brand"
-          to="/"
+          :to="{ name: 'research' }"
           aria-label="Gyanwire home"
           @click.prevent="goHome"
         >
@@ -71,6 +72,7 @@ async function onCancel() {
       </div>
 
       <div class="site-header__actions">
+        <ThemeSwitch />
         <button
           v-if="!isAuthenticated"
           type="button"

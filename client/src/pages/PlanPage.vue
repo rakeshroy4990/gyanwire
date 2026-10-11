@@ -208,7 +208,7 @@ watch(ideaId, load);
         <h1>Start from a scored idea</h1>
         <p>Open a finding, pick an idea, then come here for the week-by-week path and tools.</p>
       </header>
-      <RouterLink class="btn btn--primary" to="/">Back to research</RouterLink>
+      <RouterLink class="btn btn--primary" :to="{ name: 'research' }">Back to research</RouterLink>
     </template>
 
     <template v-else-if="plan">
@@ -342,7 +342,7 @@ watch(ideaId, load);
         <p v-if="error" class="account-notice form-error">{{ error }}</p>
         <p>Open a story in research and choose an idea. The weekly path is built from that idea.</p>
       </header>
-      <RouterLink class="btn btn--primary" to="/">Back to research</RouterLink>
+      <RouterLink class="btn btn--primary" :to="{ name: 'research' }">Back to research</RouterLink>
     </template>
   </main>
 </template>

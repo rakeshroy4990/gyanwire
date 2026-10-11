@@ -8,12 +8,33 @@ import {
   rememberIdeaSource,
   resolveIdeaSource,
 } from '../services/ideaSource.js';
+import { isPipelineIdea } from '../services/ideaCards.js';
 import PageSkeleton from '../components/ui/PageSkeleton.vue';
+import IdeaOpportunityCard from '../components/ideas/IdeaOpportunityCard.vue';
+import IdeaLaunchPlan from '../components/ideas/IdeaLaunchPlan.vue';
+import NoOpportunity from '../components/ideas/NoOpportunity.vue';
 
 const route = useRoute();
 const router = useRouter();
-const { runFromNews, ideas, loading, error, limitReached } = useIdeas();
-const { load, save, saving } = useProfile();
+const {
+  runFromNews,
+  ideas,
+  loading,
+  error,
+  limitReached,
+  gate,
+  pipeline,
+  emptyReason,
+  launchPlan,
+  planError,
+  planLoadingId,
+  savingId,
+  savedIds,
+  buildPlan,
+  closePlan,
+  save: saveIdeaCard,
+} = useIdeas();
+const { load, save: saveProfile, saving } = useProfile();
 const refineOpen = ref(false);
 const refineError = ref('');
 const source = ref(null);
@@ -40,6 +61,14 @@ const expectedCount = computed(() => {
   const n = Number(route.query.ideaCount);
   return Number.isFinite(n) && n > 0 ? Math.min(8, Math.round(n)) : 4;
 });
+
+const pipelineMode = computed(() => pipeline.value || ideas.value.some(isPipelineIdea));
+const noOpportunity = computed(() => (
+  pipelineMode.value && !ideas.value.length && gate.value && gate.value.proceed === false
+));
+const pageTitle = computed(() => (
+  pipelineMode.value ? 'Ideas you can test from this news' : 'Choose one way to act on this finding'
+));
 
 function moneyLine(row) {
   return row?.business_model || row?.businessModel || '';
@@ -79,6 +108,10 @@ async function hydrateSource() {
 }
 
 function goBack() {
+  if (launchPlan.value) {
+    closePlan();
+    return;
+  }
   if (window.history.length > 1) {
     router.back();
     return;
@@ -128,7 +161,7 @@ async function loadIdeas(force = false) {
 async function refine() {
   refineError.value = '';
   try {
-    const data = await save({
+    const data = await saveProfile({
       ...form,
       consent: true,
       industries: form.industries?.length ? form.industries : [industry.value || 'IT'],
@@ -176,7 +209,7 @@ watch(
 
     <header class="account-page__hero">
       <p class="account-page__kicker">Idea</p>
-      <h1>Choose one way to act on this finding</h1>
+      <h1>{{ pageTitle }}</h1>
       <p v-if="newsTitle">
         From:
         <a v-if="newsUrl" :href="newsUrl" target="_blank" rel="noopener noreferrer">{{ newsTitle }}</a>
@@ -187,29 +220,52 @@ watch(
 
     <template v-if="sourceMissing">
       <p class="account-empty">This idea link expired in this tab. Open the finding again from research.</p>
-      <RouterLink class="btn btn--primary" to="/">Back to research</RouterLink>
+      <RouterLink class="btn btn--primary" :to="{ name: 'research' }">Back to research</RouterLink>
     </template>
 
     <template v-else-if="!newsUrl">
       <p class="account-empty">Pick a finding first so we can score ideas from that story.</p>
-      <RouterLink class="btn btn--primary" to="/">Back to research</RouterLink>
+      <RouterLink class="btn btn--primary" :to="{ name: 'research' }">Back to research</RouterLink>
     </template>
 
     <template v-else>
-      <PageSkeleton v-if="loading" variant="options" :rows="expectedCount" label="Scoring ideas" />
+      <PageSkeleton v-if="loading && !ideas.length" variant="options" :rows="expectedCount" label="Scoring ideas" />
 
-      <p v-else-if="error" class="form-error" role="alert">{{ error }}</p>
+      <p v-else-if="error && !ideas.length" class="form-error" role="alert">{{ error }}</p>
 
       <p v-if="limitReached" class="account-notice">
         Daily idea limit reached.
         <RouterLink to="/pricing">See plans</RouterLink>
       </p>
 
-      <template v-else-if="!loading && ideas.length">
-        <p class="idea-page__sort-note">Each card is a different offer. Higher scores are a closer fit.</p>
-        <ul class="idea-options">
-          <li v-for="row in ideas" :key="row.id || row.title">
-            <article class="idea-option">
+      <template v-else-if="!loading && launchPlan">
+        <IdeaLaunchPlan :plan="launchPlan" />
+      </template>
+
+      <NoOpportunity v-else-if="!loading && noOpportunity" :gate="gate" />
+
+      <p v-else-if="!loading && emptyReason && !ideas.length" class="account-empty">{{ emptyReason }}</p>
+
+      <template v-else-if="ideas.length">
+        <p class="idea-page__sort-note">
+          {{ pipelineMode
+            ? 'Social media first, then education, then other offers. Scores rank within each type.'
+            : 'Each card is a different offer. Higher scores are a closer fit.' }}
+        </p>
+        <p v-if="planError" class="form-error" role="alert">{{ planError }}</p>
+        <ul class="idea-options" :class="{ 'idea-options--pipeline': pipelineMode }">
+          <li v-for="(row, index) in ideas" :key="row.id || row.title">
+            <IdeaOpportunityCard
+              v-if="isPipelineIdea(row)"
+              :idea="row"
+              :best="index === 0"
+              :saving="savingId === row.id"
+              :saved="savedIds.includes(row.id)"
+              :building="planLoadingId === row.id"
+              @build="buildPlan(row.id)"
+              @save="saveIdeaCard(row.id)"
+            />
+            <article v-else class="idea-option">
               <div class="idea-option__top">
                 <p class="idea-option__format">{{ row.format || 'Idea' }}</p>
                 <p class="idea-option__score">{{ scoreLabel(row.score) }}</p>
@@ -226,6 +282,7 @@ watch(
             </article>
           </li>
         </ul>
+        <PageSkeleton v-if="loading" variant="options" :rows="1" label="Scoring ideas" />
       </template>
 
       <section v-if="newsUrl && !limitReached" class="account-card">

@@ -9,7 +9,8 @@ for (const viewport of viewports) {
   test(`nine-step research journey ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize(viewport);
     await page.goto('/');
-    await expect(page.getByRole('link', { name: /gyanwire/i }).first()).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /calibration logs/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Start research' })).toBeVisible();
     await page.goto('/pricing');
     await expect(page.getByRole('heading', { name: /simple plans/i })).toBeVisible();
     await page.goto('/terms');
@@ -20,7 +21,8 @@ for (const viewport of viewports) {
     await expect(page.getByRole('heading', { name: 'Refunds' })).toBeVisible();
     await page.goto('/contact');
     await expect(page.getByRole('heading', { name: 'Contact' })).toBeVisible();
-    await page.goto('/');
+    await page.goto('/research');
+    await expect(page.getByRole('link', { name: /gyanwire/i }).first()).toBeVisible();
     await expect(page.getByLabel(/research/i).first()).toBeVisible();
   });
 }

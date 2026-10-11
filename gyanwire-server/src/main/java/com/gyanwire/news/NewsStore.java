@@ -53,10 +53,8 @@ public class NewsStore {
                 WHERE industry = ? AND enabled = TRUE
                 ORDER BY weight DESC, name
                 """;
-        if (max > 0) {
-            sql += " LIMIT " + max;
-        }
-        return jdbc.query(sql, (rs, i) -> source(rs), industry);
+        List<SourceRow> rows = jdbc.query(sql, (rs, i) -> source(rs), industry);
+        return SourceMix.pick(rows, max, SourceRow::region);
     }
 
     public void markSourceOk(UUID id, String etag, String lastModified) {
@@ -75,13 +73,23 @@ public class NewsStore {
                 """, trim(error, 500), id);
     }
 
-    public PackRow claimPack(String industry, String sub) {
+    public PackRow claimPack(String industry, String sub, String region) {
+        String scoped = region == null || region.isBlank() ? null : region.trim();
+        PackRow claimed = claimPackScoped(industry, sub, scoped);
+        if (claimed == null && scoped != null) {
+            return claimPackScoped(industry, sub, null);
+        }
+        return claimed;
+    }
+
+    private PackRow claimPackScoped(String industry, String sub, String region) {
         List<PackRow> rows = jdbc.query("""
                 UPDATE news_query_packs SET last_used_at = now()
                 WHERE id = (
                     SELECT id FROM news_query_packs
                     WHERE industry = ? AND enabled = TRUE
                       AND (?::text IS NULL OR sub IS NULL OR sub = ?)
+                      AND (?::text IS NULL OR region = ?)
                     ORDER BY CASE WHEN sub IS NOT NULL AND sub = ? THEN 0 WHEN sub IS NULL THEN 1 ELSE 2 END,
                              last_used_at ASC NULLS FIRST
                     LIMIT 1
@@ -94,7 +102,7 @@ public class NewsStore {
                 rs.getString("signal_type"),
                 rs.getString("query"),
                 rs.getInt("window_days")
-        ), industry, sub, sub, sub);
+        ), industry, sub, sub, region, region, sub);
         return rows.isEmpty() ? null : rows.get(0);
     }
 
@@ -118,7 +126,7 @@ public class NewsStore {
 
     public List<NewsRow> recent(String industry, Instant since) {
         return jdbc.query("""
-                SELECT i.*, s.name AS source_name, s.weight AS source_weight
+                SELECT i.*, s.name AS source_name, s.weight AS source_weight, s.region AS source_region
                 FROM news_items i
                 LEFT JOIN news_sources s ON s.id = i.source_id
                 WHERE i.industry = ? AND i.published_at >= ?
@@ -128,7 +136,7 @@ public class NewsStore {
     public List<NewsRow> eligible(String industry, String sub, Instant since, boolean sample) {
         if (sub == null || sub.isBlank()) {
             return jdbc.query("""
-                    SELECT i.*, s.name AS source_name, s.weight AS source_weight
+                    SELECT i.*, s.name AS source_name, s.weight AS source_weight, s.region AS source_region
                     FROM news_items i
                     LEFT JOIN news_sources s ON s.id = i.source_id
                     WHERE i.industry = ? AND i.sample = ? AND i.published_at >= ?
@@ -137,7 +145,7 @@ public class NewsStore {
                     """, (rs, rowNum) -> mapRow(rs), industry, sample, Timestamp.from(since));
         }
         return jdbc.query("""
-                SELECT i.*, s.name AS source_name, s.weight AS source_weight
+                SELECT i.*, s.name AS source_name, s.weight AS source_weight, s.region AS source_region
                 FROM news_items i
                 LEFT JOIN news_sources s ON s.id = i.source_id
                 WHERE i.industry = ? AND i.sample = ? AND i.published_at >= ?
@@ -155,8 +163,8 @@ public class NewsStore {
                     INSERT INTO news_items (
                         id, industry, sub, title, url, domain, resolved, source_id, published_at, date_estimated,
                         summary, signal_type, india_relevance, specificity, opportunity_score, why_idea,
-                        title_hash, simhash, also_covered_by, sample, scored_by, language
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        title_hash, simhash, also_covered_by, sample, scored_by, language, country
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT (url) DO NOTHING
                     """);
             ps.setObject(1, id);
@@ -181,6 +189,7 @@ public class NewsStore {
             ps.setBoolean(20, row.sample());
             ps.setString(21, row.scoredBy());
             ps.setString(22, row.language());
+            ps.setString(23, row.country());
             return ps;
         });
         return written > 0;
@@ -340,7 +349,9 @@ public class NewsStore {
                 .alsoCoveredBy(names)
                 .sample(rs.getBoolean("sample"))
                 .scoredBy(rs.getString("scored_by"))
-                .language(rs.getString("language"));
+                .language(rs.getString("language"))
+                .country(rs.getString("country"))
+                .sourceRegion(rs.getString("source_region"));
     }
 
     private static Array textArray(java.sql.Connection connection, List<String> items) throws SQLException {

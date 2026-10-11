@@ -3,9 +3,11 @@ package com.gyanwire.news;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public final class NewsRanker {
 
@@ -24,6 +26,9 @@ public final class NewsRanker {
         List<Scored> ordered = new ArrayList<>();
         if (pool != null) {
             for (NewsRow row : pool) {
+                if (row == null || isFyiRow(row)) {
+                    continue;
+                }
                 ordered.add(new Scored(row, rankScore(row, intent, indiaBoost, intentBoost, intentDemote)));
             }
         }
@@ -45,6 +50,8 @@ public final class NewsRanker {
                 picked.add(row);
             }
         }
+        // Score picks the set; display order is always newest first.
+        picked.sort(Comparator.comparing(NewsRow::publishedAt, Comparator.nullsLast(Comparator.reverseOrder())));
         String message = "";
         if (picked.size() < 3) {
             message = "Few items match this topic right now.";
@@ -61,7 +68,7 @@ public final class NewsRanker {
             String signal = row.signalType() == null ? "other" : row.signalType().toLowerCase(Locale.ROOT);
             if (PRODUCT_SIGNALS.contains(signal)) {
                 score += intentBoost;
-            } else if ("research".equals(signal) || "opinion".equals(signal)) {
+            } else if ("research".equals(signal) || "opinion".equals(signal) || "fyi".equals(signal)) {
                 score -= intentDemote;
             }
         }
@@ -78,6 +85,8 @@ public final class NewsRanker {
         List<NewsRow> picked = new ArrayList<>();
         Map<String, Integer> domains = new HashMap<>();
         Map<String, Integer> signals = new HashMap<>();
+        Map<String, Integer> countries = new HashMap<>();
+        int countryCap = countryCap(ordered, limit);
         List<NewsRow> skipped = new ArrayList<>();
         for (NewsRow row : ordered) {
             if (picked.size() >= limit) {
@@ -88,7 +97,11 @@ public final class NewsRanker {
             }
             String domain = row.domain() == null ? "" : row.domain();
             String signal = row.signalType() == null ? "other" : row.signalType();
-            boolean crowded = domains.getOrDefault(domain, 0) >= 2 || signals.getOrDefault(signal, 0) >= 2;
+            String country = row.country() == null ? "" : row.country();
+            boolean countryCrowded = !country.isEmpty() && countries.getOrDefault(country, 0) >= countryCap;
+            boolean crowded = domains.getOrDefault(domain, 0) >= 2
+                    || signals.getOrDefault(signal, 0) >= 2
+                    || countryCrowded;
             if (crowded && ordered.size() > limit) {
                 skipped.add(row);
                 continue;
@@ -96,19 +109,60 @@ public final class NewsRanker {
             picked.add(row);
             domains.merge(domain, 1, Integer::sum);
             signals.merge(signal, 1, Integer::sum);
-        }
-        if (picked.size() < limit) {
-            for (NewsRow row : skipped) {
-                if (picked.size() >= limit) {
-                    break;
-                }
-                if (nearTitle(picked, row)) {
-                    continue;
-                }
-                picked.add(row);
+            if (!country.isEmpty()) {
+                countries.merge(country, 1, Integer::sum);
             }
         }
+        if (picked.size() < limit) {
+            fill(skipped, picked, limit, countries, countryCap, true);
+        }
+        if (picked.size() < limit) {
+            fill(skipped, picked, limit, countries, countryCap, false);
+        }
         return picked;
+    }
+
+    private static void fill(
+            List<NewsRow> skipped,
+            List<NewsRow> picked,
+            int limit,
+            Map<String, Integer> countries,
+            int countryCap,
+            boolean respectCountryCap
+    ) {
+        for (NewsRow row : skipped) {
+            if (picked.size() >= limit) {
+                return;
+            }
+            if (nearTitle(picked, row)) {
+                continue;
+            }
+            String country = row.country() == null ? "" : row.country();
+            if (respectCountryCap && !country.isEmpty() && countries.getOrDefault(country, 0) >= countryCap) {
+                continue;
+            }
+            picked.add(row);
+            if (!country.isEmpty()) {
+                countries.merge(country, 1, Integer::sum);
+            }
+        }
+    }
+
+    /**
+     * When several countries are in the pool, one country can lead but cannot fill the list.
+     * A list of five keeps at most three from the leader, which is India after the India boost.
+     */
+    private static int countryCap(List<NewsRow> ordered, int limit) {
+        Set<String> codes = new HashSet<>();
+        for (NewsRow row : ordered) {
+            if (row != null && row.country() != null && !row.country().isBlank()) {
+                codes.add(row.country());
+            }
+        }
+        if (codes.size() < 2) {
+            return limit;
+        }
+        return Math.max(1, (limit * 3) / 5);
     }
 
     private static boolean nearTitle(List<NewsRow> picked, NewsRow candidate) {
@@ -121,6 +175,13 @@ public final class NewsRanker {
             }
         }
         return false;
+    }
+
+    private static boolean isFyiRow(NewsRow row) {
+        if (SignalRules.isFyi(row.signalType())) {
+            return true;
+        }
+        return SignalRules.isFyi(SignalRules.detect(row.title()));
     }
 
     private record Scored(NewsRow row, int score) {

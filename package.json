@@ -21,6 +21,7 @@
     "test:e2e": "playwright test",
     "test:gyanwire-server": "cd gyanwire-server && ./gradlew test",
     "eval:llm": "cd gyanwire-server && ./gradlew evalLlm",
+    "eval:ideas": "cd gyanwire-server && ./gradlew evalIdeaPipeline",
     "news:ingest": "bash scripts/news-ingest.sh"
   },
   "dependencies": {

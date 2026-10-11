@@ -50,7 +50,9 @@ public class NewsClassifier {
         int window = properties.getRank().windowDays()[0];
         List<NewsRow> batch = new java.util.ArrayList<>();
         for (NewsRow row : rows) {
-            if (row.dateEstimated() || row.id() == null || "other".equals(row.signalType())) {
+            if (row.dateEstimated() || row.id() == null
+                    || "other".equals(row.signalType())
+                    || SignalRules.isFyi(row.signalType())) {
                 continue;
             }
             long age = row.publishedAt() == null ? 999 : Duration.between(row.publishedAt(), now).toDays();

@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gyanwire · Live research</title>
+<meta name="description" content="A sample research session that ends in the field where you start your own.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="scrollcraft.css">
+<link rel="stylesheet" href="page.css">
+<style>
+  :root {
+    --sc-canvas: #101318;
+    --sc-surface: #1a2130;
+    --sc-ink: #e7edf6;
+    --sc-ink-soft: #9aabc2;
+    --sc-accent: #8eb6ff;
+    --sc-accent-ink: #0c121c;
+    --sc-font-display: "Archivo", system-ui, sans-serif;
+    --sc-font-text: "Outfit", system-ui, sans-serif;
+  }
+  html { scroll-behavior: auto; }
+</style>
+</head>
+<body>
+<div class="gw-page">
+  <span data-sc-progress></span>
+  <div class="sc-grain" aria-hidden="true"></div>
+  <svg class="gw-wires" viewBox="0 0 80 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <path class="gw-wire gw-wire--pile" pathLength="1" d="M58 36 C 24 180, 18 340, 52 520" />
+    <path class="gw-wire gw-wire--why" pathLength="1" d="M36 48 C 70 210, 12 390, 46 600" />
+    <path class="gw-wire gw-wire--idea" pathLength="1" d="M22 40 C 16 250, 68 430, 40 700" />
+  </svg>
+  <main>
+    <section class="gw-act" data-sc-act="pin" data-sc-span="1.8">
+      <div data-sc-stage class="gw-stage">
+        <article class="gw-app">
+          <header class="gw-bar">
+            <p class="gw-mark">Gyanwire</p>
+            <p class="gw-sample">Sample</p>
+          </header>
+          <div class="gw-status-slot">
+            <p class="gw-status" data-sc-cue="0 0.5 0">Query is in the field.</p>
+            <p class="gw-status" data-sc-cue="0.38 1">Findings have not arrived.</p>
+          </div>
+          <p class="gw-meta">Medical</p>
+          <h1 class="gw-query">Labs told to file calibration logs by 1 November</h1>
+        </article>
+      </div>
+    </section>
+
+    <section class="gw-act" data-sc-act="pan" data-sc-span="3" data-wire-source="pile">
+      <div data-sc-stage class="gw-stage">
+        <div class="gw-rail" data-sc-pan="0.04">
+          <article class="gw-link">
+            <header class="gw-bar">
+              <p class="gw-mark">Gyanwire</p>
+              <p class="gw-sample">Sample</p>
+            </header>
+            <p class="gw-meta">Medical</p>
+            <h2 class="gw-query">Labs told to file calibration logs by 1 November</h2>
+            <p class="gw-missing">No why-line yet</p>
+          </article>
+          <article class="gw-link">
+            <header class="gw-bar">
+              <p class="gw-mark">Gyanwire</p>
+              <p class="gw-sample">Sample</p>
+            </header>
+            <p class="gw-meta">Medical</p>
+            <h2 class="gw-query">Clinic owners who miss the date can be asked to pause testing</h2>
+            <p class="gw-missing">No why-line yet</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="gw-act gw-act--flow" data-sc-act="flow" data-wire-source="why">
+      <article class="gw-app">
+        <header class="gw-bar">
+          <p class="gw-mark">Gyanwire</p>
+          <p class="gw-sample">Sample</p>
+        </header>
+        <p class="gw-meta">Medical</p>
+        <h2 class="gw-query">Labs told to file calibration logs by 1 November</h2>
+        <div class="gw-why" data-sc-reveal="up" data-sc-reveal-at="0.18 0.78">
+          <p class="gw-why__label">Why</p>
+          <p class="gw-why__text">Lab owners have a dated filing task and will pay to avoid a pause in testing.</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="gw-act" data-sc-act="pin" data-sc-span="4.6" data-wire-source="idea">
+      <div data-sc-stage class="gw-stage">
+        <article class="gw-app">
+          <header class="gw-bar">
+            <p class="gw-mark">Gyanwire</p>
+            <p class="gw-sample">Sample</p>
+          </header>
+          <p class="gw-meta">Medical</p>
+          <h2 class="gw-query" data-sc-cue="0 0.34 0">Labs told to file calibration logs by 1 November</h2>
+          <div class="gw-idea">
+            <p class="gw-sample">Sample</p>
+            <div class="gw-idea-slot">
+              <h2 class="gw-idea__title" data-sc-cue="0.18 0.55">File calibration logs for labs before 1 November</h2>
+              <p data-sc-cue="0.42 0.78">A done-for-you filing service for labs that will miss the date.</p>
+              <p data-sc-cue="0.64 1"><span class="gw-label">Why now:</span> The window is days, and the notice is already published. ₹6,000 per lab.</p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="start" class="gw-act gw-act--flow" data-sc-act="flow" data-wire-source="close">
+      <article class="gw-app">
+        <header class="gw-bar">
+          <p class="gw-mark">Gyanwire</p>
+        </header>
+        <p class="gw-close-line" data-sc-cue="0">The field is empty. This one is yours.</p>
+        <form class="gw-form" action="/research" method="get">
+          <label for="gw-question">Research question</label>
+          <textarea id="gw-question" name="q" rows="4" maxlength="2000" placeholder="Ask about a news item, a market, or a messy note"></textarea>
+          <button class="gw-submit" type="submit">Start research</button>
+        </form>
+        <nav class="gw-legal" aria-label="Legal">
+          <a href="/terms">Terms</a>
+          <a href="/privacy">Privacy</a>
+          <a href="/refund">Refunds</a>
+          <a href="/contact">Contact</a>
+        </nav>
+      </article>
+    </section>
+  </main>
+</div>
+<script src="scrollcraft.js"></script>
+<script>
+  var root = document.querySelector('.gw-page');
+  ScrollCraft.mount(root);
+  (function () {
+    var svg = root.querySelector('.gw-wires');
+    var sources = root.querySelectorAll('[data-wire-source]');
+    function tick() {
+      for (var i = 0; i < sources.length; i++) {
+        var el = sources[i];
+        var raw = getComputedStyle(el).getPropertyValue('--sc-p').trim();
+        var value = raw === '' ? 0 : Number(raw);
+        svg.style.setProperty('--wire-' + el.getAttribute('data-wire-source'), Number.isFinite(value) ? String(value) : '0');
+      }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  })();
+</script>
+</body>
+</html>

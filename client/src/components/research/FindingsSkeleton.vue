@@ -2,6 +2,7 @@
 defineProps({
   rows: { type: Number, default: 4 },
   embedded: { type: Boolean, default: false },
+  showHead: { type: Boolean, default: true },
 });
 </script>
 
@@ -13,7 +14,7 @@ defineProps({
     aria-live="polite"
     aria-label="Loading findings"
   >
-    <div class="skeleton-findings__head">
+    <div v-if="showHead" class="skeleton-findings__head">
       <span class="skeleton-line skeleton-line--title" />
       <span class="skeleton-line skeleton-line--meta" />
     </div>

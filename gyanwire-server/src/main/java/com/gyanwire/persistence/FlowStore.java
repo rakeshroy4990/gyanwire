@@ -255,6 +255,30 @@ public class FlowStore {
                 feedback, tried, ideaId, userId);
     }
 
+    public String ideaRunSignals(UUID userId, UUID runId) {
+        List<String> rows = jdbc.query(
+                "SELECT signals::text FROM idea_runs WHERE id = ? AND user_id = ?",
+                (rs, i) -> rs.getString(1),
+                runId, userId);
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
+    public void deleteIdeasForRun(UUID userId, UUID runId) {
+        jdbc.update("DELETE FROM ideas WHERE user_id = ? AND run_id = ?", userId, runId);
+    }
+
+    public void updateIdeaRunSignals(UUID userId, UUID runId, String signals) {
+        jdbc.update(
+                "UPDATE idea_runs SET signals = ?::jsonb WHERE id = ? AND user_id = ?",
+                signals, runId, userId);
+    }
+
+    public void updateIdeaBody(UUID userId, UUID ideaId, String body) {
+        jdbc.update(
+                "UPDATE ideas SET body = ?::jsonb WHERE id = ? AND user_id = ?",
+                body, ideaId, userId);
+    }
+
     public int countProjects(UUID userId) {
         Integer count = jdbc.queryForObject("SELECT count(*) FROM projects WHERE user_id = ?", Integer.class, userId);
         return count == null ? 0 : count;

@@ -146,7 +146,7 @@ public class NewsProperties {
         private int actionability = 15;
         private int minScore = 40;
         private int freshFullDays = 3;
-        private int rulesCap = 55;
+        private int rulesCap = 100;
         private int indiaBoost = 8;
         private int intentBoost = 8;
         private int intentDemote = 12;

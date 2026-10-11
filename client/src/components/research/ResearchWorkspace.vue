@@ -1,10 +1,16 @@
 <script setup>
-import { ref } from 'vue';
+import { nextTick, onActivated, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuth } from '../../composables/useAuth.js';
 import { useResearch } from '../../composables/useResearch.js';
 import { useProduct } from '../../composables/useProduct.js';
 import { rememberIdeaSource } from '../../services/ideaSource.js';
+import {
+  clearResearchReturn,
+  findingElement,
+  loadResearchReturn,
+  rememberResearchReturn,
+} from '../../services/researchWorkspace.js';
 import ResearchPanel from './ResearchPanel.vue';
 import ResultsPanel from './ResultsPanel.vue';
 
@@ -12,6 +18,7 @@ const router = useRouter();
 const { isAuthenticated, greetingName, openLoginPopup } = useAuth();
 const product = useProduct();
 const claim = ref('');
+const returnKey = ref('');
 
 const {
   catalog,
@@ -26,6 +33,8 @@ const {
   browseSub,
   browseFreshness,
   browseNote,
+  browseCountries,
+  country,
   showBrowseResults,
   emptyMessage,
   showEmpty,
@@ -33,6 +42,7 @@ const {
   queryPreview,
   selectIndustry,
   selectSub,
+  selectCountry,
   runSearch,
   clearForm,
   searchesLeftLabel,
@@ -41,11 +51,33 @@ const {
   upgradeUrl,
 } = useResearch();
 
+function restoreFindingPosition() {
+  const target = loadResearchReturn();
+  if (!target) return;
+  returnKey.value = target.id || target.url;
+  nextTick(() => {
+    requestAnimationFrame(() => {
+      const el = findingElement(target);
+      if (el) el.scrollIntoView({ block: 'center' });
+      else if (target.scrollY) window.scrollTo({ top: target.scrollY, left: 0 });
+      clearResearchReturn();
+    });
+  });
+}
+
+onMounted(restoreFindingPosition);
+onActivated(restoreFindingPosition);
+
+watch([industry, subcategory], () => {
+  returnKey.value = '';
+});
+
 async function onIdea(item) {
   if (!isAuthenticated.value) {
     openLoginPopup();
     return;
   }
+  rememberResearchReturn(item, window.scrollY);
   const scopedIndustry = industry.value && industry.value !== 'All'
     ? industry.value
     : (item.industry || '');
@@ -106,9 +138,11 @@ async function onClaim(sentence) {
       :limit-reached="limitReached"
       :limit-message="limitMessage"
       :upgrade-url="upgradeUrl"
+      :return-key="returnKey"
       @update:thoughts="thoughts = $event"
       @select-industry="selectIndustry"
       @select-sub="selectSub"
+      @select-country="selectCountry"
       @search="runSearch"
       @clear="clearForm"
       @idea="onIdea"
@@ -121,13 +155,17 @@ async function onClaim(sentence) {
       :results-sub="browseSub"
       :freshness="browseFreshness"
       :note="browseNote"
+      :countries="browseCountries"
+      :country="country"
       :empty-message="emptyMessage"
       :show-empty="showEmpty && !isLoading"
       :show-results="showBrowseResults"
       :is-loading="isLoading && !hasThread"
+      :return-key="returnKey"
       show-ideas
       @idea="onIdea"
       @feedback="onFeedback"
+      @select-country="selectCountry"
     />
     <p v-if="claim" class="disclaimer">Claim check: {{ claim }}</p>
   </main>

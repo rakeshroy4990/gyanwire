@@ -1,0 +1,247 @@
+{
+  "id": "fitbit-edge",
+  "article": {
+    "title": "Fitbit expected to launch Edge tracker with rumoured sensors",
+    "text": "Google is expected to announce a Fitbit Edge fitness tracker in the coming weeks. Reports describe rumoured sensors and an expected lower price than Charge 6, but Google has not confirmed specifications, price, or an India date. Charge 6 is already sold in India beside Noise, boAt, and Garmin. India availability is not confirmed."
+  },
+  "profile": { "hoursPerWeek": 10, "skills": ["writing"] },
+  "signals": {
+    "headline": "Fitbit expected to launch Edge tracker with rumoured sensors",
+    "eventType": "launch",
+    "entities": ["Fitbit", "Google", "Fitbit Edge"],
+    "confirmedFacts": [
+      "Charge 6 is already sold in India",
+      "Google owns Fitbit"
+    ],
+    "unconfirmedClaims": [
+      "rumoured sensors and an expected lower price",
+      "India availability is not confirmed"
+    ],
+    "indiaRelevance": "high",
+    "timeWindow": { "startsAt": "", "urgency": "weeks" },
+    "affectedGroups": [
+      "Fitness-curious buyers in Indian metros",
+      "people comparing Noise and Garmin"
+    ]
+  },
+  "gate": {
+    "proceed": true,
+    "reason": "Indian shoppers will compare a rumoured tracker with models they can buy now, even though the specs are not confirmed.",
+    "confidence": 0.74,
+    "suggestions": []
+  },
+  "ideas": [
+    {
+      "angleType": "comparison_content",
+      "title": "YouTube Short: Fitbit Edge vs Charge 6 before you pay",
+      "oneLiner": "A Short for Indians deciding whether to wait for Fitbit Edge.",
+      "customer": {
+        "who": "Fitness-curious buyers in tier-1 and tier-2 cities",
+        "where": "YouTube Shorts in India"
+      },
+      "trigger": "Shoppers are already comparing a tracker Google has not priced for India.",
+      "whyTheyPay": "They want to avoid buying Charge 6 this week if Edge lands cheaper next month.",
+      "whyNow": "The expected launch window is weeks, so the comparison is useful before an India price exists.",
+      "product": "Publish a YouTube Short that compares the expected Fitbit Edge price and sensors with Charge 6, Noise ColorFit, and Garmin Vivosmart for buyers in India. Update the description when Google confirms the official specifications.",
+      "revenueModel": {
+        "type": "affiliate",
+        "price": "₹200 to ₹800 per sale",
+        "rationale": "Amazon and Flipkart fitness associates pay that range on a tracker costing several thousand rupees."
+      },
+      "firstWeek": [
+        "Draft the comparison using only expected specs, labelled as such.",
+        "Film one Short and add affiliate links for Charge 6.",
+        "Post it under two India fitness tags and count clicks."
+      ],
+      "validationTest": {
+        "action": "Publish the comparison Short",
+        "successMetric": "30 click-outs or 500 views in 7 days"
+      },
+      "risks": ["Google may slip the launch and the page goes stale."],
+      "buildEffort": "days",
+      "dependsOnUnconfirmed": false
+    },
+    {
+      "angleType": "education_or_training",
+      "title": "YouTube: set up Fitbit Charge 6 while you wait for Edge",
+      "oneLiner": "A setup video for Indians who already own Charge 6 or Noise.",
+      "customer": {
+        "who": "New fitness-tracker owners in Indian metros",
+        "where": "YouTube in India"
+      },
+      "trigger": "Edge rumours push buyers to learn the Fitbit app before a new model lands.",
+      "whyTheyPay": "They already bought a tracker and do not want to waste the first week.",
+      "whyNow": "Attention is high in the rumour weeks, and Charge 6 is sold in India today.",
+      "product": "Publish a YouTube education video that walks through Fitbit app setup, sleep goals, and India recovery tips on Charge 6. Say Edge specs are still expected, not confirmed.",
+      "revenueModel": {
+        "type": "ads",
+        "price": "",
+        "rationale": "A how-to video earns from YouTube ads when viewers finish the watch."
+      },
+      "firstWeek": [
+        "Script the setup steps from confirmed Charge 6 features only.",
+        "Film one ten-minute video and publish it.",
+        "Ask ten new owners if the steps matched their app."
+      ],
+      "validationTest": {
+        "action": "Publish the setup video",
+        "successMetric": "300 views or 20 likes in 7 days"
+      },
+      "risks": ["Viewers may want Edge-specific steps that do not exist yet."],
+      "buildEffort": "days",
+      "dependsOnUnconfirmed": false
+    },
+    {
+      "angleType": "buying_guide_or_alert",
+      "title": "Get a ping when Fitbit Edge is actually listed in India",
+      "oneLiner": "An India launch alert for shoppers who want the confirmed price first.",
+      "customer": {
+        "who": "Shoppers who already shortlist fitness trackers on Flipkart",
+        "where": "Flipkart, Amazon, and YouTube"
+      },
+      "trigger": "No India listing exists yet, and people will refresh retail sites until one does.",
+      "whyTheyPay": "They do not want to miss the first real price after weeks of rumours.",
+      "whyNow": "The useful window is the days around a listing, which has not happened.",
+      "product": "Set up a launch-alert page and an email list that pings subscribers when an India price and a Flipkart or Amazon listing appear. The page states that current sensors are expected, not confirmed, and that availability is still open.",
+      "revenueModel": {
+        "type": "affiliate",
+        "price": "₹200 to ₹800 per sale",
+        "rationale": "The alert is free to join, and the rupee amount comes from the associate fee on the tracker they finally buy."
+      },
+      "firstWeek": [
+        "Publish a one-page alert form that labels specs as expected.",
+        "Post it under three Fitbit videos and collect emails.",
+        "Write the first ping template and do not send it until a listing exists."
+      ],
+      "validationTest": {
+        "action": "Open the alert landing page",
+        "successMetric": "30 email signups in 7 days"
+      },
+      "risks": ["A listing may never come to India."],
+      "buildEffort": "hours",
+      "dependsOnUnconfirmed": false
+    },
+    {
+      "angleType": "accessories_or_addons",
+      "title": "Bands and guards for the Fitbit people already wear",
+      "oneLiner": "A band and screen-guard note for owners of a current Fitbit.",
+      "customer": {
+        "who": "Fitbit owners in Indian metros who already wear a tracker",
+        "where": "Instagram and Amazon search"
+      },
+      "trigger": "Launch chatter sends current owners looking at straps while they wait.",
+      "whyTheyPay": "A torn band is annoying, and they would rather fix the tracker they have.",
+      "whyNow": "Attention is high this month, and the note does not need the new model to exist.",
+      "product": "Publish a short note on replacement bands and screen guards for Fitbit models already sold through Indian shops. Keep every recommendation on current hardware owners can buy today.",
+      "revenueModel": {
+        "type": "ads",
+        "price": "",
+        "rationale": "A short note can carry display ads because the buyer is browsing, not paying a fee for the note itself."
+      },
+      "firstWeek": [
+        "List bands that fit models already sold in Indian shops.",
+        "Publish the note with shop links and a clear current-model label.",
+        "Ask ten owners which band they would reorder."
+      ],
+      "validationTest": {
+        "action": "Publish the accessory note",
+        "successMetric": "20 shop clicks in 7 days"
+      },
+      "risks": ["Accessory margins are thin if ads are the only pay."],
+      "buildEffort": "weeks",
+      "dependsOnUnconfirmed": false
+    },
+    {
+      "angleType": "data_or_tool",
+      "title": "Fitbit Edge comparison checklist for the same buyers",
+      "oneLiner": "A checklist of the Fitbit Edge comparison for Indians still deciding.",
+      "customer": {
+        "who": "Fitness-curious buyers in tier-1 and tier-2 cities",
+        "where": "Google and YouTube in India"
+      },
+      "trigger": "Shoppers are already comparing a tracker Google has not priced for India.",
+      "whyTheyPay": "They want to avoid buying Charge 6 this week if Edge lands cheaper next month.",
+      "whyNow": "The expected launch window is weeks, so the comparison is useful before an India price exists.",
+      "product": "Publish one page that compares the expected Fitbit Edge price and sensors with Charge 6, Noise ColorFit, and Garmin Vivosmart for buyers in India. Update the page when Google confirms the official specifications.",
+      "revenueModel": {
+        "type": "one_time",
+        "price": "₹299",
+        "rationale": "A single download is worth a few hundred rupees if it saves a wrong tracker purchase."
+      },
+      "firstWeek": [
+        "Copy the comparison into a one-page checklist file.",
+        "Put a pay link on the same page as the comparison.",
+        "Ask five buyers if they would pay for the file."
+      ],
+      "validationTest": {
+        "action": "Offer the checklist beside the comparison",
+        "successMetric": "5 paid downloads in 7 days"
+      },
+      "risks": ["It is the same comparison with a different file type."],
+      "buildEffort": "days",
+      "dependsOnUnconfirmed": true
+    },
+    {
+      "angleType": "b2b_service",
+      "title": "Setup help for gyms that want the new tracker",
+      "oneLiner": "A setup service for gyms that plan to demo Fitbit Edge.",
+      "customer": {
+        "who": "Gym front-desk teams that demo wearables",
+        "where": "Metro gyms in India"
+      },
+      "trigger": "Gyms will be asked about Edge as soon as members see the rumour.",
+      "whyTheyPay": "Staff lose time answering the same spec questions at the desk.",
+      "whyNow": "The questions start in the rumour weeks, before any official training exists.",
+      "product": "Sell a one-hour desk briefing that tells gym staff what is confirmed and what is still expected. Leave a one-page answer sheet they can reuse.",
+      "revenueModel": {
+        "type": "service",
+        "price": "₹4,000 per session",
+        "rationale": "One hour of staff time plus prep is worth a few thousand rupees for a single location."
+      },
+      "firstWeek": [
+        "Write the briefing from confirmed facts only.",
+        "Call five gyms and offer the session.",
+        "Run one paid or unpaid pilot and keep the objections."
+      ],
+      "validationTest": {
+        "action": "Pitch five gyms",
+        "successMetric": "2 gyms book a briefing in 7 days"
+      },
+      "risks": ["Members may not ask the desk at all."],
+      "buildEffort": "days",
+      "dependsOnUnconfirmed": true
+    },
+    {
+      "angleType": "community_or_newsletter",
+      "title": "A vague newsletter for everyone",
+      "oneLiner": "A newsletter about the news for anyone who reads it.",
+      "customer": { "who": "People in India", "where": "Online" },
+      "trigger": "because of this news",
+      "whyTheyPay": "They might pay a low monthly fee someday.",
+      "whyNow": "Because of this news people are talking.",
+      "product": "Send emails. That is the product.",
+      "revenueModel": { "type": "subscription", "price": "₹0 to start", "rationale": "low monthly fee" },
+      "firstWeek": ["Write", "Send", "Hope"],
+      "validationTest": { "action": "Send", "successMetric": "Some" },
+      "risks": [],
+      "buildEffort": "days",
+      "dependsOnUnconfirmed": false
+    }
+  ],
+  "expect": {
+    "proceed": true,
+    "eventType": "launch",
+    "unconfirmedPresent": true,
+    "confirmedAreNotRumours": true,
+    "distinctAngles": true,
+    "minIdeas": 2,
+    "maxIdeas": 5,
+    "scoresDiffer": true,
+    "reasonsPresent": true,
+    "unconfirmedTagged": true,
+    "accessoriesStayConfirmed": true,
+    "noB2b": true,
+    "duplicateRemoved": true,
+    "placeholderRejected": true
+  }
+}

@@ -38,7 +38,7 @@ onMounted(async () => {
         Plan: {{ planName }} · {{ searchesLeftLabel }}
       </p>
       <p v-if="error" class="form-error" role="alert">{{ error }}</p>
-      <RouterLink class="btn btn--primary" to="/">Back to research</RouterLink>
+      <RouterLink class="btn btn--primary" :to="{ name: 'research' }">Back to research</RouterLink>
     </template>
   </main>
 </template>

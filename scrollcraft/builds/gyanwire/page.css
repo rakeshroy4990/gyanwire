@@ -1,0 +1,317 @@
+.gw-page {
+  color: var(--sc-ink, var(--ink));
+  background: var(--sc-canvas, var(--canvas));
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.65;
+}
+
+.gw-wires {
+  --wire-pile: 0;
+  --wire-why: 0;
+  --wire-idea: 0;
+  --wire-close: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 30;
+  width: min(16vw, 6.5rem);
+  height: 100svh;
+  pointer-events: none;
+  transform: translate3d(calc(var(--wire-close) * 16vw), calc(var(--wire-close) * 8vh), 0);
+}
+
+.gw-wire {
+  fill: none;
+  stroke: var(--sc-accent, var(--accent));
+  stroke-width: 2;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - var(--draw, 0));
+}
+
+.gw-wire--pile { --draw: var(--wire-pile); }
+.gw-wire--why { --draw: var(--wire-why); }
+.gw-wire--idea { --draw: var(--wire-idea); }
+
+.gw-stage {
+  display: grid;
+  align-items: center;
+}
+
+.gw-act--flow {
+  min-height: 100svh;
+  display: grid;
+  align-items: center;
+  padding: var(--sc-6) var(--sc-gutter);
+}
+
+.gw-app,
+.gw-link {
+  width: min(68rem, calc(100% - var(--sc-gutter) - 4.5rem));
+  margin-inline: auto;
+  padding: var(--sc-5) var(--sc-5) var(--sc-6);
+  background: var(--sc-surface);
+  color: var(--sc-ink);
+  border-radius: var(--sc-r-md);
+  box-shadow: var(--sc-e2), var(--sc-edge);
+}
+
+.gw-link {
+  width: 82vw;
+  height: 100%;
+  margin-inline: 0;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.gw-rail {
+  align-items: stretch;
+  height: 100%;
+  gap: var(--sc-5);
+  padding-inline: var(--sc-gutter);
+}
+
+.gw-bar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sc-4);
+  margin-bottom: var(--sc-5);
+}
+
+.gw-mark {
+  margin: 0;
+  font-family: var(--sc-font-display);
+  font-size: var(--sc-t-lg);
+  font-weight: 600;
+  letter-spacing: var(--sc-track-snug);
+  line-height: 1.1;
+}
+
+.gw-sample,
+.gw-meta,
+.gw-label,
+.gw-missing {
+  margin: 0;
+  font-family: var(--sc-font-display);
+  font-size: var(--sc-t-xs);
+  font-weight: 600;
+  letter-spacing: var(--sc-track-wide);
+  text-transform: uppercase;
+  color: var(--sc-ink-soft);
+}
+
+.gw-sample {
+  color: var(--sc-accent);
+}
+
+.gw-status-slot {
+  position: relative;
+  min-height: 1.7em;
+  margin: 0 0 var(--sc-4);
+}
+
+.gw-status {
+  position: absolute;
+  inset: 0 auto auto 0;
+  margin: 0;
+  max-width: 46ch;
+  color: var(--sc-ink-soft);
+  font-size: var(--sc-t-sm);
+}
+
+.gw-query {
+  margin: var(--sc-4) 0 0;
+  max-width: 28ch;
+  font-family: var(--sc-font-display);
+  font-size: var(--sc-t-xl);
+  font-weight: 600;
+  letter-spacing: var(--sc-track-snug);
+  line-height: 1.12;
+  text-wrap: balance;
+}
+
+.gw-missing {
+  margin-top: var(--sc-5);
+  color: var(--sc-accent);
+  text-transform: none;
+  letter-spacing: var(--sc-track-normal);
+  font-size: var(--sc-t-base);
+  font-weight: 500;
+}
+
+.gw-why {
+  margin-top: var(--sc-6);
+  padding: var(--sc-6) var(--sc-5) var(--sc-7);
+  background: color-mix(in oklab, var(--sc-canvas) 55%, var(--sc-surface));
+  border-radius: var(--sc-r-md);
+  box-shadow: var(--sc-e1), var(--sc-edge);
+  line-height: 1.5;
+}
+
+.gw-why__label {
+  margin: 0 0 var(--sc-3);
+}
+
+.gw-why__text {
+  margin: 0;
+  max-width: 42ch;
+  font-size: var(--sc-t-lg);
+  line-height: 1.45;
+  color: var(--sc-ink);
+}
+
+.gw-idea {
+  position: relative;
+  z-index: 2;
+  margin-top: calc(var(--sc-4) * -1);
+  padding: var(--sc-5);
+  background: var(--sc-canvas);
+  border-radius: var(--sc-r-md);
+  box-shadow: var(--sc-e3), var(--sc-edge);
+}
+
+.gw-idea-slot {
+  position: relative;
+  min-height: 9.5rem;
+}
+
+.gw-idea-slot > * {
+  position: absolute;
+  inset: 0 auto auto 0;
+  max-width: 42ch;
+}
+
+.gw-idea__title {
+  margin: 0;
+  max-width: 26ch;
+  font-family: var(--sc-font-display);
+  font-size: var(--sc-t-lg);
+  font-weight: 600;
+  letter-spacing: var(--sc-track-snug);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.gw-idea p {
+  margin: 0;
+  max-width: 42ch;
+}
+
+.gw-label {
+  display: inline;
+  margin-right: var(--sc-2);
+  text-transform: none;
+  letter-spacing: var(--sc-track-normal);
+  color: var(--sc-accent);
+}
+
+.gw-close-line {
+  margin: 0 0 var(--sc-5);
+  max-width: 36ch;
+  font-size: var(--sc-t-lg);
+  line-height: 1.4;
+}
+
+.gw-form {
+  display: grid;
+  gap: var(--sc-3);
+  max-width: 40rem;
+}
+
+.gw-form label {
+  font-size: var(--sc-t-sm);
+  font-weight: 600;
+  color: var(--sc-ink-soft);
+}
+
+.gw-form textarea::placeholder {
+  color: var(--sc-ink-soft);
+  opacity: 1;
+}
+  min-height: 7.5rem;
+  padding: var(--sc-4);
+  resize: vertical;
+  border: 1px solid color-mix(in oklab, var(--sc-ink) 18%, transparent);
+  border-radius: var(--sc-r-sm);
+  background: var(--sc-canvas);
+  color: var(--sc-ink);
+  line-height: 1.55;
+}
+
+.gw-submit {
+  justify-self: start;
+  min-height: 2.75rem;
+  padding: 0.7rem 1.15rem;
+  border: 0;
+  border-radius: var(--sc-r-sm);
+  background: var(--sc-accent);
+  color: var(--sc-accent-ink);
+  font-weight: 600;
+  letter-spacing: var(--sc-track-normal);
+  cursor: pointer;
+  transition: transform 140ms var(--sc-ease-out), background 140ms var(--sc-ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .gw-submit:hover {
+    background: color-mix(in oklab, var(--sc-accent) 82%, white);
+  }
+}
+
+.gw-submit:active {
+  transform: scale(0.98);
+}
+
+.gw-legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sc-4);
+  margin-top: var(--sc-6);
+  color: var(--sc-ink-soft);
+  font-size: var(--sc-t-sm);
+}
+
+.gw-legal a {
+  text-decoration: underline;
+  text-underline-offset: 0.22em;
+}
+
+@media (max-width: 700px) {
+  .gw-wires {
+    width: 1.75rem;
+    transform: translate3d(calc(var(--wire-close) * 8vw), calc(var(--wire-close) * 4vh), 0);
+  }
+
+  .gw-app,
+  .gw-link {
+    width: min(100%, calc(100% - 2.5rem));
+    padding: var(--sc-4);
+  }
+
+  .gw-link {
+    width: 86vw;
+  }
+
+  .gw-query {
+    font-size: var(--sc-t-lg);
+  }
+
+  .gw-act--flow {
+    padding-inline: var(--sc-3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gw-wires {
+    transform: none;
+  }
+
+  .gw-submit {
+    transition: none;
+  }
+}

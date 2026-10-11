@@ -19,6 +19,7 @@ defineProps({
   limitReached: { type: Boolean, default: false },
   limitMessage: { type: String, default: '' },
   upgradeUrl: { type: String, default: '/pricing' },
+  returnKey: { type: String, default: '' },
 });
 
 const emit = defineEmits([
@@ -196,6 +197,7 @@ function onThoughtsKeydown(event) {
                 :show-results="turn.results.length > 0"
                 :is-loading="turn.status === 'streaming'"
                 :empty-message="'No strong findings for this question.'"
+                :return-key="returnKey"
                 @idea="emit('idea', $event)"
                 @feedback="emit('feedback', $event)"
               />
