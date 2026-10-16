@@ -118,7 +118,7 @@ public final class SocialMediaIdea {
         String hook = firstWords(subject, 5);
         return new BusinessIdea(
                 "comparison_content",
-                "Post today: " + hook,
+                "Quick short on " + hook,
                 oneLiner(hook),
                 new Customer("Viewers who follow this headline on YouTube", "YouTube"),
                 trigger(subject),
@@ -126,11 +126,14 @@ public final class SocialMediaIdea {
                 "\"" + hook + "\" is current, so the post has to go out today or tomorrow.",
                 "Record one short that quotes \"" + hook + "\" and says who should care. "
                         + "Publish that cut on YouTube, Instagram, and LinkedIn the same day.",
-                new RevenueModel("ads", "", "Display ads on a short can pay once the clip is up."),
+                new RevenueModel(
+                        "ads",
+                        "",
+                        "Shorts can earn ad revenue share only after YouTube Partner Program eligibility. This is not instant income."),
                 List.of(
-                        "Write the hook from the headline.",
-                        "Cut the clip with on-screen words.",
-                        "Schedule YouTube, Instagram, and LinkedIn."),
+                        "Write a 90–130 word script with the entity and three facts.",
+                        "Record and cut a ≤60 s vertical short.",
+                        "Upload to YouTube Shorts, Instagram Reels, and LinkedIn."),
                 new ValidationTest("Post the short today", "100 views in two days"),
                 List.of("The hook is vague if the headline fact is left out."),
                 "hours",

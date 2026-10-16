@@ -19,7 +19,8 @@ It’s the site where you dump messy research thoughts and get the best pages fr
 |---|---|
 | **Primary** | Turn industry + free-form thoughts into a small set of high-signal web findings (papers, products, news, labs). |
 | **Secondary** | Surface industry product news quickly when a category is selected (before a deep research chat). |
-| **From news to a plan** (`CURSOR_PLAN_FLOW_FIRST.md`, not shipped) | After search streaming and a cited brief: profile-fit ideas, a 10% skill budget, a 12-week plan, and a one-page outline. Scores and rupee amounts come from code. The current LLM only phrases them. |
+| **From news to a business plan** (`CURSOR_PLAN_FLOW_FIRST.md` S8–S11) | After search streaming and a cited brief: profile-fit ideas, a 10% skill budget, a 12-week plan, and a one-page outline. Scores and rupee amounts come from code. The current LLM only phrases them. |
+| **From news to an action plan** (`CURSOR_PLAN_NEWS_TO_ACTION_PLAN.md`) | Pack-gated news → IdeasPanel → social/format PlanSheet → executable steps with Open Source / Paid paths. APIs under `/api/action-plans`. Separate from S10/S11. |
 | **Account** | Email/password or Google sign-in; profile in Pinia; JWTs in httpOnly cookies only. |
 | **Monetization** | Free daily search limits; Pro/Team via Razorpay; usage shown in the workspace. |
 | **Quality control** | Rank with Gyanwire’s own pointers (trusted domains, practical terms, category boosts). |
@@ -29,7 +30,7 @@ It’s the site where you dump messy research thoughts and get the best pages fr
 - Not a full browser or content CMS  
 - Not a medical diagnosis / clinical decision tool  
 - Not a filmic multi-act marketing scroll page (grammar is **live surface**)  
-- Steps 4–14 in `CURSOR_PLAN.md` are historical. The active sequence is `CURSOR_PLAN_FLOW_FIRST.md` (S0–S16), not shipped yet  
+- Steps 4–14 in `CURSOR_PLAN.md` are historical. The active sequence is `CURSOR_PLAN_FLOW_FIRST.md` (S0–S16). Action plans are the post-S16 addendum `CURSOR_PLAN_NEWS_TO_ACTION_PLAN.md`.  
 - Temperature stays `0.2` and responses stay JSON. `ModelRouter` is in place; embeddings and agents stay parked in `docs/PARKED_MODEL_WORK.md`  
 - Share Market ideas stay education/tools only (no tips or signals). Medical ideas stay education/admin/logistics only (no diagnosis or treatment claims)  
 - Not a store of exact salary, Aadhaar, PAN, or bank details
@@ -92,7 +93,7 @@ It’s the site where you dump messy research thoughts and get the best pages fr
 |---|---|---|
 | `GET` | `/api/health` | Engine, auth, billing readiness |
 | `GET` | `/api/industries` | Industry catalog (gyanwire-server; client caches in IndexedDB) |
-| `GET` | `/api/news/default` / `/api/news/:industry` | Product news feed |
+| `GET` | `/api/news/default` / `/api/news/:industry` | Product news feed (pack-gated; relevance score + reason) |
 | `POST` | `/api/search` | Deep research (optional auth + plan limit + usage log) |
 | `GET` | `/api/me/usage` | Plan + remaining daily searches |
 | `POST` | `/api/billing/checkout` | Create Razorpay subscription |
@@ -110,8 +111,17 @@ Search streams on `POST /api/search/stream` (`status`, `finding`, `done`, `error
 | `GET` / `PUT` | `/api/me/profile` | S7 | Profile v2. Income as a band. `consent_at` required |
 | `DELETE` | `/api/me/profile/data` | S7 | Delete profile and skills only |
 | `POST` | `/api/ideas/from-news` | S9 | `{ url, title, description, industry, sub }` → ranked ideas |
+| `POST` | `/api/news/{id}/ideas` | N2 | NewsBrief-first ideas with evidence chips (metered as `idea`) |
 | `GET` | `/api/ideas` | S9 | Saved ideas for the user |
 | `POST` | `/api/ideas/{id}/feedback` | S9 | Thumbs and reason |
+| `POST` | `/api/ideas/{id}/rating` | N2 | `useful` / `not_useful` for angle scoring |
+| `POST` | `/api/action-plans` | N3 | Create executable content plan from news URL + format/budget/demo |
+| `GET` | `/api/action-plans/{id}` | N3 | Load plan + step done flags |
+| `GET` | `/api/action-plans/{id}/steps/{stepKey}` | N4 | Step drawer (OS + Paid micro-steps, tools, gain) |
+| `PATCH` | `/api/action-plans/{id}/steps/{stepKey}` | N3 | Toggle step done |
+| `POST` | `/api/action-plans/{id}/steps/{stepKey}/timing` | N6 | Actual minutes for calibration |
+| `GET` | `/api/action-plans/tools` | N5 | Tools by step/format/tier |
+| `POST` | `/api/ideas/{id}/launch-plan` | N3 | Action plan from saved idea (social) or legacy launch plan |
 | `POST` | `/api/plans/skill` | S10 | 10% skill budget for an idea (weeks include `taskType`, `sittings`, `baseHours`) |
 | `POST` | `/api/plans/weekly` | S11 | 12-week plan (Pro/Team) |
 | `POST` | `/api/plans/checkin` | S11 | `done` / `partly` / `not_done` |
@@ -121,7 +131,9 @@ Search streams on `POST /api/search/stream` (`status`, `finding`, `done`, `error
 | `POST` | `/api/plan/variants/meter` | Creative UI | Gate multi-variant compare (`max_plan_variants`) |
 | MCP | `search_research`, `get_findings`, `generate_idea` | S14 | API key. Inputs treated as untrusted |
 
-Planned pages: `/profile`, `/plan`, `/roadmap`, a business-outline page, `/terms`, `/privacy`, `/refund`, `/contact`. The Idea button sits on each row in `ResultsPanel.vue`. Metering kinds: `search` (shipped), `brief` (1/day on Free), `idea` (Free 3/day, Pro 30, Team 150). Over limit → HTTP 402 `LIMIT_REACHED`. Weekly plan and outline require `can_roadmap`.
+Pages: `/profile`, `/plan`, `/roadmap`, `/action-plan/:id`, business-outline, `/terms`, `/privacy`, `/refund`, `/contact`. Get an idea opens IdeasPanel on the research surface (IdeaPage remains a deep-link). Metering kinds: `search`, `brief` (1/day on Free), `idea` (Free 3/day, Pro 30, Team 150), `action_plan` (own daily limit). Over limit → HTTP 402 `LIMIT_REACHED`. Weekly plan and outline require `can_roadmap`.
+
+**Two plan types:** business plan = S10/S11 (`/api/plans/*`); action plan = content steps (`/api/action-plans`). Do not conflate them.
 
 ---
 

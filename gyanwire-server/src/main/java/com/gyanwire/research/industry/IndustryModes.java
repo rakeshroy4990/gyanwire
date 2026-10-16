@@ -36,6 +36,7 @@ public final class IndustryModes {
     public static String disclaimer(String industry) {
         return switch (industry == null ? "" : industry) {
             case "Share Market" -> "Informational only. Not investment advice or a recommendation to buy or sell.";
+            case "Real Estate" -> "Informational only. Not property, loan, or investment advice.";
             case "Medical" -> "Research aid, not a diagnosis or treatment.";
             case "Astrology" -> "Cultural and educational context, not a health or financial prediction.";
             default -> "";
@@ -44,7 +45,8 @@ public final class IndustryModes {
 
     private static String mode(String industry) {
         return switch (industry == null ? "" : industry) {
-            case "Share Market" -> "what-changed";
+            case "Share Market", "Real Estate" -> "what-changed";
+            case "AI" -> "launches";
             case "IT" -> "compare";
             case "Medical" -> "evidence";
             case "Space", "Gaming" -> "timeline";
@@ -59,8 +61,13 @@ public final class IndustryModes {
                     : blob.contains("trial") || blob.contains("rct") ? "rct"
                     : blob.contains("review") ? "review" : "blog";
             case "Share Market" -> blob.contains("circular") || blob.contains("filing") ? "filing" : "coverage";
+            case "Real Estate" -> blob.contains("rera") || blob.contains("circular") || blob.contains("notification")
+                    ? "regulation"
+                    : blob.contains("launch") || blob.contains("booking") || blob.contains("unveil") ? "launch" : "coverage";
             case "Social Media" -> blob.contains("policy") || blob.contains("rule") ? "policy-change" : "note";
             case "IT" -> "source";
+            case "AI" -> blob.contains("launch") || blob.contains("roll") || blob.contains("unveil") || blob.contains("feature")
+                    ? "feature" : "model";
             default -> "event";
         };
     }

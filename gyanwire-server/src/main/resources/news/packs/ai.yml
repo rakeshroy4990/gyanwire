@@ -1,0 +1,25 @@
+industry: AI
+allow_domains:
+  - techcrunch.com
+  - theverge.com
+  - inc42.com
+  - livemint.com
+  - openai.com
+  - anthropic.com
+  - blog.google
+  - ai.meta.com
+  - blogs.microsoft.com
+deny:
+  domains: []
+  keywords:
+    - celebrity
+    - arrested
+    - match score
+    - horoscope today
+    - gossip
+signals:
+  launch: [launches, introduces, rolls out, announces, unveils, release]
+  money: [pricing, free tier, funding, raises, acquires, subsidy]
+  rule: [regulation, ban, guidelines, mandate, policy, safety]
+  pain: [shortage, outage, complaint, backlash, cost, hallucination]
+  tool: [API, open-source, SDK, plugin, model, weights]

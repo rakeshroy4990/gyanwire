@@ -1,0 +1,85 @@
+steps:
+  - id: s1
+    order: 1
+    title: Pick 3 facts and one hook
+    startMin: 0
+    durationMin: 15
+    paidDurationMin: 10
+    paidToolId: chatgpt_plus
+    action: "Open the article and write 3 fact lines plus one hook sentence into facts.md."
+    input: "NewsBrief facts"
+    output: "facts.md"
+    doneWhen: "Each fact has a source sentence"
+    toolId: notes_app
+    altToolId: text_editor
+    ifStuck: "Copy three sentences with a name or number."
+    platforms: [all]
+    scalable: false
+
+  - id: s2
+    order: 2
+    title: Draft the LinkedIn post
+    startMin: 15
+    durationMin: 25
+    paidDurationMin: 12
+    paidToolId: chatgpt_plus
+    action: "Write 120–220 words: hook {{hook}}, three points, one insight, one question CTA."
+    input: "facts.md"
+    output: "post.md"
+    doneWhen: "Word count in range; first line is the hook"
+    toolId: text_editor
+    altToolId: notes_app
+    ifStuck: "Start with the entity name and the surprising fact."
+    platforms: [linkedin]
+    scalable: false
+
+  - id: s3
+    order: 3
+    title: Trim for scannability
+    startMin: 40
+    durationMin: 15
+    paidDurationMin: 8
+    paidToolId: chatgpt_plus
+    action: "Break into short paragraphs. Cut fluff. Keep one emoji-free post."
+    input: "post.md"
+    output: "post_final.md"
+    doneWhen: "Readable on a phone screen without horizontal scroll"
+    toolId: text_editor
+    altToolId: notes_app
+    ifStuck: "Delete the longest paragraph."
+    platforms: [linkedin]
+    scalable: false
+
+  - id: s4
+    order: 4
+    title: Optional one-image card
+    startMin: 55
+    durationMin: 20
+    paidDurationMin: 10
+    paidToolId: canva_pro
+    action: "Make one 1200×627 image with the hook line if you want a visual."
+    input: "post_final.md"
+    output: "card.png (optional)"
+    doneWhen: "Image is optional; skip if time is short"
+    toolId: gimp
+    altToolId: canva_free
+    ifStuck: "Skip the image and post text only."
+    platforms: [linkedin]
+    scalable: true
+
+  - id: s5
+    order: 5
+    title: Publish and set the reminder
+    startMin: 75
+    durationMin: 15
+    paidDurationMin: 8
+    paidToolId: buffer
+    action: "Post on LinkedIn. Save the URL. Calendar reminder +48 h for the test metric."
+    input: "post_final.md"
+    output: "live link + reminder"
+    doneWhen: "URL saved; reminder set"
+    toolId: linkedin_app
+    altToolId: calendar_app
+    ifStuck: "Post now; set the reminder within an hour."
+    platforms: [linkedin]
+    scalable: false

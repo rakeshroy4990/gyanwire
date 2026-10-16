@@ -4,7 +4,9 @@ import { useRouter } from 'vue-router';
 import { useAuth } from '../../composables/useAuth.js';
 import { useResearch } from '../../composables/useResearch.js';
 import { useProduct } from '../../composables/useProduct.js';
+import { useNewsIdeas } from '../../composables/useNewsIdeas.js';
 import { rememberIdeaSource } from '../../services/ideaSource.js';
+import { createActionPlan } from '../../services/actionPlan.service.js';
 import {
   clearResearchReturn,
   findingElement,
@@ -13,12 +15,32 @@ import {
 } from '../../services/researchWorkspace.js';
 import ResearchPanel from './ResearchPanel.vue';
 import ResultsPanel from './ResultsPanel.vue';
+import IdeasPanel from '../ideas/IdeasPanel.vue';
+import PlanSheet from '../ideas/PlanSheet.vue';
 
 const router = useRouter();
 const { isAuthenticated, greetingName, openLoginPopup } = useAuth();
 const product = useProduct();
 const claim = ref('');
 const returnKey = ref('');
+const planSheetOpen = ref(false);
+const planSubmitting = ref(false);
+const planError = ref('');
+
+const {
+  open: ideasOpen,
+  loading: ideasLoading,
+  error: ideasError,
+  item: ideasItem,
+  ideas: ideaRows,
+  headline: ideasHeadline,
+  selected: selectedIdea,
+  ratingId: ideasRatingId,
+  openForItem,
+  close: closeIdeas,
+  rate: rateIdea,
+  selectIdea,
+} = useNewsIdeas();
 
 const {
   catalog,
@@ -34,6 +56,10 @@ const {
   browseFreshness,
   browseNote,
   browseCountries,
+  browsePage,
+  browseTotal,
+  browseTotalPages,
+  browseHasMore,
   country,
   showBrowseResults,
   emptyMessage,
@@ -43,6 +69,9 @@ const {
   selectIndustry,
   selectSub,
   selectCountry,
+  goBrowsePage,
+  dismissBrowseItem,
+  hideBrowseSource,
   runSearch,
   clearForm,
   searchesLeftLabel,
@@ -72,34 +101,98 @@ watch([industry, subcategory], () => {
   returnKey.value = '';
 });
 
+function scopedIndustryFor(item) {
+  return industry.value && industry.value !== 'All'
+    ? industry.value
+    : (item?.industry || '');
+}
+
+async function openFullIdeaPage(item) {
+  const target = item || ideasItem.value;
+  if (!target) return;
+  rememberResearchReturn(target, window.scrollY);
+  const scopedIndustry = scopedIndustryFor(target);
+  const src = await rememberIdeaSource({
+    url: target.url || '',
+    title: target.title || '',
+    description: target.whyIdea || target.description || target.why || '',
+    industry: scopedIndustry,
+    ideaCount: target.ideaCount,
+    signalType: target.signalType || '',
+    whyIdea: target.whyIdea || '',
+  });
+  closeIdeas();
+  planSheetOpen.value = false;
+  router.push({
+    name: 'idea',
+    query: src ? { src } : {
+      url: target.url || '',
+      title: target.title || '',
+      description: (target.description || target.why || '').slice(0, 1500),
+      industry: scopedIndustry,
+      ideaCount: target.ideaCount ? String(target.ideaCount) : '',
+    },
+  });
+}
+
 async function onIdea(item) {
   if (!isAuthenticated.value) {
     openLoginPopup();
     return;
   }
   rememberResearchReturn(item, window.scrollY);
-  const scopedIndustry = industry.value && industry.value !== 'All'
-    ? industry.value
-    : (item.industry || '');
-  const src = await rememberIdeaSource({
-    url: item.url || '',
-    title: item.title || '',
-    description: item.whyIdea || item.description || item.why || '',
-    industry: scopedIndustry,
-    ideaCount: item.ideaCount,
-    signalType: item.signalType || '',
-    whyIdea: item.whyIdea || '',
-  });
-  router.push({
-    name: 'idea',
-    query: src ? { src } : {
-      url: item.url || '',
-      title: item.title || '',
-      description: (item.description || item.why || '').slice(0, 1500),
-      industry: scopedIndustry,
-      ideaCount: item.ideaCount ? String(item.ideaCount) : '',
-    },
-  });
+  if (!item?.id) {
+    await openFullIdeaPage(item);
+    return;
+  }
+  planSheetOpen.value = false;
+  planError.value = '';
+  await openForItem(item);
+}
+
+function onMakePlan(idea) {
+  selectIdea(idea);
+  planError.value = '';
+  planSheetOpen.value = true;
+}
+
+async function onNotUseful(idea) {
+  if (!idea?.id) return;
+  await rateIdea(idea.id, 'not_useful');
+}
+
+async function onPlanConfirm({ format, budgetMinutes, demo }) {
+  const newsItem = ideasItem.value;
+  if (!newsItem?.url) {
+    planError.value = 'Missing news URL for this plan.';
+    return;
+  }
+  planSubmitting.value = true;
+  planError.value = '';
+  try {
+    const plan = await createActionPlan({
+      newsUrl: newsItem.url,
+      title: newsItem.title || ideasHeadline.value || '',
+      budgetMinutes,
+      demo: !!demo,
+      format,
+      save: true,
+    });
+    planSheetOpen.value = false;
+    closeIdeas();
+    if (plan?.planId) {
+      router.push({ name: 'action-plan', params: { id: plan.planId } });
+    }
+  } catch (err) {
+    planError.value = err.message || 'Could not build that plan.';
+  } finally {
+    planSubmitting.value = false;
+  }
+}
+
+function closePlanSheet() {
+  planSheetOpen.value = false;
+  selectIdea(null);
 }
 
 async function onFeedback(body) {
@@ -157,16 +250,46 @@ async function onClaim(sentence) {
       :note="browseNote"
       :countries="browseCountries"
       :country="country"
+      :page="browsePage"
+      :total="browseTotal"
+      :total-pages="browseTotalPages"
+      :has-more="browseHasMore"
       :empty-message="emptyMessage"
       :show-empty="showEmpty && !isLoading"
       :show-results="showBrowseResults"
       :is-loading="isLoading && !hasThread"
       :return-key="returnKey"
       show-ideas
+      allow-dismiss
       @idea="onIdea"
       @feedback="onFeedback"
+      @dismiss="dismissBrowseItem"
+      @hide-source="hideBrowseSource"
       @select-country="selectCountry"
+      @page="goBrowsePage"
     />
     <p v-if="claim" class="disclaimer">Claim check: {{ claim }}</p>
+
+    <IdeasPanel
+      :open="ideasOpen"
+      :loading="ideasLoading"
+      :error="ideasError"
+      :headline="ideasHeadline"
+      :ideas="ideaRows"
+      :rating-id="ideasRatingId"
+      @close="closeIdeas"
+      @make-plan="onMakePlan"
+      @not-useful="onNotUseful"
+      @open-full="openFullIdeaPage()"
+    />
+
+    <PlanSheet
+      :open="planSheetOpen"
+      :idea="selectedIdea"
+      :submitting="planSubmitting"
+      :error="planError"
+      @close="closePlanSheet"
+      @confirm="onPlanConfirm"
+    />
   </main>
 </template>

@@ -1,0 +1,25 @@
+industry: Share Market
+allow_domains:
+  - sebi.gov.in
+  - rbi.org.in
+  - economictimes.indiatimes.com
+  - livemint.com
+  - thehindu.com
+  - thehindubusinessline.com
+  - moneycontrol.com
+  - business-standard.com
+deny:
+  domains: []
+  keywords:
+    - celebrity
+    - arrested
+    - match score
+    - horoscope today
+    - cricket score
+    - gossip
+signals:
+  launch: [launches, introduces, rolls out, announces, unveils]
+  money: [pricing, free tier, funding, raises, acquires, subsidy, fee]
+  rule: [regulation, ban, guidelines, mandate, policy, circular, SEBI, RBI]
+  pain: [shortage, outage, complaint, backlash, cost, fine]
+  tool: [API, open-source, SDK, plugin, model, app]

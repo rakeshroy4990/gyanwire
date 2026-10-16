@@ -167,10 +167,10 @@ public class IndustryNewsService {
         List<Map<String, Object>> collected = new ArrayList<>();
         record Part(String category, String sub, int take) {}
         for (Part part : List.of(
-                new Part("Share Market", "IT", 2),
-                new Part("Share Market", "EV", 1),
-                new Part("Medical", "Cardiology", 1),
-                new Part("Medical", "Gynecology", 1)
+                new Part("AI", "OpenAI", 2),
+                new Part("AI", "Anthropic", 1),
+                new Part("AI", "Grok", 1),
+                new Part("AI", "Google", 1)
         )) {
             int remaining = limit - collected.size();
             if (remaining <= 0) break;
@@ -187,7 +187,7 @@ public class IndustryNewsService {
             withIds.add(copy);
         }
         Map<String, Object> out = new HashMap<>();
-        out.put("query", "share IT/EV + medical cardiology/gynecology products");
+        out.put("query", "AI OpenAI/Anthropic/Grok/Google feature launches");
         out.put("category", "Default");
         out.put("label", "Top searched product news");
         out.put("results", withIds);
@@ -195,8 +195,11 @@ public class IndustryNewsService {
     }
 
     private List<Map<String, Object>> fetchGoogleNewsRss(String query, int limit, String why, List<String> blockGeneric) throws Exception {
-        String url = "https://news.google.com/rss/search?q=" + URLEncoder.encode(query, StandardCharsets.UTF_8)
-                + "&hl=en-IN&gl=IN&ceid=IN:en&when:7d";
+        String scoped = query == null || query.contains("when:")
+                ? query
+                : query + " when:30d";
+        String url = "https://news.google.com/rss/search?q=" + URLEncoder.encode(scoped, StandardCharsets.UTF_8)
+                + "&hl=en-IN&gl=IN&ceid=IN:en";
         HttpRequest req = HttpRequest.newBuilder().uri(URI.create(url))
                 .timeout(Duration.ofSeconds(12))
                 .header("User-Agent", "GyanwireBot/1.0 (+local research tool)")

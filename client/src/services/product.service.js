@@ -61,6 +61,14 @@ export function sendNewsFeedback(body) {
   return send('/api/news/feedback', { method: 'POST', body: JSON.stringify(body) });
 }
 
+export function dismissNews(body) {
+  return send('/api/news/dismiss', { method: 'POST', body: JSON.stringify(body) });
+}
+
+export function hideNewsSource(body) {
+  return send('/api/news/hide-source', { method: 'POST', body: JSON.stringify(body) });
+}
+
 export function requestClaimCheck(sentence) {
   return send('/api/briefs/claim-check', { method: 'POST', body: JSON.stringify({ sentence, passages: [] }) });
 }

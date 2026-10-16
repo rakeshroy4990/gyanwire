@@ -1,0 +1,304 @@
+- id: notes_app
+  name: Notes app
+  tier: free
+  covers: [draft_facts, notes]
+  platforms: [desktop, mobile]
+  url: https://www.apple.com/notes/
+  freeLimit: Built-in notes are enough for three fact lines
+  lastVerified: 2026-10-16
+
+- id: text_editor
+  name: Any text editor
+  tier: free
+  covers: [script_draft, captions]
+  platforms: [desktop, mobile]
+  url: https://notepad-plus-plus.org
+  freeLimit: Plain text is enough for a 90–130 word script
+  lastVerified: 2026-10-16
+
+- id: phone_timer
+  name: Phone timer
+  tier: free
+  covers: [read_aloud, timing]
+  platforms: [mobile]
+  url: https://support.apple.com/guide/iphone/iphone-clock
+  freeLimit: Free timer covers a 35–50 s read-through
+  lastVerified: 2026-10-16
+
+- id: audacity
+  name: Audacity
+  tier: open_source
+  covers: [voice_record, trim_audio]
+  platforms: [desktop]
+  url: https://www.audacityteam.org
+  freeLimit: Free for two takes and silence trim
+  lastVerified: 2026-10-16
+
+- id: phone_recorder
+  name: Phone voice recorder
+  tier: free
+  covers: [voice_record]
+  platforms: [mobile]
+  url: https://support.apple.com/guide/voice-memos
+  freeLimit: Built-in recorder is enough for a 45 s voice-over
+  lastVerified: 2026-10-16
+
+- id: capcut
+  name: CapCut
+  tier: freemium
+  covers: [edit_short, captions, export_vertical, visuals]
+  platforms: [desktop, mobile]
+  url: https://www.capcut.com
+  freeLimit: Free tier is enough for a 45 s vertical short
+  lastVerified: 2026-10-16
+
+- id: canva_free
+  name: Canva Free
+  tier: freemium
+  covers: [visuals, thumbnail]
+  platforms: [desktop, mobile]
+  url: https://www.canva.com
+  freeLimit: Free templates cover four on-screen text cards
+  lastVerified: 2026-10-16
+
+- id: davinci_resolve
+  name: DaVinci Resolve
+  tier: freemium
+  covers: [edit_short, export_vertical, captions]
+  platforms: [desktop]
+  url: https://www.blackmagicdesign.com/products/davinciresolve
+  freeLimit: Free edition covers cut, captions, and 1080x1920 export
+  lastVerified: 2026-10-16
+
+- id: obs_studio
+  name: OBS Studio
+  tier: open_source
+  covers: [screen_capture, record_video]
+  platforms: [desktop]
+  url: https://obsproject.com
+  freeLimit: Free for one screen demo take
+  lastVerified: 2026-10-16
+
+- id: sharex
+  name: ShareX
+  tier: open_source
+  covers: [screen_capture]
+  platforms: [desktop]
+  url: https://getsharex.com
+  freeLimit: Free for short B-roll inserts
+  lastVerified: 2026-10-16
+
+- id: shotcut
+  name: Shotcut
+  tier: open_source
+  covers: [edit_short, export_vertical]
+  platforms: [desktop]
+  url: https://shotcut.org
+  freeLimit: Free timeline cut and vertical export
+  lastVerified: 2026-10-16
+
+- id: kdenlive
+  name: Kdenlive
+  tier: open_source
+  covers: [edit_short, captions]
+  platforms: [desktop]
+  url: https://kdenlive.org
+  freeLimit: Free multi-track titles when needed
+  lastVerified: 2026-10-16
+
+- id: phone_gallery
+  name: Phone gallery / player
+  tier: free
+  covers: [review_silent]
+  platforms: [mobile]
+  url: https://support.apple.com/guide/iphone
+  freeLimit: Built-in player for silent review
+  lastVerified: 2026-10-16
+
+- id: youtube_app
+  name: YouTube app
+  tier: free
+  covers: [schedule_youtube, upload]
+  platforms: [mobile, desktop]
+  url: https://www.youtube.com
+  freeLimit: Free upload for Shorts
+  lastVerified: 2026-10-16
+
+- id: instagram_app
+  name: Instagram app
+  tier: free
+  covers: [schedule_instagram, upload]
+  platforms: [mobile]
+  url: https://www.instagram.com
+  freeLimit: Free Reel upload
+  lastVerified: 2026-10-16
+
+- id: linkedin_app
+  name: LinkedIn app
+  tier: free
+  covers: [schedule_linkedin, upload]
+  platforms: [mobile, desktop]
+  url: https://www.linkedin.com
+  freeLimit: Free video post upload
+  lastVerified: 2026-10-16
+
+- id: calendar_app
+  name: Calendar app
+  tier: free
+  covers: [reminder]
+  platforms: [desktop, mobile]
+  url: https://calendar.google.com
+  freeLimit: Free reminder at +48 h
+  lastVerified: 2026-10-16
+
+- id: teleprompter_free
+  name: Big Telly / free teleprompter
+  tier: free
+  covers: [teleprompter]
+  platforms: [mobile]
+  url: https://www.bigtelly.com
+  freeLimit: Free scroll for a 45 s read
+  lastVerified: 2026-10-16
+
+- id: gimp
+  name: GIMP
+  tier: open_source
+  covers: [thumbnail, visuals]
+  platforms: [desktop]
+  url: https://www.gimp.org
+  freeLimit: Free cover frame export
+  lastVerified: 2026-10-16
+
+- id: inkscape
+  name: Inkscape
+  tier: open_source
+  covers: [visuals]
+  platforms: [desktop]
+  url: https://inkscape.org
+  freeLimit: Free vector text cards
+  lastVerified: 2026-10-16
+
+- id: vlc
+  name: VLC
+  tier: open_source
+  covers: [review_silent]
+  platforms: [desktop]
+  url: https://www.videolan.org
+  freeLimit: Free local playback
+  lastVerified: 2026-10-16
+
+- id: buffer_paid
+  name: Buffer
+  tier: paid
+  license: proprietary
+  covers: [schedule_multi]
+  platforms: [desktop]
+  url: https://buffer.com
+  freeLimit: Paid multi-channel queue
+  priceInrMonth: 1500
+  priceVerifiedOn: 2026-10-16
+  lastVerified: 2026-10-16
+
+- id: buffer
+  name: Buffer
+  tier: paid
+  license: proprietary
+  covers: [schedule_multi]
+  platforms: [desktop]
+  url: https://buffer.com
+  freeLimit: Paid multi-channel queue
+  priceInrMonth: 1500
+  priceVerifiedOn: 2026-10-16
+  lastVerified: 2026-10-16
+
+- id: later_paid
+  name: Later
+  tier: paid
+  license: proprietary
+  covers: [schedule_multi]
+  platforms: [desktop]
+  url: https://later.com
+  freeLimit: Paid visual planner
+  lastVerified: 2026-10-16
+
+- id: jasper_paid
+  name: Jasper
+  tier: paid
+  license: proprietary
+  covers: [script_ai]
+  platforms: [desktop]
+  url: https://www.jasper.ai
+  freeLimit: Paid brand-voice drafts only
+  lastVerified: 2026-10-16
+
+- id: premiere_paid
+  name: Adobe Premiere
+  tier: paid
+  license: proprietary
+  covers: [edit_pro]
+  platforms: [desktop]
+  url: https://www.adobe.com/products/premiere.html
+  freeLimit: Subscription only
+  priceInrMonth: 1900
+  priceVerifiedOn: 2026-10-16
+  lastVerified: 2026-10-16
+
+- id: premiere
+  name: Adobe Premiere
+  tier: paid
+  license: proprietary
+  covers: [edit_pro]
+  platforms: [desktop]
+  url: https://www.adobe.com/products/premiere.html
+  freeLimit: Subscription only
+  priceInrMonth: 1900
+  priceVerifiedOn: 2026-10-16
+  lastVerified: 2026-10-16
+
+- id: chatgpt_plus
+  name: ChatGPT Plus
+  tier: paid
+  license: proprietary
+  covers: [script_ai, captions, summarise]
+  platforms: [desktop, mobile]
+  url: https://chatgpt.com
+  freeLimit: Paid plan for long-article summaries
+  priceInrMonth: 1900
+  priceVerifiedOn: 2026-10-16
+  lastVerified: 2026-10-16
+
+- id: descript
+  name: Descript
+  tier: paid
+  license: proprietary
+  covers: [edit_short, captions, voice_record]
+  platforms: [desktop]
+  url: https://www.descript.com
+  freeLimit: Free tier cannot finish a full short
+  priceInrMonth: 2000
+  priceVerifiedOn: 2026-10-16
+  lastVerified: 2026-10-16
+
+- id: elevenlabs
+  name: ElevenLabs
+  tier: paid
+  license: proprietary
+  covers: [voice_record]
+  platforms: [desktop]
+  url: https://elevenlabs.io
+  freeLimit: Free minutes are too low for weekly posting
+  priceInrMonth: 500
+  priceVerifiedOn: 2026-10-16
+  lastVerified: 2026-10-16
+
+- id: canva_pro
+  name: Canva Pro
+  tier: paid
+  license: proprietary
+  covers: [visuals, thumbnail]
+  platforms: [desktop, mobile]
+  url: https://www.canva.com
+  freeLimit: Brand kit and magic resize need Pro
+  priceInrMonth: 500
+  priceVerifiedOn: 2026-10-16
+  lastVerified: 2026-10-16

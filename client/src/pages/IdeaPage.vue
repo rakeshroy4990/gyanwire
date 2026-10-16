@@ -67,7 +67,10 @@ const noOpportunity = computed(() => (
   pipelineMode.value && !ideas.value.length && gate.value && gate.value.proceed === false
 ));
 const pageTitle = computed(() => (
-  pipelineMode.value ? 'Ideas you can test from this news' : 'Choose one way to act on this finding'
+  // Keep the pipeline title while scoring so the hero does not flash the classic heading.
+  !loading.value && !pipelineMode.value
+    ? 'Choose one way to act on this finding'
+    : 'Ideas you can test from this news'
 ));
 
 function moneyLine(row) {
@@ -145,7 +148,7 @@ function applyProfile(data) {
 async function loadIdeas(force = false) {
   if (!newsUrl.value) return;
   if (!form.industries.length) {
-    form.industries = [industry.value || 'IT'];
+    form.industries = [industry.value || 'AI'];
   }
   await runFromNews({
     url: newsUrl.value,
@@ -164,7 +167,7 @@ async function refine() {
     const data = await saveProfile({
       ...form,
       consent: true,
-      industries: form.industries?.length ? form.industries : [industry.value || 'IT'],
+      industries: form.industries?.length ? form.industries : [industry.value || 'AI'],
     });
     applyProfile(data);
     refineOpen.value = false;
@@ -183,7 +186,7 @@ async function bootFromRoute() {
   const status = await hydrateSource();
   if (status === 'replaced') return;
   if (!form.industries.length) {
-    form.industries = [industry.value || 'IT'];
+    form.industries = [industry.value || 'AI'];
   }
   await loadIdeas(false);
 }
@@ -229,7 +232,12 @@ watch(
     </template>
 
     <template v-else>
-      <PageSkeleton v-if="loading && !ideas.length" variant="options" :rows="expectedCount" label="Scoring ideas" />
+      <PageSkeleton
+        v-if="loading && !ideas.length"
+        variant="ideas"
+        :rows="expectedCount"
+        label="Scoring ideas"
+      />
 
       <p v-else-if="error && !ideas.length" class="form-error" role="alert">{{ error }}</p>
 
@@ -282,7 +290,7 @@ watch(
             </article>
           </li>
         </ul>
-        <PageSkeleton v-if="loading" variant="options" :rows="1" label="Scoring ideas" />
+        <PageSkeleton v-if="loading" variant="ideas" :rows="1" label="Scoring ideas" />
       </template>
 
       <section v-if="newsUrl && !limitReached" class="account-card">

@@ -1,0 +1,9 @@
+id: linkedin_post
+label: "LinkedIn post"
+platforms: [linkedin]
+aspect: "1:1"
+resolution: "1200x627"
+defaultBudgetMinutes: 90
+scriptWords: [120, 220]
+stepTemplate: linkedin_post_steps.yml
+moneyRuleId: linkedin_organic

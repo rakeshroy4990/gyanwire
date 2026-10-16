@@ -44,7 +44,7 @@ const HOURS = [
   { value: 20, label: '20 hours' },
   { value: 40, label: '40 hours or more' },
 ];
-const INDUSTRIES = ['Share Market', 'IT', 'Medical', 'Space', 'Social Media', 'Gaming', 'Astrology'];
+const INDUSTRIES = ['AI', 'Share Market', 'IT', 'Medical', 'Space', 'Social Media', 'Gaming', 'Astrology'];
 
 function blankForm() {
   return {
@@ -55,7 +55,7 @@ function blankForm() {
     capitalBand: '0',
     investPct: 10,
     hoursPerWeek: 10,
-    industries: ['IT'],
+    industries: ['AI'],
     languages: ['en'],
     state: '',
     city: '',
@@ -125,7 +125,7 @@ function apply(data) {
   form.capitalBand = data.capitalBand || '0';
   form.investPct = Number(data.investPct) || 10;
   form.hoursPerWeek = Number(data.hoursPerWeek) || 10;
-  form.industries = Array.isArray(data.industries) && data.industries.length ? [...data.industries] : ['IT'];
+  form.industries = Array.isArray(data.industries) && data.industries.length ? [...data.industries] : ['AI'];
   form.languages = Array.isArray(data.languages) && data.languages.length ? [...data.languages] : ['en'];
   form.city = data.city || '';
   form.state = data.state || '';
@@ -169,7 +169,7 @@ async function submitProfile() {
     const data = await save({
       ...form,
       consent: true,
-      industries: form.industries[0] ? [form.industries[0]] : ['IT'],
+      industries: form.industries[0] ? [form.industries[0]] : ['AI'],
       city: form.city.trim(),
       state: form.state.trim(),
     });

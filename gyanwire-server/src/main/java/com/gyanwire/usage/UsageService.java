@@ -177,6 +177,7 @@ public class UsageService {
         out.put("seats", plan.getSeats());
         out.put("dailyBriefLimit", plan.getDailyBriefLimit());
         out.put("dailyIdeaLimit", plan.getDailyIdeaLimit());
+        out.put("dailyActionPlanLimit", plan.getDailyActionPlanLimit());
         out.put("canRoadmap", plan.isCanRoadmap());
         out.put("projectLimit", plan.getProjectLimit());
         out.put("maxPlanVariants", plan.getMaxPlanVariants());
@@ -211,6 +212,7 @@ public class UsageService {
             out.put("seats", 1);
             out.put("dailyBriefLimit", 1);
             out.put("dailyIdeaLimit", 3);
+            out.put("dailyActionPlanLimit", 5);
             out.put("canRoadmap", false);
             out.put("projectLimit", 1);
             out.put("maxPlanVariants", 1);

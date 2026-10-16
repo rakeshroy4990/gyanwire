@@ -1,0 +1,8 @@
+id: carousel
+label: "Carousel"
+platforms: [instagram_reels, linkedin]
+aspect: "4:5"
+resolution: "1080x1350"
+defaultBudgetMinutes: 180
+stepTemplate: carousel_steps.yml
+moneyRuleId: linkedin_organic

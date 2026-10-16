@@ -1,0 +1,7 @@
+id: x_thread
+label: "X thread"
+platforms: [x]
+defaultBudgetMinutes: 90
+scriptWords: [40, 80]
+stepTemplate: x_thread_steps.yml
+moneyRuleId: linkedin_organic

@@ -151,6 +151,10 @@ public class DiscoverService {
 
     private static List<Map<String, String>> categorySeeds(List<String> categories, String query) {
         Map<String, List<Map<String, String>>> seeds = Map.of(
+                "AI", List.of(
+                        Map.of("title", "OpenAI news", "url", "https://openai.com/news/", "description", "Latest OpenAI feature launches", "source", "category-seed"),
+                        Map.of("title", "Anthropic news", "url", "https://www.anthropic.com/news", "description", "Latest Claude feature launches", "source", "category-seed")
+                ),
                 "IT", List.of(
                         Map.of("title", "arXiv cs", "url", "https://arxiv.org/list/cs/recent", "description", "Computer science research preprints", "source", "category-seed"),
                         Map.of("title", "IEEE Xplore", "url", "https://ieeexplore.ieee.org/", "description", "Engineering and computing research", "source", "category-seed")
@@ -166,6 +170,10 @@ public class DiscoverService {
                 "Share Market", List.of(
                         Map.of("title", "Moneycontrol Markets", "url", "https://www.moneycontrol.com/stocksmarketsindia/", "description", "Indian share market news", "source", "category-seed"),
                         Map.of("title", "NSE India", "url", "https://www.nseindia.com/", "description", "National Stock Exchange of India", "source", "category-seed")
+                ),
+                "Real Estate", List.of(
+                        Map.of("title", "Magicbricks News", "url", "https://www.magicbricks.com/blog/", "description", "Indian real estate and housing updates", "source", "category-seed"),
+                        Map.of("title", "Housing.com News", "url", "https://housing.com/news/", "description", "Residential and PropTech product news", "source", "category-seed")
                 )
         );
         List<Map<String, String>> pages = new ArrayList<>();

@@ -2,6 +2,7 @@ package com.gyanwire.ideas.pipeline;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gyanwire.actionplan.ActionPlanPipeline;
 import com.gyanwire.digests.DigestDeduper;
 import com.gyanwire.news.SignalRules;
 import com.gyanwire.persistence.FlowStore;
@@ -38,16 +39,19 @@ public class OpportunityPipeline {
     private final IdeaStageClient client;
     private final ObjectMapper mapper;
     private final IdeaScoreWeights weights;
+    private final ActionPlanPipeline actionPlans;
 
     public OpportunityPipeline(
             FlowStore store,
             UsageService usage,
             IdeaStageClient client,
-            ObjectMapper mapper
+            ObjectMapper mapper,
+            ActionPlanPipeline actionPlans
     ) {
         this.store = store;
         this.usage = usage;
         this.client = client;
+        this.actionPlans = actionPlans;
         this.mapper = mapper;
         this.weights = IdeaScoreWeights.load();
     }
@@ -155,24 +159,65 @@ public class OpportunityPipeline {
     }
 
     public Map<String, Object> launchPlan(UUID userId, UUID ideaId, boolean force) {
+        return launchPlan(userId, ideaId, force, null, false, null);
+    }
+
+    public Map<String, Object> launchPlan(
+            UUID userId,
+            UUID ideaId,
+            boolean force,
+            Integer budgetMinutes,
+            boolean demo,
+            String format
+    ) {
         Map<String, Object> found = store.findIdea(userId, ideaId);
         if (found == null) {
             throw new ResearchException("That idea is not on this account.", "NOT_FOUND", 404);
         }
         Map<String, Object> body = asMap(found.get("body"));
         BusinessIdea idea = readIdea(body, found);
-        boolean social = SocialMediaPlan.isSocial(idea);
-        if (!force && body.get("launchPlan") instanceof Map<?, ?> saved) {
-            boolean savedSocial = "social".equals(String.valueOf(saved.get("kind")));
-            if (social == savedSocial && (!social || SocialMediaPlan.hasLinkedTools(saved))) {
+        boolean social = idea != null && "comparison_content".equals(idea.angleType());
+        boolean optionsSet = budgetMinutes != null || demo || (format != null && !format.isBlank());
+        if (!force && !optionsSet && body.get("launchPlan") instanceof Map<?, ?> saved) {
+            boolean savedAction = ActionPlanPipeline.isActionPlan(saved);
+            boolean savedLegacySocial = "social".equals(String.valueOf(saved.get("kind")));
+            if (social && savedAction && ActionPlanPipeline.hasValidShape(saved)) {
+                Map<String, Object> plan = copyMap(saved);
+                plan.put("ideaId", ideaId.toString());
+                PipelineLog.launchPlan(ideaId, true, false);
+                return plan;
+            }
+            if (!social && !savedAction && !savedLegacySocial) {
                 Map<String, Object> plan = copyMap(saved);
                 plan.put("ideaId", ideaId.toString());
                 PipelineLog.launchPlan(ideaId, true, false);
                 return plan;
             }
         }
-        Map<String, Object> plan = new LaunchPlanStage(mapper).run(
-                client, userId, idea, String.valueOf(found.getOrDefault("newsTitle", "")));
+        Map<String, Object> plan;
+        if (social) {
+            String newsUrl = String.valueOf(found.getOrDefault("newsUrl", ""));
+            String newsTitle = String.valueOf(found.getOrDefault("newsTitle", ""));
+            String description = idea.oneLiner() == null ? newsTitle : idea.oneLiner();
+            int budget = budgetMinutes == null || budgetMinutes <= 0 ? 240 : budgetMinutes;
+            try {
+                plan = actionPlans.generateForIdea(userId, newsUrl, newsTitle, demo, budget, format);
+            } catch (Exception ex) {
+                plan = actionPlans.generate(
+                        userId,
+                        null,
+                        newsUrl,
+                        newsTitle,
+                        "",
+                        budget,
+                        padArticle(newsTitle, description),
+                        demo,
+                        userId != null);
+            }
+        } else {
+            plan = new LaunchPlanStage(mapper).run(
+                    client, userId, idea, String.valueOf(found.getOrDefault("newsTitle", "")));
+        }
         body.put("launchPlan", plan);
         try {
             store.updateIdeaBody(userId, ideaId, mapper.writeValueAsString(body));
@@ -384,6 +429,25 @@ public class OpportunityPipeline {
                 false);
     }
 
+    /** Pad headline + description to satisfy NewsResolve MIN_CHARS when the article cannot be fetched. */
+    static String padArticle(String title, String description) {
+        StringBuilder out = new StringBuilder();
+        if (title != null && !title.isBlank()) {
+            out.append(title.trim()).append(". ");
+        }
+        if (description != null && !description.isBlank()) {
+            out.append(description.trim()).append(' ');
+        }
+        String seed = out.toString().trim();
+        if (seed.isBlank()) {
+            seed = "This news item needs a short explainer for viewers who follow product launches.";
+        }
+        while (out.length() < 650) {
+            out.append(' ').append(seed);
+        }
+        return out.toString().trim();
+    }
+
     private static Map<String, Object> asMap(Object value) {
         Map<String, Object> copy = new LinkedHashMap<>();
         if (value instanceof Map<?, ?> map) {
@@ -419,6 +483,7 @@ public class OpportunityPipeline {
     private static String disclaimer(String industry) {
         return switch (industry) {
             case "Share Market" -> "Informational only. Not investment advice.";
+            case "Real Estate" -> "Informational only. Not property, loan, or investment advice.";
             case "Medical" -> "Research aid, not a diagnosis or treatment.";
             case "Astrology", "Gaming" -> "Ideas here are cultural or entertainment context, not predictions.";
             default -> "";

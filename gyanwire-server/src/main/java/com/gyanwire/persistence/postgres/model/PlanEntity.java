@@ -36,6 +36,9 @@ public class PlanEntity {
     @Column(name = "daily_idea_limit", nullable = false)
     private int dailyIdeaLimit = 3;
 
+    @Column(name = "daily_action_plan_limit", nullable = false)
+    private int dailyActionPlanLimit = 5;
+
     @Column(name = "can_roadmap", nullable = false)
     private boolean canRoadmap;
 
@@ -82,6 +85,10 @@ public class PlanEntity {
 
     public int getDailyIdeaLimit() {
         return dailyIdeaLimit;
+    }
+
+    public int getDailyActionPlanLimit() {
+        return dailyActionPlanLimit;
     }
 
     public boolean isCanRoadmap() {

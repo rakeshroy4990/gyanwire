@@ -6,7 +6,8 @@ import { useProfileStore } from '../stores/profile.store.js';
 import { apiUrl } from '../services/apiBase.js';
 import { loadResearchIndustries } from '../services/industries.service.js';
 import { withoutFyiNews } from '../services/newsFyi.js';
-import { readNdjson } from '../services/newsStream.js';
+import { fetchDefaultNews, fetchIndustryNews, PAGE_SIZE } from '../services/news.service.js';
+import { dismissNews, hideNewsSource } from '../services/product.service.js';
 import {
   clearResearchReturn,
   consumeResearchHome,
@@ -17,15 +18,24 @@ import { useAuth } from './useAuth.js';
 import { useUsage } from './useUsage.js';
 
 const ALL_INDUSTRY = 'All';
+const HOME_INDUSTRY = 'AI';
 
 const FALLBACK_CATALOG = [
+  {
+    name: 'AI',
+    subs: ['Anthropic', 'OpenAI', 'Grok', 'Google', 'Meta', 'Microsoft'],
+  },
   {
     name: 'Share Market',
     subs: ['IT', 'EV', 'Space', 'Pharma', 'Banking', 'Energy'],
   },
   {
+    name: 'Real Estate',
+    subs: ['Residential', 'Commercial', 'PropTech', 'Construction', 'RERA'],
+  },
+  {
     name: 'IT',
-    subs: ['AI', 'Semiconductors', 'Cybersecurity', 'Cloud'],
+    subs: ['Semiconductors', 'Cybersecurity', 'Cloud'],
   },
   {
     name: 'Medical',
@@ -49,6 +59,16 @@ const FALLBACK_CATALOG = [
   },
 ];
 
+function withAiFirst(rows) {
+  const cleaned = rows.map((item) => {
+    if (item.name !== 'IT' || !Array.isArray(item.subs)) return item;
+    return { ...item, subs: item.subs.filter((name) => name !== 'AI') };
+  });
+  const lead = cleaned.find((item) => item.name === HOME_INDUSTRY) || FALLBACK_CATALOG[0];
+  const rest = cleaned.filter((item) => item.name !== HOME_INDUSTRY);
+  return [lead, ...rest];
+}
+
 function hostname(url) {
   try {
     return new URL(url).hostname.replace(/^www\./, '');
@@ -64,7 +84,7 @@ function findingScore(item) {
   return Number.isFinite(n) ? n : 0;
 }
 
-/** Keep only findings with a business-idea score, highest first. Drop FYI briefs. */
+/** Research chat: keep scored findings, drop FYI, highest score first. */
 function mapResults(payload) {
   const list = Array.isArray(payload?.results)
     ? payload.results
@@ -87,9 +107,26 @@ function mapResults(payload) {
     .sort((a, b) => findingScore(b) - findingScore(a));
 }
 
+/** Browse feed: keep server order (newest first across 30 days). */
+function mapBrowseResults(payload) {
+  const list = Array.isArray(payload?.results)
+    ? payload.results
+    : Array.isArray(payload?.items)
+      ? payload.items
+      : Array.isArray(payload)
+        ? payload
+        : [];
+  return list.map((item) => ({
+    ...item,
+    host: item.source || hostname(item.url),
+    score: item.relevanceScore ?? item.opportunityScore ?? item.score,
+    why: item.relevanceReason || item.whyIdea || item.why || item.description,
+  }));
+}
+
 function mapStreamItem(item) {
   if (!item || typeof item !== 'object') return null;
-  const [row] = mapResults({ results: [item], freshness: 'stream' });
+  const [row] = mapBrowseResults({ results: [item] });
   return row || null;
 }
 
@@ -152,10 +189,14 @@ export function useResearch() {
   const profileStore = useProfileStore();
   const usage = useUsage();
   const savedWorkspace = consumeResearchHome() ? null : loadResearchWorkspace();
-  /** False after the user picks an industry chip. Home resets to All while this stays true. */
+  /** False after the user picks an industry chip. Home opens AI while this stays true. */
   const followProfile = ref(savedWorkspace ? savedWorkspace.followProfile : true);
   const catalog = ref(FALLBACK_CATALOG);
-  const industry = ref(savedWorkspace?.industry || ALL_INDUSTRY);
+  const industry = ref(
+    savedWorkspace && !savedWorkspace.followProfile
+      ? (savedWorkspace.industry || HOME_INDUSTRY)
+      : HOME_INDUSTRY,
+  );
   const subcategory = ref(savedWorkspace?.subcategory ?? null);
   const thoughts = ref(savedWorkspace?.thoughts || '');
   const formError = ref('');
@@ -163,11 +204,15 @@ export function useResearch() {
   /** Chat turns: each research question keeps its findings underneath. */
   const thread = ref(savedWorkspace?.thread || []);
   /** Browse-mode product news (shown only when the chat thread is empty). */
-  const browseResults = ref(withoutFyiNews(savedWorkspace?.browseResults || []));
+  const browseResults = ref(savedWorkspace?.browseResults || []);
   const browseSub = ref(savedWorkspace?.browseSub || '');
   const browseFreshness = ref(savedWorkspace?.browseFreshness || '');
   const browseNote = ref(savedWorkspace?.browseNote || '');
   const browseCountries = ref(savedWorkspace?.browseCountries || []);
+  const browsePage = ref(1);
+  const browseTotal = ref(0);
+  const browseTotalPages = ref(0);
+  const browseHasMore = ref(false);
   /** Null means worldwide, with India still ranked first. */
   const country = ref(savedWorkspace?.country || null);
   const emptyMessage = ref(
@@ -232,9 +277,18 @@ export function useResearch() {
 
   function applyHomeFeed() {
     if (!followProfile.value || hasThread.value) return;
-    industry.value = ALL_INDUSTRY;
+    industry.value = HOME_INDUSTRY;
     subcategory.value = null;
-    loadNewsFeed({ industryName: ALL_INDUSTRY });
+    loadNewsFeed({ industryName: HOME_INDUSTRY, page: 1 });
+  }
+
+  function applyBrowsePaging(data) {
+    browsePage.value = Number(data?.page) > 0 ? Number(data.page) : 1;
+    browseTotal.value = Number(data?.total) >= 0 ? Number(data.total) : browseResults.value.length;
+    browseTotalPages.value = Number(data?.totalPages) >= 0
+      ? Number(data.totalPages)
+      : (browseTotal.value ? Math.ceil(browseTotal.value / PAGE_SIZE) : 0);
+    browseHasMore.value = Boolean(data?.hasMore) || browsePage.value < browseTotalPages.value;
   }
 
   function applyBrowseMeta(data, scoped, sub) {
@@ -243,10 +297,17 @@ export function useResearch() {
     browseCountries.value = Array.isArray(data?.countries) ? data.countries : [];
     browseFreshness.value = data?.freshness || '';
     browseNote.value = data?.message || '';
+    applyBrowsePaging(data);
     const place = countryName(country.value, browseCountries.value);
+    const total = browseTotal.value;
+    const page = browsePage.value;
+    const pageSize = Number(data?.pageSize) > 0 ? Number(data.pageSize) : PAGE_SIZE;
+    const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
+    const to = Math.min(page * pageSize, total);
+    const range = total ? `${from}–${to} of ${total}` : '0';
     const scopeLine = scoped
-      ? `5 latest ${label}${sub ? ` · ${scope}` : ''}`
-      : 'Top searched product news';
+      ? `${range} · last 30 days · ${label}${sub ? ` · ${scope}` : ''}`
+      : `${range} · last 30 days · Top searched product news`;
     browseSub.value = place
       ? `${place} · ${scopeLine}`
       : `Worldwide, India first · ${scopeLine}`;
@@ -267,31 +328,7 @@ export function useResearch() {
             : 'No product news yet.';
   }
 
-  async function readDefaultNews(response, requestId, scoped, sub) {
-    let frame = {};
-    await readNdjson(response, async (event) => {
-      if (requestId !== newsRequestId) return;
-      if (event?.type === 'meta') {
-        frame = event;
-        applyBrowseMeta(event, scoped, sub);
-      } else if (event?.type === 'item') {
-        const row = mapStreamItem(event.item);
-        if (!row) return;
-        const key = row.url || row.id;
-        if (key && browseResults.value.some((item) => (item.url || item.id) === key)) return;
-        browseResults.value = [...browseResults.value, row];
-        await nextTick();
-      } else if (event?.type === 'error') {
-        throw new Error(event.message || 'Could not load product news.');
-      } else if (event?.type === 'done') {
-        frame = { ...frame, returned: event.returned };
-      }
-    });
-    if (requestId !== newsRequestId) return;
-    settleBrowse(frame, scoped, countryName(country.value, browseCountries.value));
-  }
-
-  async function loadNewsFeed({ industryName = null, sub = null } = {}) {
+  async function loadNewsFeed({ industryName = null, sub = null, page = 1 } = {}) {
     // News browsing does not clear an active research chat.
     if (hasThread.value) return;
 
@@ -302,48 +339,58 @@ export function useResearch() {
     newsAbort = controller;
     isLoading.value = true;
     browseResults.value = [];
+    browsePage.value = Math.max(1, page);
     browseSub.value = sub || scoped || 'Loading…';
     browseFreshness.value = '';
     browseNote.value = '';
     showEmpty.value = false;
 
     try {
-      let path = '/api/news/default?limit=5&intent=products';
+      let data;
       if (scoped) {
-        path = `/api/news/${encodeURIComponent(scoped)}?limit=5&intent=products&window=14d`;
-        if (sub) path += `&sub=${encodeURIComponent(sub)}`;
+        data = await fetchIndustryNews({
+          industry: scoped,
+          sub,
+          country: country.value,
+          page: browsePage.value,
+          limit: PAGE_SIZE,
+          signal: controller.signal,
+        });
+        if (requestId !== newsRequestId) return;
+        browseResults.value = mapBrowseResults(data);
+      } else {
+        browseResults.value = [];
+        data = await fetchDefaultNews({
+          country: country.value,
+          page: browsePage.value,
+          limit: PAGE_SIZE,
+          signal: controller.signal,
+          onItem: async (item) => {
+            if (requestId !== newsRequestId) return;
+            const row = mapStreamItem(item);
+            if (!row) return;
+            const key = row.url || row.id;
+            if (key && browseResults.value.some((entry) => (entry.url || entry.id) === key)) return;
+            browseResults.value = [...browseResults.value, row];
+            await nextTick();
+          },
+        });
+        if (requestId !== newsRequestId) return;
+        if (!browseResults.value.length) {
+          browseResults.value = mapBrowseResults(data);
+        }
       }
-      if (country.value) path += `&country=${encodeURIComponent(country.value)}`;
-      const res = await fetch(apiUrl(path), {
-        credentials: 'include',
-        cache: 'no-store',
-        signal: controller.signal,
-        headers: { Accept: scoped ? 'application/json' : 'application/x-ndjson, application/json' },
-      });
-      if (requestId !== newsRequestId) return;
-      if (!res.ok) {
-        const payload = await res.json().catch(() => ({}));
-        throw new Error(payload.message || 'Could not load product news.');
-      }
-      const contentType = res.headers.get('content-type') || '';
-      if (!scoped && contentType.includes('ndjson')) {
-        await readDefaultNews(res, requestId, scoped, sub);
-        return;
-      }
-      const payload = await res.json();
-      if (requestId !== newsRequestId) return;
-      if (!payload.success) {
-        throw new Error(payload.message || 'Could not load product news.');
-      }
-      browseResults.value = mapResults(payload.data);
-      const place = applyBrowseMeta(payload.data, scoped, sub);
-      settleBrowse(payload.data, scoped, place);
+      const place = applyBrowseMeta(data, scoped, sub);
+      settleBrowse(data, scoped, place);
     } catch (error) {
       if (error?.name === 'AbortError' || requestId !== newsRequestId) return;
       browseResults.value = [];
       browseSub.value = '';
       browseFreshness.value = '';
       browseNote.value = '';
+      browseTotal.value = 0;
+      browseTotalPages.value = 0;
+      browseHasMore.value = false;
       showEmpty.value = true;
       emptyMessage.value = error.message || 'Product news will appear here.';
     } finally {
@@ -353,6 +400,53 @@ export function useResearch() {
     }
   }
 
+  function goBrowsePage(nextPage) {
+    const page = Math.max(1, Number(nextPage) || 1);
+    if (browseTotalPages.value && page > browseTotalPages.value) return;
+    if (page === browsePage.value && browseResults.value.length) return;
+    const scoped = industry.value && industry.value !== ALL_INDUSTRY ? industry.value : null;
+    loadNewsFeed({
+      industryName: scoped || ALL_INDUSTRY,
+      sub: scoped ? subcategory.value : null,
+      page,
+    });
+  }
+
+  async function dismissBrowseItem(item) {
+    if (!item || hasThread.value) return;
+    const key = item.url || item.id;
+    browseResults.value = browseResults.value.filter((row) => (row.url || row.id) !== key);
+    try {
+      await dismissNews({
+        itemId: item.id,
+        url: item.url,
+        industry: item.industry || industry.value || HOME_INDUSTRY,
+      });
+    } catch {
+      // Keep the optimistic remove; feed reload still fills the slot when possible.
+    }
+    const scoped = industry.value && industry.value !== ALL_INDUSTRY ? industry.value : HOME_INDUSTRY;
+    await loadNewsFeed({ industryName: scoped, sub: subcategory.value, page: browsePage.value || 1 });
+  }
+
+  async function hideBrowseSource(item) {
+    if (!item || hasThread.value) return;
+    const sourceKey = item.sourceId;
+    if (sourceKey) {
+      browseResults.value = browseResults.value.filter((row) => row.sourceId !== sourceKey);
+    }
+    try {
+      await hideNewsSource({
+        sourceId: item.sourceId,
+        itemId: item.id,
+      });
+    } catch {
+      // Optimistic hide; reload refreshes.
+    }
+    const scoped = industry.value && industry.value !== ALL_INDUSTRY ? industry.value : HOME_INDUSTRY;
+    await loadNewsFeed({ industryName: scoped, sub: subcategory.value, page: browsePage.value || 1 });
+  }
+
   function selectIndustry(name) {
     followProfile.value = false;
     if (industry.value === name) {
@@ -360,13 +454,13 @@ export function useResearch() {
       industry.value = ALL_INDUSTRY;
       subcategory.value = null;
       formError.value = '';
-      if (!hasThread.value) loadNewsFeed({ industryName: ALL_INDUSTRY });
+      if (!hasThread.value) loadNewsFeed({ industryName: ALL_INDUSTRY, page: 1 });
       return;
     }
     industry.value = name;
     subcategory.value = null;
     formError.value = '';
-    if (!hasThread.value) loadNewsFeed({ industryName: name });
+    if (!hasThread.value) loadNewsFeed({ industryName: name, page: 1 });
   }
 
   function selectCountry(code) {
@@ -377,6 +471,7 @@ export function useResearch() {
       loadNewsFeed({
         industryName: industry.value,
         sub: isAllIndustry.value ? null : subcategory.value,
+        page: 1,
       });
     }
   }
@@ -386,12 +481,12 @@ export function useResearch() {
     if (isAllIndustry.value) return;
     if (subcategory.value === name) {
       subcategory.value = null;
-      if (!hasThread.value) loadNewsFeed({ industryName: industry.value });
+      if (!hasThread.value) loadNewsFeed({ industryName: industry.value, page: 1 });
       return;
     }
     subcategory.value = name;
     formError.value = '';
-    if (!hasThread.value) loadNewsFeed({ industryName: industry.value, sub: name });
+    if (!hasThread.value) loadNewsFeed({ industryName: industry.value, sub: name, page: 1 });
   }
 
   async function runSearch() {
@@ -536,6 +631,10 @@ export function useResearch() {
     browseFreshness.value = '';
     browseNote.value = '';
     browseCountries.value = [];
+    browsePage.value = 1;
+    browseTotal.value = 0;
+    browseTotalPages.value = 0;
+    browseHasMore.value = false;
     country.value = null;
     showEmpty.value = true;
     usage.clearLimitPrompt();
@@ -563,9 +662,7 @@ export function useResearch() {
     try {
       const { catalog: rows } = await loadResearchIndustries();
       if (rows.length) {
-        const share = rows.find((item) => item.name === 'Share Market');
-        const rest = rows.filter((item) => item.name !== 'Share Market');
-        catalog.value = share ? [share, ...rest] : rows;
+        catalog.value = withAiFirst(rows);
       }
     } catch {
       // keep FALLBACK_CATALOG
@@ -574,7 +671,7 @@ export function useResearch() {
     if (savedWorkspace && !followProfile.value) {
       persistWorkspace();
       if (!hasThread.value) {
-        await loadNewsFeed({ industryName: industry.value, sub: subcategory.value });
+        await loadNewsFeed({ industryName: industry.value, sub: subcategory.value, page: 1 });
       }
       return;
     }
@@ -605,6 +702,10 @@ export function useResearch() {
     browseFreshness,
     browseNote,
     browseCountries,
+    browsePage,
+    browseTotal,
+    browseTotalPages,
+    browseHasMore,
     country,
     showBrowseResults,
     emptyMessage,
@@ -614,6 +715,9 @@ export function useResearch() {
     selectIndustry,
     selectSub,
     selectCountry,
+    goBrowsePage,
+    dismissBrowseItem,
+    hideBrowseSource,
     runSearch,
     clearForm,
     searchesLeftLabel: usage.searchesLeftLabel,

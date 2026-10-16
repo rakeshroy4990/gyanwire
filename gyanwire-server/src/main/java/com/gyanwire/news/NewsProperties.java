@@ -151,7 +151,7 @@ public class NewsProperties {
         private int intentBoost = 8;
         private int intentDemote = 12;
         private int cacheSeconds = 60;
-        private String windows = "14,30,60";
+        private String windows = "1,7,30";
 
         public int getRecency() {
             return recency;

@@ -34,6 +34,9 @@ public final class NewsRow {
     private String country;
     private String sourceRegion;
     private boolean weakSignal;
+    private int relevanceScore;
+    private String relevanceReason;
+    private List<String> signals = new ArrayList<>();
 
     public UUID id() { return id; }
     public NewsRow id(UUID id) { this.id = id; return this; }
@@ -94,4 +97,13 @@ public final class NewsRow {
     public NewsRow sourceRegion(String sourceRegion) { this.sourceRegion = sourceRegion; return this; }
     public boolean weakSignal() { return weakSignal; }
     public NewsRow weakSignal(boolean weakSignal) { this.weakSignal = weakSignal; return this; }
+    public int relevanceScore() { return relevanceScore; }
+    public NewsRow relevanceScore(int relevanceScore) { this.relevanceScore = relevanceScore; return this; }
+    public String relevanceReason() { return relevanceReason; }
+    public NewsRow relevanceReason(String relevanceReason) { this.relevanceReason = relevanceReason; return this; }
+    public List<String> signals() { return signals; }
+    public NewsRow signals(List<String> signals) {
+        this.signals = signals == null ? new ArrayList<>() : new ArrayList<>(signals);
+        return this;
+    }
 }

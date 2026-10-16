@@ -328,7 +328,18 @@ public class IdeaService {
     }
 
     public Map<String, Object> launchPlan(UUID userId, UUID ideaId, boolean force) {
-        return opportunityPipeline.launchPlan(userId, ideaId, force);
+        return launchPlan(userId, ideaId, force, null, false, null);
+    }
+
+    public Map<String, Object> launchPlan(
+            UUID userId,
+            UUID ideaId,
+            boolean force,
+            Integer budgetMinutes,
+            boolean demo,
+            String format
+    ) {
+        return opportunityPipeline.launchPlan(userId, ideaId, force, budgetMinutes, demo, format);
     }
 
     private static String eventForNews(String signalType) {

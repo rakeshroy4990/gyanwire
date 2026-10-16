@@ -484,3 +484,9 @@ Change one thing at a time, run evals, and keep the old `LLM_*` values for rollb
 - [x] S14 Digests (Watchers v0) + MCP server
 - [x] S15 Limits, observability, legal
 - [x] S16 E2E test + release
+
+---
+
+## Post-S16 — Action plans
+
+News → Idea → executable **action plan** (Open Source / Paid paths) is specified in [`CURSOR_PLAN_NEWS_TO_ACTION_PLAN.md`](CURSOR_PLAN_NEWS_TO_ACTION_PLAN.md) (steps N1–N7). It does not replace S10/S11 business plans. API prefix: `/api/action-plans`.

@@ -1,0 +1,24 @@
+industry: IT
+allow_domains:
+  - inc42.com
+  - yourstory.com
+  - livemint.com
+  - thehindu.com
+  - thehindubusinessline.com
+  - indianexpress.com
+  - medianama.com
+  - techcrunch.com
+deny:
+  domains: []
+  keywords:
+    - celebrity
+    - arrested
+    - match score
+    - horoscope today
+    - gossip
+signals:
+  launch: [launches, introduces, rolls out, announces, unveils, release]
+  money: [pricing, free tier, funding, raises, acquires, subsidy]
+  rule: [regulation, ban, guidelines, mandate, policy, MeitY]
+  pain: [shortage, outage, complaint, backlash, cost, breach]
+  tool: [API, open-source, SDK, plugin, model, GitHub]

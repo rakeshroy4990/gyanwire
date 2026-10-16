@@ -1,0 +1,17 @@
+- id: yt_shorts_ypp
+  claim: "Shorts can earn ad revenue share only after YouTube Partner Program eligibility. This is not instant income."
+  appliesTo: [short_vertical]
+  honestForNewChannel: false
+  lastVerified: 2026-10-16
+
+- id: ig_reels_bonus
+  claim: "Reels bonuses are invitation-only and not available to new channels. Measure views and profile visits instead."
+  appliesTo: [short_vertical]
+  honestForNewChannel: false
+  lastVerified: 2026-10-16
+
+- id: linkedin_organic
+  claim: "LinkedIn video posts do not pay creators directly. Track comments and profile visits as the test."
+  appliesTo: [short_vertical, linkedin_post]
+  honestForNewChannel: false
+  lastVerified: 2026-10-16

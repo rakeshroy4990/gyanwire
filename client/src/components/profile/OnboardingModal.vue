@@ -14,7 +14,7 @@ const form = reactive({
   capitalBand: '0',
   investPct: 10,
   hoursPerWeek: 10,
-  industries: ['IT'],
+  industries: ['AI'],
   languages: ['en'],
   locationTier: '',
   state: '',
@@ -109,6 +109,7 @@ async function next() {
       <label v-else class="auth-field">
         <span class="auth-field__label">Industry</span>
         <select v-model="form.industries[0]">
+          <option>AI</option>
           <option>Share Market</option>
           <option>IT</option>
           <option>Medical</option>

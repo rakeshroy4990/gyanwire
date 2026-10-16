@@ -1,0 +1,22 @@
+industry: Space
+allow_domains:
+  - thehindu.com
+  - indianexpress.com
+  - nasa.gov
+  - esa.int
+  - space.com
+  - isro.gov.in
+deny:
+  domains: []
+  keywords:
+    - celebrity
+    - arrested
+    - match score
+    - horoscope today
+    - gossip
+signals:
+  launch: [launches, launch, introduces, rolls out, announces, liftoff]
+  money: [pricing, funding, raises, acquires, subsidy, contract]
+  rule: [regulation, ban, guidelines, mandate, policy, IN-SPACe]
+  pain: [shortage, outage, delay, backlash, cost, scrub]
+  tool: [API, open-source, SDK, satellite, payload]

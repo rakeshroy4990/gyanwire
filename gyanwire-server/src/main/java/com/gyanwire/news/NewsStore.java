@@ -10,7 +10,9 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
@@ -133,6 +135,19 @@ public class NewsStore {
                 """, (rs, rowNum) -> mapRow(rs), industry, Timestamp.from(since));
     }
 
+    public NewsRow findById(UUID id) {
+        if (id == null) {
+            return null;
+        }
+        List<NewsRow> rows = jdbc.query("""
+                SELECT i.*, s.name AS source_name, s.weight AS source_weight, s.region AS source_region
+                FROM news_items i
+                LEFT JOIN news_sources s ON s.id = i.source_id
+                WHERE i.id = ?
+                """, (rs, rowNum) -> mapRow(rs), id);
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
     public List<NewsRow> eligible(String industry, String sub, Instant since, boolean sample) {
         if (sub == null || sub.isBlank()) {
             return jdbc.query("""
@@ -141,7 +156,7 @@ public class NewsStore {
                     LEFT JOIN news_sources s ON s.id = i.source_id
                     WHERE i.industry = ? AND i.sample = ? AND i.published_at >= ?
                     ORDER BY i.published_at DESC
-                    LIMIT 80
+                    LIMIT 500
                     """, (rs, rowNum) -> mapRow(rs), industry, sample, Timestamp.from(since));
         }
         return jdbc.query("""
@@ -151,7 +166,7 @@ public class NewsStore {
                 WHERE i.industry = ? AND i.sample = ? AND i.published_at >= ?
                   AND (i.sub IS NULL OR i.sub = ?)
                 ORDER BY i.published_at DESC
-                LIMIT 80
+                LIMIT 500
                 """, (rs, rowNum) -> mapRow(rs), industry, sample, Timestamp.from(since), sub);
     }
 
@@ -230,6 +245,129 @@ public class NewsStore {
                 INSERT INTO news_feedback (id, item_id, user_id, anon_hash, vote, reason, industry, signal_type)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """, UUID.randomUUID(), itemId, userId, anonHash, vote, reason, industry, signalType);
+    }
+
+    public void saveDismissal(UUID itemId, String url, UUID userId, String anonHash, String industry) {
+        if (userId == null && (anonHash == null || anonHash.isBlank())) {
+            return;
+        }
+        if (itemId == null && (url == null || url.isBlank())) {
+            return;
+        }
+        String cleanUrl = url == null || url.isBlank() ? null : url.trim();
+        if (itemId != null) {
+            if (userId != null) {
+                jdbc.update("""
+                        INSERT INTO news_dismissals (id, item_id, url, user_id, anon_hash, industry)
+                        SELECT ?, ?, ?, ?, NULL, ?
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM news_dismissals WHERE user_id = ? AND item_id = ?
+                        )
+                        """, UUID.randomUUID(), itemId, cleanUrl, userId, industry, userId, itemId);
+            } else {
+                jdbc.update("""
+                        INSERT INTO news_dismissals (id, item_id, url, user_id, anon_hash, industry)
+                        SELECT ?, ?, ?, NULL, ?, ?
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM news_dismissals WHERE anon_hash = ? AND item_id = ?
+                        )
+                        """, UUID.randomUUID(), itemId, cleanUrl, anonHash, industry, anonHash, itemId);
+            }
+            return;
+        }
+        if (userId != null) {
+            jdbc.update("""
+                    INSERT INTO news_dismissals (id, item_id, url, user_id, anon_hash, industry)
+                    SELECT ?, NULL, ?, ?, NULL, ?
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM news_dismissals WHERE user_id = ? AND item_id IS NULL AND url = ?
+                    )
+                    """, UUID.randomUUID(), cleanUrl, userId, industry, userId, cleanUrl);
+        } else {
+            jdbc.update("""
+                    INSERT INTO news_dismissals (id, item_id, url, user_id, anon_hash, industry)
+                    SELECT ?, NULL, ?, NULL, ?, ?
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM news_dismissals WHERE anon_hash = ? AND item_id IS NULL AND url = ?
+                    )
+                    """, UUID.randomUUID(), cleanUrl, anonHash, industry, anonHash, cleanUrl);
+        }
+    }
+
+    public record Dismissals(Set<UUID> itemIds, Set<String> urls) {
+        public static Dismissals empty() {
+            return new Dismissals(Set.of(), Set.of());
+        }
+    }
+
+    public void hideSource(UUID userId, UUID sourceId) {
+        if (userId == null || sourceId == null) {
+            return;
+        }
+        jdbc.update("""
+                INSERT INTO user_hidden_sources (user_id, source_id)
+                VALUES (?, ?)
+                ON CONFLICT (user_id, source_id) DO NOTHING
+                """, userId, sourceId);
+    }
+
+    public Set<UUID> loadHiddenSources(UUID userId) {
+        if (userId == null) {
+            return Set.of();
+        }
+        List<UUID> ids = jdbc.query(
+                "SELECT source_id FROM user_hidden_sources WHERE user_id = ?",
+                (rs, i) -> rs.getObject("source_id", UUID.class),
+                userId);
+        return new HashSet<>(ids);
+    }
+
+    public UUID findSourceIdForItem(UUID itemId) {
+        if (itemId == null) {
+            return null;
+        }
+        List<UUID> ids = jdbc.query(
+                "SELECT source_id FROM news_items WHERE id = ?",
+                (rs, i) -> rs.getObject("source_id", UUID.class),
+                itemId);
+        return ids.isEmpty() ? null : ids.get(0);
+    }
+
+    public Dismissals loadDismissals(NewsViewer viewer) {
+        if (viewer == null || (viewer.userId() == null && (viewer.anonHash() == null || viewer.anonHash().isBlank()))) {
+            return Dismissals.empty();
+        }
+        List<java.util.Map<String, Object>> rows;
+        if (viewer.userId() != null) {
+            rows = jdbc.query("""
+                    SELECT item_id, url FROM news_dismissals WHERE user_id = ?
+                    """, (rs, i) -> {
+                java.util.Map<String, Object> row = new java.util.LinkedHashMap<>();
+                row.put("itemId", rs.getObject("item_id", UUID.class));
+                row.put("url", rs.getString("url"));
+                return row;
+            }, viewer.userId());
+        } else {
+            rows = jdbc.query("""
+                    SELECT item_id, url FROM news_dismissals WHERE anon_hash = ?
+                    """, (rs, i) -> {
+                java.util.Map<String, Object> row = new java.util.LinkedHashMap<>();
+                row.put("itemId", rs.getObject("item_id", UUID.class));
+                row.put("url", rs.getString("url"));
+                return row;
+            }, viewer.anonHash());
+        }
+        Set<UUID> ids = new HashSet<>();
+        Set<String> urls = new HashSet<>();
+        for (java.util.Map<String, Object> row : rows) {
+            if (row.get("itemId") instanceof UUID id) {
+                ids.add(id);
+            }
+            if (row.get("url") instanceof String u && !u.isBlank()) {
+                urls.add(u);
+            }
+        }
+        return new Dismissals(ids, urls);
     }
 
     public List<java.util.Map<String, Object>> sourceStatus() {

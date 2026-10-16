@@ -1,0 +1,27 @@
+industry: Social Media
+allow_domains:
+  - medianama.com
+  - inc42.com
+  - livemint.com
+  - theverge.com
+  - techcrunch.com
+  - blog.youtube
+  - about.fb.com
+  - blog.instagram.com
+  - blog.linkedin.com
+  - blog.x.com
+deny:
+  domains: []
+  keywords:
+    - celebrity
+    - arrested
+    - match score
+    - horoscope today
+    - gossip
+    - break up
+signals:
+  launch: [launches, introduces, rolls out, announces, unveils]
+  money: [pricing, free tier, funding, raises, acquires, monetisation, ads]
+  rule: [regulation, ban, guidelines, mandate, policy, IT rules]
+  pain: [shortage, outage, complaint, backlash, cost, shadowban]
+  tool: [API, open-source, SDK, plugin, model, creator]

@@ -7,6 +7,7 @@ import {
   requestOutline,
   requestSkillPlan,
   requestWeeklyPlan,
+  dismissNews,
   sendFindingFeedback,
   sendNewsFeedback,
 } from '../services/product.service.js';
@@ -38,6 +39,7 @@ export function useProduct() {
     addProject: (name) => run(() => createProject(name)),
     feedback: (body) => sendFindingFeedback(body),
     newsFeedback: (body) => sendNewsFeedback(body),
+    dismissNews: (body) => dismissNews(body),
     claim: (sentence) => requestClaimCheck(sentence),
     industryMode: (body) => requestIndustryMode(body),
   };

@@ -15,7 +15,7 @@ public class NewsIngestJob {
 
     private static final Logger log = LoggerFactory.getLogger(NewsIngestJob.class);
     private static final List<String> FALLBACK = List.of(
-            "Share Market", "IT", "Medical", "Space", "Social Media", "Gaming", "Astrology");
+            "AI", "Share Market", "Real Estate", "IT", "Medical", "Space", "Social Media", "Gaming", "Astrology");
 
     private final NewsProperties properties;
     private final NewsStore store;

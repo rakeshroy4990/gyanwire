@@ -1,12 +1,13 @@
 [
   {
-    "name": "IT",
-    "label": "IT products",
-    "why": "Hot product move in IT.",
+    "name": "AI",
+    "label": "AI features",
+    "why": "Latest AI feature that just launched.",
     "queries": [
-      "NVIDIA GPU AI chip product launch OR earnings",
-      "ChatGPT OpenAI product update OR API release",
-      "Microsoft Copilot product update enterprise"
+      "GPT-6 Intelligent UI OR Claude Haiku 5.5 OR Grok 4.7 feature launch",
+      "OpenAI OR Anthropic OR xAI OR Gemini launches OR unveils feature",
+      "ChatGPT OR Claude OR Grok OR Copilot rolls out new feature",
+      "AI feature launches OR unveils OR rolls out when:30d"
     ],
     "blockGeneric": [
       "share market live",
@@ -15,15 +16,82 @@
     ],
     "subs": [
       {
-        "name": "AI",
-        "label": "AI products",
-        "why": "AI product people are watching.",
+        "name": "Anthropic",
+        "label": "Anthropic features",
+        "why": "Newest Claude feature that just shipped.",
         "queries": [
-          "ChatGPT Claude Gemini product update",
-          "OpenAI API GPT model launch news",
-          "enterprise AI copilot product release"
+          "Anthropic Claude Haiku 5.5 OR Sonnet 5.5 OR Opus 5.5 launch",
+          "Claude Fable 5.1 OR Claude 1M context feature release",
+          "Anthropic Claude unveils OR rolls out new feature"
         ]
       },
+      {
+        "name": "OpenAI",
+        "label": "OpenAI features",
+        "why": "Newest ChatGPT or GPT feature that just shipped.",
+        "queries": [
+          "OpenAI GPT-6 Intelligent UI ChatGPT launch",
+          "GPT-6 Sol OR GPT-6 Luna ChatGPT feature rollout",
+          "ChatGPT unveils OR rolls out new feature"
+        ]
+      },
+      {
+        "name": "Grok",
+        "label": "Grok features",
+        "why": "Newest Grok feature that just shipped.",
+        "queries": [
+          "Grok 4.7 xAI launch coding OR API feature",
+          "Grok Build OR Grok API feature release",
+          "xAI Grok unveils OR rolls out new feature"
+        ]
+      },
+      {
+        "name": "Google",
+        "label": "Google features",
+        "why": "Newest Gemini feature that just shipped.",
+        "queries": [
+          "Google Gemini agent OR EmbeddingGemma 2 feature launch",
+          "Gemini 3.8 Flash OR Gemini 3.8 Live feature release",
+          "Google DeepMind Gemini unveils OR rolls out new feature"
+        ]
+      },
+      {
+        "name": "Meta",
+        "label": "Meta features",
+        "why": "Newest Meta AI feature that just shipped.",
+        "queries": [
+          "Meta Muse Image API OR Llama 4 feature launch",
+          "Meta AI image OR Llama model feature release",
+          "Meta AI unveils OR rolls out new feature"
+        ]
+      },
+      {
+        "name": "Microsoft",
+        "label": "Microsoft features",
+        "why": "Newest Copilot or Windows AI feature that just shipped.",
+        "queries": [
+          "Microsoft 365 Copilot Chat skills feature rollout",
+          "Windows ML llama.cpp OR Copilot Autopilot feature launch",
+          "Microsoft Copilot unveils OR rolls out new feature"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "IT",
+    "label": "IT products",
+    "why": "Hot product move in IT.",
+    "queries": [
+      "NVIDIA GPU AI chip product launch OR earnings",
+      "enterprise SaaS software product launch OR platform update",
+      "AWS Azure Google Cloud product update enterprise"
+    ],
+    "blockGeneric": [
+      "share market live",
+      "stock market today",
+      "nifty closes"
+    ],
+    "subs": [
       {
         "name": "Semiconductors",
         "label": "Chip products",
@@ -401,6 +469,73 @@
           "Unity Unreal Engine game development update",
           "game studio acquisition OR funding product news",
           "game engine tool OR SDK product launch"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Real Estate",
+    "label": "Real Estate products",
+    "why": "Housing, commercial, PropTech, or RERA product move that just shipped.",
+    "queries": [
+      "housing OR apartment OR villa project launches India when:30d",
+      "PropTech OR real estate app launches OR unveils feature India",
+      "RERA OR home loan OR stamp duty product OR rule update India"
+    ],
+    "blockGeneric": [
+      "share market live",
+      "stock market today",
+      "nifty closes"
+    ],
+    "subs": [
+      {
+        "name": "Residential",
+        "label": "Residential products",
+        "why": "Newest residential project or housing product launch.",
+        "queries": [
+          "residential apartment villa housing project launch India",
+          "housing opens booking OR unveils project India",
+          "home loan EMI stamp duty housing update India"
+        ]
+      },
+      {
+        "name": "Commercial",
+        "label": "Commercial products",
+        "why": "Newest commercial, office, warehouse, or REIT move.",
+        "queries": [
+          "commercial office warehouse mall leasing launch India",
+          "REIT commercial real estate listing OR funding India",
+          "office park warehouse product announcement India"
+        ]
+      },
+      {
+        "name": "PropTech",
+        "label": "PropTech products",
+        "why": "Newest PropTech app or brokerage feature launch.",
+        "queries": [
+          "PropTech property app brokerage launches OR rolls out India",
+          "home search OR listing platform feature launch India",
+          "PropTech startup funding OR product update India"
+        ]
+      },
+      {
+        "name": "Construction",
+        "label": "Construction products",
+        "why": "Newest construction material or prefab product move.",
+        "queries": [
+          "construction cement prefab building material product launch India",
+          "building material price OR shortage OR product update India",
+          "construction tech OR prefab housing product news India"
+        ]
+      },
+      {
+        "name": "RERA",
+        "label": "RERA products",
+        "why": "Newest RERA rule, clearance, or compliance product signal.",
+        "queries": [
+          "RERA notification guidelines order approves India",
+          "real estate regulator registration rule update India",
+          "RERA penalty OR clearance housing project India"
         ]
       }
     ]

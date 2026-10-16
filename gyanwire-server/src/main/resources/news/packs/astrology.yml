@@ -1,0 +1,24 @@
+industry: Astrology
+# Thin pack: culture / consumer-trend / app-market only. Empty feed is OK.
+allow_domains:
+  - thehindu.com
+  - livemint.com
+  - yourstory.com
+  - inc42.com
+deny:
+  domains: []
+  keywords:
+    - horoscope today
+    - daily horoscope
+    - zodiac prediction
+    - lucky number
+    - celebrity
+    - arrested
+    - match score
+    - gossip
+signals:
+  launch: [launches, introduces, rolls out, announces, app]
+  money: [pricing, free tier, funding, raises, acquires, subscription]
+  rule: [regulation, ban, guidelines, mandate, policy]
+  pain: [complaint, backlash, cost, scam]
+  tool: [API, open-source, SDK, plugin, app]

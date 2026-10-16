@@ -50,6 +50,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         return path.startsWith("/api/search")
                 || path.startsWith("/api/ideas")
                 || path.startsWith("/api/plans")
+                || path.startsWith("/api/action-plans")
                 || path.startsWith("/api/briefs")
                 || path.startsWith("/api/mcp");
     }

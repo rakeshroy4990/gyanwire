@@ -1,0 +1,85 @@
+steps:
+  - id: s1
+    order: 1
+    title: Pick 5 slide facts
+    startMin: 0
+    durationMin: 20
+    paidDurationMin: 12
+    paidToolId: chatgpt_plus
+    action: "Write 5 fact lines for slides: hook, 3 points, CTA."
+    input: "NewsBrief facts"
+    output: "slides.md"
+    doneWhen: "5 lines, each ≤12 words"
+    toolId: notes_app
+    altToolId: text_editor
+    ifStuck: "Reuse three article sentences and add a CTA."
+    platforms: [all]
+    scalable: false
+
+  - id: s2
+    order: 2
+    title: Design 5 carousel frames
+    startMin: 20
+    durationMin: 60
+    paidDurationMin: 30
+    paidToolId: canva_pro
+    action: "Build five 1080×1350 frames with large text. Export PNGs."
+    input: "slides.md"
+    output: "frames/"
+    doneWhen: "5 readable frames"
+    toolId: gimp
+    altToolId: canva_free
+    ifStuck: "Use plain high-contrast text slides."
+    platforms: [instagram_reels, linkedin]
+    scalable: true
+
+  - id: s3
+    order: 3
+    title: Write the caption
+    startMin: 80
+    durationMin: 20
+    paidDurationMin: 10
+    paidToolId: chatgpt_plus
+    action: "Write one caption with hook + CTA for Instagram and LinkedIn."
+    input: "slides.md"
+    output: "caption.md"
+    doneWhen: "Caption under 400 characters for IG"
+    toolId: text_editor
+    altToolId: notes_app
+    ifStuck: "Use the hook line plus one question."
+    platforms: [all]
+    scalable: false
+
+  - id: s4
+    order: 4
+    title: Upload carousel
+    startMin: 100
+    durationMin: 25
+    paidDurationMin: 12
+    paidToolId: buffer
+    action: "Upload frames as a carousel on Instagram and/or LinkedIn. Save links."
+    input: "frames/ + caption.md"
+    output: "live links"
+    doneWhen: "At least one platform live"
+    toolId: instagram_app
+    altToolId: linkedin_app
+    ifStuck: "Post to one platform today."
+    platforms: [instagram_reels, linkedin]
+    scalable: true
+
+  - id: s5
+    order: 5
+    title: Measurement reminder
+    startMin: 125
+    durationMin: 10
+    paidDurationMin: 5
+    paidToolId: buffer
+    action: "Calendar +48 h with the test metric and links."
+    input: "live links"
+    output: "reminder"
+    doneWhen: "Reminder created"
+    toolId: calendar_app
+    altToolId: notes_app
+    ifStuck: "Phone alarm with the metric."
+    platforms: [all]
+    scalable: false

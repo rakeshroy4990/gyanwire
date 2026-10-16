@@ -1,0 +1,180 @@
+format: short_vertical
+steps:
+  s1:
+    goal: Pick 3 sourced facts for the short.
+    commonMistakes: Using aggregator blurbs instead of the publisher article.
+    open_source:
+      microSteps:
+        - Open the publisher article, not the aggregator link.
+        - Copy 3 sentences that contain a name, number or date.
+        - Paste into facts.md, one line each with the article URL.
+        - Mark the single most surprising one as the hook fact.
+      tools: [notes_app, text_editor]
+      minutes: 15
+    paid:
+      microSteps:
+        - Paste the article into a paid AI chat and ask for claims with quotes.
+        - Check each quote against the page.
+        - Keep three verified lines in facts.md.
+      tools: [chatgpt_plus]
+      minutes: 10
+      giveUp: Monthly cost; you still must verify every quote.
+    free_not_os: []
+  s2:
+    goal: Write a 45-second script (90–130 words).
+    commonMistakes: Hook without the product/company name.
+    open_source:
+      microSteps:
+        - Hook (≤3 s): entity + hook fact in one sentence.
+        - Context: who is affected, one sentence.
+        - Three points, one fact each, ≤15 words.
+        - CTA: one action. Count words.
+      tools: [text_editor]
+      minutes: 30
+    paid:
+      microSteps:
+        - Run a saved prompt on facts.md that returns script + on-screen text + 3 captions.
+        - Edit for voice and accuracy.
+      tools: [chatgpt_plus]
+      minutes: 15
+      giveUp: Prompt lock-in; edit carefully for accuracy.
+    free_not_os: []
+  s3:
+    goal: Confirm spoken length 35–50 s.
+    commonMistakes: Reading too fast and skipping the timer.
+    open_source:
+      microSteps:
+        - Set a phone timer.
+        - Read at normal speed.
+        - Cut any phrase you stumble on.
+        - Aim for 35–50 s. Save script_final.md.
+      tools: [phone_timer]
+      minutes: 15
+    paid:
+      microSteps:
+        - Paste into a script editor with auto-timing.
+        - Trim until the timer shows 35–50 s.
+      tools: [descript]
+      minutes: 10
+      giveUp: Subscription for a small timing gain.
+    free_not_os: []
+  s4:
+    goal: One clean 40–55 s voice track.
+    commonMistakes: Recording next to a fan or with breath cut-offs.
+    open_source:
+      microSteps:
+        - Install Audacity. Record in a quiet room, mic ~15 cm away.
+        - Do 2 takes.
+        - Noise reduction on 1 s of silence, then Normalize.
+        - Export WAV. Or run Piper offline TTS on script_final.md.
+      tools: [audacity, phone_recorder]
+      minutes: 30
+    paid:
+      microSteps:
+        - Paste script into a cloud voice tool.
+        - Pick voice → download cleaned WAV.
+      tools: [elevenlabs]
+      minutes: 15
+      giveUp: Monthly cost, usage caps, commercial licence terms.
+    free_not_os: []
+  s5:
+    goal: Four 1080×1920 visual cards.
+    commonMistakes: Tiny text; logo without brand permission.
+    open_source:
+      microSteps:
+        - Create 4 frames at 1080×1920: hook + 3 points.
+        - Big text (≥64 px), 5–8 words per card, high contrast.
+        - Export PNGs. Optional OBS screen demo of the product.
+      tools: [gimp, inkscape, obs_studio]
+      minutes: 40
+    paid:
+      microSteps:
+        - Pick a brand template → paste text → magic resize → export.
+      tools: [canva_pro]
+      minutes: 20
+      giveUp: Subscription; template look-alike risk.
+    free_not_os: [canva_free, capcut]
+  s6:
+    goal: Assemble ≤55 s with captions.
+    commonMistakes: Loud music; captions covering lower 20%.
+    open_source:
+      microSteps:
+        - New 9:16 project, 1080×1920, 30 fps.
+        - Place voiceover.wav; sync each card to spoken lines.
+        - Captions via Whisper + Subtitle Edit; music ≤ −20 dB if licensed.
+      tools: [shotcut, kdenlive]
+      minutes: 40
+    paid:
+      microSteps:
+        - Import → auto-caption → pick style → trim silences → export.
+      tools: [descript, premiere]
+      minutes: 25
+      giveUp: Subscription; export watermark risks on free tiers.
+    free_not_os: [capcut, davinci_resolve]
+  s7:
+    goal: Message clear with sound off.
+    commonMistakes: Ignoring safe-zone overlap with platform UI.
+    open_source:
+      microSteps:
+        - Copy to phone. Mute. Watch once.
+        - Captions never cover the lower 20%.
+        - Fix and re-export only if needed.
+      tools: [phone_gallery, vlc]
+      minutes: 20
+    paid:
+      microSteps:
+        - Use editor preview with safe-zone overlay; one pass mute review.
+      tools: [descript]
+      minutes: 15
+      giveUp: Small time gain for a review step.
+    free_not_os: []
+  s8:
+    goal: One export + 3 platform captions.
+    commonMistakes: Re-exporting many times; LinkedIn caption without a question.
+    open_source:
+      microSteps:
+        - Export H.264 MP4, 1080×1920, ≤60 s.
+        - YouTube title ≤70 chars with entity first; Instagram hook + 3–5 hashtags; LinkedIn insight + question.
+      tools: [shotcut, text_editor]
+      minutes: 20
+    paid:
+      microSteps:
+        - AI drafts three captions from facts.md; you edit once.
+      tools: [chatgpt_plus]
+      minutes: 10
+      giveUp: Generic AI captions need a human pass.
+    free_not_os: []
+  s9:
+    goal: Live on YouTube Shorts, Instagram Reels, LinkedIn.
+    commonMistakes: Wrong aspect or forgetting #Shorts.
+    open_source:
+      microSteps:
+        - YouTube Studio: vertical ≤60 s, title + #Shorts, not made for kids, schedule.
+        - Instagram Reel: cover = hook card; paste caption.
+        - LinkedIn: new post → video; hook as first line.
+      tools: [youtube_app, instagram_app]
+      minutes: 20
+    paid:
+      microSteps:
+        - Scheduler posts to all three with per-platform captions from one screen.
+      tools: [buffer]
+      minutes: 10
+      giveUp: Monthly scheduler cost.
+    free_not_os: []
+  s10:
+    goal: 48 h measurement reminder.
+    commonMistakes: Reminder without the three links.
+    open_source:
+      microSteps:
+        - Calendar event at +48 h titled with the test metric.
+        - Paste the three video links.
+        - At the reminder: record views / AVD / profile visits; mark worked or not.
+      tools: [calendar_app]
+      minutes: 10
+    paid:
+      microSteps:
+        - Analytics dashboard reminder if you post weekly.
+      tools: [buffer]
+      minutes: 5
+      giveUp: Analytics paywall for infrequent posters.
+    free_not_os: []

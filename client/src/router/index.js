@@ -6,6 +6,7 @@ import BillingSuccessPage from '../pages/BillingSuccessPage.vue';
 import ProfilePage from '../pages/ProfilePage.vue';
 import IdeaPage from '../pages/IdeaPage.vue';
 import PlanPage from '../pages/PlanPage.vue';
+import ActionPlanPage from '../pages/ActionPlanPage.vue';
 import RoadmapPage from '../pages/RoadmapPage.vue';
 import OutlinePage from '../pages/OutlinePage.vue';
 import ProjectsPage from '../pages/ProjectsPage.vue';
@@ -22,6 +23,7 @@ export const router = createRouter({
     { path: '/profile', name: 'profile', component: ProfilePage },
     { path: '/idea', name: 'idea', component: IdeaPage },
     { path: '/plan', name: 'plan', component: PlanPage },
+    { path: '/action-plan/:id', name: 'action-plan', component: ActionPlanPage },
     { path: '/roadmap', name: 'roadmap', component: RoadmapPage },
     { path: '/outline', name: 'outline', component: OutlinePage },
     { path: '/projects', name: 'projects', component: ProjectsPage },

@@ -1,6 +1,7 @@
 package com.gyanwire.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gyanwire.actionplan.NewsIdeasService;
 import com.gyanwire.auth.security.AuthUserPrincipal;
 import com.gyanwire.ideas.IdeaNdjson;
 import com.gyanwire.ideas.IdeaService;
@@ -52,6 +53,7 @@ public class ProductController {
     private final FlowStore store;
     private final McpService mcp;
     private final ObjectMapper mapper;
+    private final NewsIdeasService newsIdeas;
 
     public ProductController(
             ProfileService profiles,
@@ -62,7 +64,8 @@ public class ProductController {
             ReferralService referrals,
             FlowStore store,
             McpService mcp,
-            ObjectMapper mapper
+            ObjectMapper mapper,
+            NewsIdeasService newsIdeas
     ) {
         this.profiles = profiles;
         this.ideas = ideas;
@@ -73,6 +76,7 @@ public class ProductController {
         this.store = store;
         this.mcp = mcp;
         this.mapper = mapper;
+        this.newsIdeas = newsIdeas;
     }
 
     @GetMapping("/api/me/profile")
@@ -130,13 +134,28 @@ public class ProductController {
         return ResponseEntity.ok(StandardApiResponse.success("Saved.", Map.of("id", id.toString())));
     }
 
+    @PostMapping("/api/ideas/{id}/rating")
+    public ResponseEntity<StandardApiResponse<Map<String, Object>>> ideaRating(
+            @PathVariable String id,
+            @RequestBody Map<String, Object> body
+    ) {
+        String rating = body.get("rating") == null ? "" : String.valueOf(body.get("rating"));
+        newsIdeas.rate(requireUser().id(), id, rating);
+        return ResponseEntity.ok(StandardApiResponse.success("Rated.", Map.of("id", id, "rating", rating)));
+    }
+
     @PostMapping("/api/ideas/{id}/launch-plan")
     public ResponseEntity<StandardApiResponse<Map<String, Object>>> launchPlan(
             @PathVariable UUID id,
             @RequestBody(required = false) Map<String, Object> body
     ) {
         boolean force = body != null && (Boolean.TRUE.equals(body.get("force")) || "true".equalsIgnoreCase(String.valueOf(body.get("force"))));
-        return ResponseEntity.ok(StandardApiResponse.success("Launch plan ready.", ideas.launchPlan(requireUser().id(), id, force)));
+        Integer budget = body != null && body.get("budgetMinutes") instanceof Number n ? n.intValue() : null;
+        boolean demo = body != null && (Boolean.TRUE.equals(body.get("demo")) || "true".equalsIgnoreCase(String.valueOf(body.get("demo"))));
+        String format = body != null && body.get("format") != null ? String.valueOf(body.get("format")) : null;
+        return ResponseEntity.ok(StandardApiResponse.success(
+                "Launch plan ready.",
+                ideas.launchPlan(requireUser().id(), id, force, budget, demo, format)));
     }
 
     @PostMapping("/api/plans/skill")

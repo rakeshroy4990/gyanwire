@@ -54,7 +54,7 @@ public final class HybridRanker {
             return 30;
         }
         return switch (industry) {
-            case "Share Market" -> 7;
+            case "Share Market", "AI", "Real Estate" -> 7;
             case "IT" -> 45;
             case "Medical" -> 90;
             case "Space" -> 60;

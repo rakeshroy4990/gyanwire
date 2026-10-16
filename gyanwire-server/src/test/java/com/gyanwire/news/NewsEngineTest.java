@@ -6,6 +6,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -13,6 +15,69 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class NewsEngineTest {
+
+    @Test
+    void aiLabChipKeepsThatLabsFeatureLaunches() {
+        NewsRow gpt = new NewsRow().title("OpenAI rolls out GPT-6 Intelligent UI");
+        NewsRow claude = new NewsRow().title("Anthropic launches Claude Haiku 5.5");
+        NewsRow grok = new NewsRow().title("xAI launches Grok 4.7 for coding");
+        assertThat(NewsQueryService.labRows("AI", "Grok", List.of(gpt, claude, grok)))
+                .extracting(NewsRow::title)
+                .containsExactly("xAI launches Grok 4.7 for coding");
+        assertThat(NewsQueryService.labRows("AI", null, List.of(gpt, claude))).hasSize(2);
+        assertThat(NewsQueryService.labRows("Medical", "Cardiology", List.of(gpt))).hasSize(1);
+    }
+
+    @Test
+    void browseListsNewestFirstAcrossThirtyDaysWithPagination() {
+        Instant now = Instant.parse("2026-10-16T12:00:00Z");
+        NewsRow today = row("Today launch", now.minus(Duration.ofHours(6)), false, 70, "launch", "a.com");
+        NewsRow week = row("Week launch", now.minus(Duration.ofDays(5)), false, 90, "launch", "b.com");
+        NewsRow month = row("Month launch", now.minus(Duration.ofDays(20)), false, 95, "launch", "c.com");
+        NewsRow estimated = row("Estimated", now, true, 99, "launch", "d.com");
+        List<NewsRow> ordered = NewsQueryService.chronological(List.of(month, estimated, today, week));
+        assertThat(ordered).extracting(NewsRow::title)
+                .containsExactly("Today launch", "Week launch", "Month launch");
+        NewsQueryService.PageSlice first = NewsQueryService.slice(ordered, 1, 2);
+        assertThat(first.items()).extracting(NewsRow::title).containsExactly("Today launch", "Week launch");
+        assertThat(first.total()).isEqualTo(3);
+        assertThat(first.hasMore()).isTrue();
+        NewsQueryService.PageSlice second = NewsQueryService.slice(ordered, 2, 2);
+        assertThat(second.items()).extracting(NewsRow::title).containsExactly("Month launch");
+        assertThat(second.hasMore()).isFalse();
+    }
+
+    @Test
+    void freshnessGateStillWidensWhenAsked() {
+        Instant now = Instant.parse("2026-10-16T12:00:00Z");
+        NewsRow today = row("Today launch", now.minus(Duration.ofHours(6)), false, 70, "launch", "a.com");
+        NewsRow week = row("Week launch", now.minus(Duration.ofDays(5)), false, 70, "launch", "b.com");
+        NewsRow month = row("Month launch", now.minus(Duration.ofDays(20)), false, 70, "launch", "c.com");
+        FreshnessGate.Result dayFirst = FreshnessGate.select(List.of(today, week, month), 1, new int[]{1, 7, 30}, now);
+        assertThat(dayFirst.freshness()).isEqualTo("fresh");
+        FreshnessGate.Result weekWiden = FreshnessGate.select(List.of(week, month), 1, new int[]{1, 7, 30}, now);
+        assertThat(weekWiden.freshness()).isEqualTo("last 7 days");
+        FreshnessGate.Result monthWiden = FreshnessGate.select(List.of(month), 1, new int[]{1, 7, 30}, now);
+        assertThat(monthWiden.freshness()).isEqualTo("last 30 days");
+    }
+
+    @Test
+    void dismissedIdsAndUrlsAreDroppedBeforeRank() {
+        UUID keptId = UUID.randomUUID();
+        UUID goneId = UUID.randomUUID();
+        NewsRow kept = row("Kept launch", Instant.parse("2026-10-16T00:00:00Z"), false, 70, "launch", "a.com")
+                .id(keptId).url("https://a.example/kept");
+        NewsRow byId = row("Gone by id", Instant.parse("2026-10-16T00:00:00Z"), false, 70, "launch", "b.com")
+                .id(goneId).url("https://b.example/gone");
+        NewsRow byUrl = row("Gone by url", Instant.parse("2026-10-16T00:00:00Z"), false, 70, "launch", "c.com")
+                .id(UUID.randomUUID()).url("https://c.example/gone");
+        NewsStore.Dismissals dismissals = new NewsStore.Dismissals(
+                Set.of(goneId),
+                Set.of("https://c.example/gone"));
+        assertThat(NewsQueryService.withoutDismissed(List.of(kept, byId, byUrl), dismissals))
+                .extracting(NewsRow::title)
+                .containsExactly("Kept launch");
+    }
 
     @Test
     void startupSkipsAFreshIndustry() {

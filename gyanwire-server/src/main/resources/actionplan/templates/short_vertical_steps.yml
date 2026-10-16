@@ -1,0 +1,170 @@
+steps:
+  - id: s1
+    order: 1
+    title: Re-read the source and pick 3 facts
+    startMin: 0
+    durationMin: 15
+    paidDurationMin: 10
+    paidToolId: chatgpt_plus
+    action: "Open the source article and write exactly 3 fact lines into facts.md. Each line must include a copied source sentence."
+    input: "NewsBrief facts"
+    output: "facts.md (3 lines, each with source link)"
+    doneWhen: "Each fact has a source sentence"
+    toolId: notes_app
+    altToolId: text_editor
+    ifStuck: "Copy three sentences that name the product or company. Stop at three."
+    platforms: [all]
+    scalable: false
+
+  - id: s2
+    order: 2
+    title: Write the script to the beat sheet
+    startMin: 15
+    durationMin: 30
+    paidDurationMin: 15
+    paidToolId: chatgpt_plus
+    action: "Write a 90–130 word script with hook {{hook}}, three points {{point_1}} / {{point_2}} / {{point_3}}, and CTA {{cta}}."
+    input: "facts.md (from s1)"
+    output: "script.md (90–130 words)"
+    doneWhen: "Word count in range; hook has entity + fact"
+    toolId: text_editor
+    altToolId: notes_app
+    ifStuck: "Paste the three facts as spoken lines. Keep the hook under 12 words."
+    platforms: [all]
+    scalable: false
+
+  - id: s3
+    order: 3
+    title: Read it aloud once
+    startMin: 45
+    durationMin: 15
+    paidDurationMin: 10
+    paidToolId: descript
+    action: "Read script.md aloud once with a phone timer. Cut any line you stumble on. Save as script_final.md."
+    input: "script.md (from s2)"
+    output: "script_final.md"
+    doneWhen: "Spoken time 35–50 s"
+    toolId: phone_timer
+    altToolId: text_editor
+    ifStuck: "Delete the longest sentence and re-time once."
+    platforms: [all]
+    scalable: false
+
+  - id: s4
+    order: 4
+    title: Record voice-over
+    startMin: 60
+    durationMin: 30
+    paidDurationMin: 15
+    paidToolId: elevenlabs
+    action: "Record the script aloud into your mic in a quiet room. Do 2 takes, keep the better one as voiceover.wav (~45 s)."
+    input: "script_final.md (from s3)"
+    output: "voiceover.wav (≈45 s)"
+    doneWhen: "One clean take, no breath cut-offs, length 40–55 s"
+    toolId: audacity
+    altToolId: phone_recorder
+    ifStuck: "Skip re-takes. Use the phone's built-in voice recorder and trim silence."
+    platforms: [all]
+    scalable: true
+
+  - id: s5
+    order: 5
+    title: Build the visuals
+    startMin: 90
+    durationMin: 40
+    paidDurationMin: 20
+    paidToolId: canva_pro
+    action: "Build 4 cards: one hook card plus three fact cards with on-screen text. Save under cards/."
+    input: "script_final.md (from s3)"
+    output: "cards/ (4 images or editor clips)"
+    doneWhen: "4 cards, readable at phone size"
+    toolId: gimp
+    altToolId: canva_free
+    ifStuck: "Use four plain text slides with large type. No stock photos."
+    platforms: [all]
+    scalable: true
+
+  - id: s6
+    order: 6
+    title: Assemble and cut
+    startMin: 130
+    durationMin: 40
+    paidDurationMin: 25
+    paidToolId: descript
+    action: "Assemble voice-over and cards in the editor. Add captions. Export short_draft.mp4 ≤55 s."
+    input: "voiceover.wav + cards/ (from s4, s5)"
+    output: "short_draft.mp4"
+    doneWhen: "Length ≤55 s, captions on"
+    toolId: shotcut
+    altToolId: capcut
+    ifStuck: "Drop cards on a single timeline over the voice-over. Skip fancy transitions."
+    platforms: [all]
+    scalable: true
+
+  - id: s7
+    order: 7
+    title: Review on your phone with sound off
+    startMin: 170
+    durationMin: 20
+    paidDurationMin: 15
+    paidToolId: descript
+    action: "Watch short_draft.mp4 on your phone with sound off. Fix any card that is unclear. Save short_final.mp4."
+    input: "short_draft.mp4 (from s6)"
+    output: "short_final.mp4"
+    doneWhen: "Message is clear without audio"
+    toolId: phone_gallery
+    altToolId: vlc
+    ifStuck: "Enlarge the on-screen text and re-export once."
+    platforms: [all]
+    scalable: false
+
+  - id: s8
+    order: 8
+    title: Export once and write 3 captions
+    startMin: 190
+    durationMin: 20
+    paidDurationMin: 10
+    paidToolId: chatgpt_plus
+    action: "Export 1080×1920 once as export.mp4. Write three captions: {{caption_youtube}}, {{caption_instagram}}, {{caption_linkedin}}."
+    input: "short_final.mp4 (from s7)"
+    output: "export.mp4, captions.md"
+    doneWhen: "1080×1920; one caption per platform"
+    toolId: shotcut
+    altToolId: text_editor
+    ifStuck: "Reuse the hook sentence as every caption and add one hashtag."
+    platforms: [all]
+    scalable: false
+
+  - id: s9
+    order: 9
+    title: Upload and schedule on 3 platforms
+    startMin: 210
+    durationMin: 20
+    paidDurationMin: 10
+    paidToolId: buffer
+    action: "Upload export.mp4 to YouTube Shorts, Instagram Reels, and LinkedIn. Title {{title}}. Save the 3 live links."
+    input: "export.mp4 + captions.md (from s8)"
+    output: "3 live links"
+    doneWhen: "3 URLs saved in the plan"
+    toolId: youtube_app
+    altToolId: instagram_app
+    ifStuck: "Upload to one platform now; schedule the other two within an hour."
+    platforms: [youtube_shorts, instagram_reels, linkedin]
+    scalable: true
+
+  - id: s10
+    order: 10
+    title: Set the measurement reminder
+    startMin: 230
+    durationMin: 10
+    paidDurationMin: 5
+    paidToolId: buffer
+    action: "Create a calendar reminder at +48 h with the test number from the angle."
+    input: "angle.test"
+    output: "Calendar reminder"
+    doneWhen: "Reminder created with the test number"
+    toolId: calendar_app
+    altToolId: notes_app
+    ifStuck: "Set a phone alarm labelled with the test metric."
+    platforms: [all]
+    scalable: false

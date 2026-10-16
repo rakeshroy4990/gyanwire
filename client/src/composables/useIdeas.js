@@ -47,7 +47,7 @@ export function useIdeas() {
     idea.value = null;
     gate.value = null;
     removed.value = [];
-    pipeline.value = false;
+    // Keep last pipeline mode until meta arrives so the page title does not flash.
     emptyReason.value = '';
     launchPlan.value = null;
     planError.value = '';

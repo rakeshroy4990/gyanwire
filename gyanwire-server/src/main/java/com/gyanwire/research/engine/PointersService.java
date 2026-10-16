@@ -50,10 +50,12 @@ public class PointersService {
     }
 
     private static final Map<String, List<String>> CATEGORY = Map.of(
-            "IT", List.of("software", "computing", "artificial intelligence", "semiconductor", "cybersecurity"),
+            "AI", List.of("feature", "launch", "model", "claude", "chatgpt", "grok", "gemini", "copilot"),
+            "IT", List.of("software", "computing", "semiconductor", "cybersecurity", "cloud"),
             "Medical", List.of("clinical", "biomedical", "pharma", "therapy", "diagnostics", "trial"),
             "Space", List.of("aerospace", "satellite", "orbital", "launch", "nasa", "isro"),
             "Share Market", List.of("equity research", "stock", "share", "nifty", "sensex", "ipo"),
+            "Real Estate", List.of("housing", "apartment", "rera", "proptech", "commercial", "construction"),
             "Social Media", List.of("instagram", "tiktok", "whatsapp", "creator", "platform"),
             "Gaming", List.of("game", "esports", "console", "steam", "multiplayer"),
             "Astrology", List.of("horoscope", "zodiac", "vedic", "jyotish", "tarot", "vastu")

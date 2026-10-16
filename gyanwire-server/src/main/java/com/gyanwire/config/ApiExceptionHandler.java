@@ -1,5 +1,6 @@
 package com.gyanwire.config;
 
+import com.gyanwire.actionplan.ActionPlanException;
 import com.gyanwire.auth.AuthException;
 import com.gyanwire.billing.BillingException;
 import com.gyanwire.controller.dto.StandardApiResponse;
@@ -43,6 +44,13 @@ public class ApiExceptionHandler {
         StandardApiResponse<Map<String, Object>> body = StandardApiResponse.error(e.getMessage(), e.getErrorCode());
         body.setDataObject(e.getData());
         return ResponseEntity.status(402).body(body);
+    }
+
+    @ExceptionHandler(ActionPlanException.class)
+    public ResponseEntity<StandardApiResponse<Map<String, Object>>> actionPlan(ActionPlanException e) {
+        StandardApiResponse<Map<String, Object>> body = StandardApiResponse.error(e.getMessage(), e.getErrorCode());
+        body.setDataObject(e.getData());
+        return ResponseEntity.status(e.getStatus()).body(body);
     }
 
     @ExceptionHandler(Exception.class)

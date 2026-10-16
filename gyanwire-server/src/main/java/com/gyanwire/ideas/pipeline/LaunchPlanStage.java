@@ -22,9 +22,7 @@ public final class LaunchPlanStage {
     }
 
     public Map<String, Object> run(IdeaStageClient client, UUID userId, BusinessIdea idea, String newsTitle) {
-        if (SocialMediaPlan.isSocial(idea)) {
-            return SocialMediaPlan.fromIdea(idea, newsTitle);
-        }
+        // Social plans are built by ActionPlanPipeline (see OpportunityPipeline.launchPlan).
         Map<String, Object> fallback = fromIdea(idea, newsTitle);
         if (client == null || idea == null) {
             return fallback;
@@ -73,11 +71,11 @@ public final class LaunchPlanStage {
     }
 
     public static Map<String, Object> fromIdea(BusinessIdea idea, String newsTitle) {
-        if (SocialMediaPlan.isSocial(idea)) {
-            return SocialMediaPlan.fromIdea(idea, newsTitle);
-        }
         if (idea == null) {
             return Map.of();
+        }
+        if ("comparison_content".equals(idea.angleType())) {
+            return Map.of("kind", "action_plan", "deferred", true);
         }
         List<String> week = idea.firstWeek() == null ? List.of() : idea.firstWeek();
         List<Map<String, String>> schedule = new ArrayList<>();

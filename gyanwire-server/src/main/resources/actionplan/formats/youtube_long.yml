@@ -1,0 +1,12 @@
+id: youtube_long
+label: "YouTube long demo"
+platforms: [youtube]
+aspect: "16:9"
+resolution: "1920x1080"
+defaultBudgetMinutes: 480
+maxSeconds: 600
+targetSeconds: [360, 600]
+scriptWords: [900, 1500]
+stepTemplate: youtube_long_steps.yml
+moneyRuleId: yt_shorts_ypp
+requiresDemo: true

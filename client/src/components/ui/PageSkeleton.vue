@@ -1,6 +1,6 @@
 <script setup>
 defineProps({
-  /** cards | facts | list | pricing | compact | options */
+  /** cards | facts | list | pricing | compact | options | ideas */
   variant: { type: String, default: 'cards' },
   rows: { type: Number, default: 4 },
   label: { type: String, default: 'Loading' },
@@ -74,6 +74,26 @@ defineProps({
         <span class="skeleton-line skeleton-line--why page-skeleton__line--mid" />
         <span class="skeleton-line skeleton-line--host" />
         <span class="skeleton-line page-skeleton__button" />
+      </div>
+    </template>
+
+    <template v-else-if="variant === 'ideas'">
+      <div v-for="n in rows" :key="n" class="page-skeleton__idea">
+        <div class="page-skeleton__idea-top">
+          <span class="skeleton-line skeleton-line--meta" />
+          <div class="page-skeleton__idea-tags">
+            <span class="skeleton-line page-skeleton__pill" />
+            <span class="skeleton-line page-skeleton__pill" />
+          </div>
+        </div>
+        <span class="skeleton-line skeleton-line--heading" />
+        <span class="skeleton-line skeleton-line--why" />
+        <span class="skeleton-line skeleton-line--host page-skeleton__line--mid" />
+        <span class="skeleton-line skeleton-line--meta page-skeleton__idea-details" />
+        <div class="page-skeleton__idea-actions">
+          <span class="skeleton-line page-skeleton__button page-skeleton__button--grow" />
+          <span class="skeleton-line page-skeleton__button page-skeleton__button--save" />
+        </div>
       </div>
     </template>
 

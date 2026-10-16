@@ -1,0 +1,24 @@
+industry: Medical
+allow_domains:
+  - economictimes.indiatimes.com
+  - thehindu.com
+  - indianexpress.com
+  - timesofindia.indiatimes.com
+  - who.int
+  - medicalxpress.com
+  - cdsco.gov.in
+deny:
+  domains: []
+  keywords:
+    - celebrity
+    - arrested
+    - match score
+    - horoscope today
+    - gossip
+    - miracle cure
+signals:
+  launch: [launches, introduces, rolls out, announces, unveils]
+  money: [pricing, funding, raises, acquires, subsidy, shortage]
+  rule: [regulation, ban, guidelines, mandate, policy, CDSCO, approval]
+  pain: [shortage, recall, complaint, backlash, cost, outbreak]
+  tool: [API, open-source, SDK, device, diagnostic]

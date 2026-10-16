@@ -1,0 +1,22 @@
+industry: Gaming
+allow_domains:
+  - thehindu.com
+  - polygon.com
+  - gamespot.com
+  - gamesindustry.biz
+  - pcgamer.com
+  - inc42.com
+deny:
+  domains: []
+  keywords:
+    - celebrity
+    - arrested
+    - match score
+    - horoscope today
+    - gossip
+signals:
+  launch: [launches, introduces, rolls out, announces, unveils, release]
+  money: [pricing, free tier, funding, raises, acquires, premium]
+  rule: [regulation, ban, guidelines, mandate, policy]
+  pain: [shortage, outage, complaint, backlash, cost, nerf]
+  tool: [API, open-source, SDK, plugin, engine, Unity, Unreal]

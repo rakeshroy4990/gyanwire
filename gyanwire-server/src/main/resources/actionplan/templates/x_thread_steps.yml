@@ -1,0 +1,68 @@
+steps:
+  - id: s1
+    order: 1
+    title: Pick 4 tweet-sized facts
+    startMin: 0
+    durationMin: 15
+    paidDurationMin: 8
+    paidToolId: chatgpt_plus
+    action: "Write 4 lines ≤240 chars each from the article."
+    input: "NewsBrief facts"
+    output: "thread.md"
+    doneWhen: "Each line stands alone"
+    toolId: notes_app
+    altToolId: text_editor
+    ifStuck: "One entity + one number per line."
+    platforms: [x]
+    scalable: false
+
+  - id: s2
+    order: 2
+    title: Order the thread
+    startMin: 15
+    durationMin: 20
+    paidDurationMin: 10
+    paidToolId: chatgpt_plus
+    action: "Hook first, then 3 points, then CTA. Number 1/n … n/n."
+    input: "thread.md"
+    output: "thread_final.md"
+    doneWhen: "5 tweets max including CTA"
+    toolId: text_editor
+    altToolId: notes_app
+    ifStuck: "Cut to three tweets."
+    platforms: [x]
+    scalable: false
+
+  - id: s3
+    order: 3
+    title: Post the thread
+    startMin: 35
+    durationMin: 15
+    paidDurationMin: 8
+    paidToolId: buffer
+    action: "Post as a thread on X. Save the first tweet URL."
+    input: "thread_final.md"
+    output: "live link"
+    doneWhen: "URL saved"
+    toolId: text_editor
+    altToolId: notes_app
+    ifStuck: "Post the hook alone first."
+    platforms: [x]
+    scalable: false
+
+  - id: s4
+    order: 4
+    title: Measurement reminder
+    startMin: 50
+    durationMin: 10
+    paidDurationMin: 5
+    paidToolId: buffer
+    action: "Calendar +48 h for impressions / profile visits."
+    input: "live link"
+    output: "reminder"
+    doneWhen: "Reminder created"
+    toolId: calendar_app
+    altToolId: notes_app
+    ifStuck: "Phone alarm."
+    platforms: [all]
+    scalable: false

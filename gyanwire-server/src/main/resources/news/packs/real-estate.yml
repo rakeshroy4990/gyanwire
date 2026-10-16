@@ -1,0 +1,21 @@
+industry: Real Estate
+allow_domains:
+  - economictimes.indiatimes.com
+  - livemint.com
+  - thehindu.com
+  - inc42.com
+  - yourstory.com
+deny:
+  domains: []
+  keywords:
+    - celebrity
+    - arrested
+    - match score
+    - horoscope today
+    - gossip
+signals:
+  launch: [launches, introduces, rolls out, announces, unveils, booking]
+  money: [pricing, funding, raises, acquires, subsidy, stamp duty, EMI]
+  rule: [regulation, ban, guidelines, mandate, policy, RERA]
+  pain: [shortage, complaint, backlash, cost, delay]
+  tool: [API, open-source, SDK, PropTech, app]

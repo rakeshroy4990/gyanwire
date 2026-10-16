@@ -59,6 +59,9 @@ public final class FreshnessGate {
             return "fresh";
         }
         int days = windows[Math.min(step, windows.length - 1)];
+        if (days <= 7) {
+            return "last 7 days";
+        }
         if (days <= 30) {
             return "last 30 days";
         }

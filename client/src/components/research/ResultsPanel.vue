@@ -13,14 +13,19 @@ const props = defineProps({
   embedded: { type: Boolean, default: false },
   heading: { type: String, default: 'Findings' },
   showIdeas: { type: Boolean, default: false },
+  allowDismiss: { type: Boolean, default: false },
   freshness: { type: String, default: '' },
   note: { type: String, default: '' },
   returnKey: { type: String, default: '' },
   countries: { type: Array, default: () => [] },
   country: { type: String, default: null },
+  page: { type: Number, default: 1 },
+  totalPages: { type: Number, default: 0 },
+  total: { type: Number, default: 0 },
+  hasMore: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['idea', 'feedback', 'select-country']);
+const emit = defineEmits(['idea', 'feedback', 'dismiss', 'hide-source', 'select-country', 'page']);
 const votes = reactive({});
 
 function vote(item, value, reason) {
@@ -59,9 +64,42 @@ function potential(item) {
 
 function freshnessText(value) {
   if (value === 'warming_up') return 'Fetching the latest news...';
-  if (value === 'last 30 days') return 'Few recent items — showing the last 30 days.';
+  if (value === 'last 30 days') return 'Showing news from the last 30 days, newest first.';
+  if (value === 'last 7 days') return 'Few recent items — showing the last 7 days.';
   if (value === 'older — few recent items') return 'Few recent items — showing older coverage.';
   return '';
+}
+
+function itemRank(item, index) {
+  const ranked = Number(item?.rank);
+  if (Number.isFinite(ranked) && ranked > 0) return ranked;
+  return index + 1;
+}
+
+function goPage(next) {
+  if (next < 1) return;
+  if (props.totalPages && next > props.totalPages) return;
+  emit('page', next);
+}
+
+function dismiss(item) {
+  emit('dismiss', item);
+}
+
+function hideSource(item) {
+  emit('hide-source', item);
+}
+
+function whyLine(item) {
+  return item.relevanceReason || item.whyIdea || item.why || item.description || '';
+}
+
+function signalChips(item) {
+  if (Array.isArray(item.signals) && item.signals.length) {
+    return item.signals.map((s) => signalLabel(s) || s).filter(Boolean);
+  }
+  const one = signalLabel(item.signalType);
+  return one ? [one] : [];
 }
 
 function articleDate(item) {
@@ -150,16 +188,39 @@ function isReturned(item) {
         :data-finding-url="item.url || undefined"
         :style="{ animationDelay: `${index * 45}ms` }"
       >
-        <div class="result__rank" aria-hidden="true">{{ index + 1 }}</div>
+        <div class="result__rank" aria-hidden="true">{{ itemRank(item, index) }}</div>
         <div class="result__body">
-          <h3 class="result__title">
-            <time v-if="item.ageLabel || articleDate(item)" class="result__date" :datetime="item.publishedAt || undefined">{{ item.ageLabel || articleDate(item) }}</time>
-            <span v-if="signalLabel(item.signalType)" class="signal-chip">{{ signalLabel(item.signalType) }}</span>
-            <span v-if="item.countryName" class="country-chip">{{ item.countryName }}</span>
-            <a :href="item.url" target="_blank" rel="noopener noreferrer">{{ item.title }}</a>
-          </h3>
+          <div class="result__headline">
+            <h3 class="result__title">
+              <time v-if="item.ageLabel || articleDate(item)" class="result__date" :datetime="item.publishedAt || undefined">{{ item.ageLabel || articleDate(item) }}</time>
+              <span v-if="signalLabel(item.signalType)" class="signal-chip">{{ signalLabel(item.signalType) }}</span>
+              <span v-if="item.countryName" class="country-chip">{{ item.countryName }}</span>
+              <a :href="item.url" target="_blank" rel="noopener noreferrer">{{ item.title }}</a>
+            </h3>
+            <button
+              v-if="allowDismiss"
+              type="button"
+              class="result__dismiss"
+              aria-label="Remove from list"
+              title="Remove from list"
+              @click="dismiss(item)"
+            >
+              <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+                <path
+                  d="M3.5 3.5l9 9m0-9l-9 9"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </button>
+          </div>
           <p class="result__url">{{ item.host }}</p>
-          <p class="result__why">{{ item.whyIdea || item.why || item.description }}</p>
+          <p v-if="signalChips(item).length" class="result__signals">
+            Signals: {{ signalChips(item).join(' · ') }}
+          </p>
+          <p class="result__why">{{ whyLine(item) }}</p>
           <p v-if="item.sample" class="result__flag">Sample data</p>
           <p v-if="item.weakSignal" class="result__flag">Weak signal</p>
           <p v-if="item.trust" class="trust-badge">
@@ -169,6 +230,13 @@ function isReturned(item) {
           </p>
           <div class="result__actions">
             <button v-if="showIdeas" type="button" class="btn btn--ghost" @click="emit('idea', item)">Get an idea</button>
+            <a v-if="item.url" class="btn btn--ghost" :href="item.url" target="_blank" rel="noopener noreferrer">Open</a>
+            <button
+              v-if="allowDismiss && (item.sourceId || item.id)"
+              type="button"
+              class="btn btn--ghost"
+              @click="hideSource(item)"
+            >Hide this source</button>
             <span v-if="showIdeas && ideaCount(item)" class="result__idea-count">{{ ideaCount(item) }} {{ ideaCount(item) === 1 ? 'idea' : 'ideas' }}</span>
             <div class="result__votes" role="group" aria-label="Was this finding useful?">
               <span class="result__votes-label">Was this useful?</span>
@@ -213,5 +281,29 @@ function isReturned(item) {
       :rows="1"
       :show-head="false"
     />
+
+    <nav
+      v-if="!embedded && !isLoading && results.length && totalPages > 1"
+      class="results-pager"
+      aria-label="News pages"
+    >
+      <button
+        type="button"
+        class="btn btn--ghost"
+        :disabled="page <= 1"
+        @click="goPage(page - 1)"
+      >
+        Previous
+      </button>
+      <p class="results-pager__status">Page {{ page }} of {{ totalPages }}</p>
+      <button
+        type="button"
+        class="btn btn--ghost"
+        :disabled="page >= totalPages && !hasMore"
+        @click="goPage(page + 1)"
+      >
+        Next
+      </button>
+    </nav>
   </section>
 </template>

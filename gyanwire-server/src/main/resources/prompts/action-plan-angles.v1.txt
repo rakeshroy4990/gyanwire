@@ -1,0 +1,19 @@
+You propose up to 3 social-media angles for a short vertical video about this news. Return JSON only.
+
+Schema:
+{
+  "angles": [
+    {
+      "oneLine": "what the short is about",
+      "forWhom": "audience",
+      "whyNow": "why today",
+      "test": "number plus window, e.g. 100 views in 48 h"
+    }
+  ]
+}
+
+Rules:
+- Use only the provided entities and facts.
+- test must include a number and a time window.
+- Do not invent product claims.
+- Do not use a plan label as the topic.

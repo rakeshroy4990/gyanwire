@@ -1,0 +1,23 @@
+- id: youtube_shorts
+  label: YouTube Shorts
+  rules:
+    - Upload as vertical video ≤60 s
+    - Put #Shorts in the description
+    - Title ≤70 characters with the main entity first
+  lastVerified: 2026-10-16
+
+- id: instagram_reels
+  label: Instagram Reels
+  rules:
+    - Upload as a Reel
+    - Cover frame = hook card
+    - Captions on; 3–5 hashtags
+  lastVerified: 2026-10-16
+
+- id: linkedin
+  label: LinkedIn
+  rules:
+    - Upload as a video post
+    - First line of the text = hook sentence
+    - No more than 2 hashtags
+  lastVerified: 2026-10-16

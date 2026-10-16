@@ -232,6 +232,14 @@ class HandbookRulesTest {
         assertThat(fused.get(0)).containsKey("trust");
         Map<String, Object> mode = IndustryModes.build("Medical", List.of(Map.of("title", "WHO guideline", "url", "https://who.int/g", "description", "guideline")));
         assertThat(mode.get("disclaimer")).asString().contains("diagnosis");
+        Map<String, Object> estate = IndustryModes.build(
+                "Real Estate",
+                List.of(Map.of("title", "RERA notification on registration", "url", "https://example.com/rera", "description", "circular")));
+        assertThat(estate.get("mode")).isEqualTo("what-changed");
+        assertThat(estate.get("disclaimer")).asString().contains("property");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> estateItems = (List<Map<String, Object>>) estate.get("items");
+        assertThat(estateItems.get(0).get("tag")).isEqualTo("regulation");
         assertThat(EvalMetrics.ndcgAt(List.of("a"), EvalMetrics.setOf(List.of("a")), 5)).isEqualTo(1.0);
     }
 

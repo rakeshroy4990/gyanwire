@@ -1,5 +1,6 @@
 package com.gyanwire.api;
 
+import com.gyanwire.actionplan.NewsIdeasService;
 import com.gyanwire.auth.security.AuthUserPrincipal;
 import com.gyanwire.auth.security.JwtAuthenticationFilter;
 import com.gyanwire.config.ApiExceptionHandler;
@@ -60,6 +61,8 @@ class ProductControllerTest {
     FlowStore store;
     @MockBean
     McpService mcp;
+    @MockBean
+    NewsIdeasService newsIdeas;
     @MockBean
     JwtAuthenticationFilter jwtAuthenticationFilter;
 

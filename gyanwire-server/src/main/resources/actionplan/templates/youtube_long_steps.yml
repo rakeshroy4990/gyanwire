@@ -1,0 +1,102 @@
+steps:
+  - id: s1
+    order: 1
+    title: Outline the demo chapters
+    startMin: 0
+    durationMin: 30
+    paidDurationMin: 15
+    paidToolId: chatgpt_plus
+    action: "Outline hook, problem, live demo, three takeaways, CTA. Save outline.md."
+    input: "NewsBrief + product"
+    output: "outline.md"
+    doneWhen: "5 chapter titles"
+    toolId: notes_app
+    altToolId: text_editor
+    ifStuck: "Use: hook / why / demo / tips / CTA."
+    platforms: [youtube]
+    scalable: false
+
+  - id: s2
+    order: 2
+    title: Script the spoken parts
+    startMin: 30
+    durationMin: 60
+    paidDurationMin: 30
+    paidToolId: chatgpt_plus
+    action: "Write a 900–1500 word script with timestamps for the demo."
+    input: "outline.md"
+    output: "script.md"
+    doneWhen: "Word count in range"
+    toolId: text_editor
+    altToolId: notes_app
+    ifStuck: "Narrate the outline aloud and type what you said."
+    platforms: [youtube]
+    scalable: true
+
+  - id: s3
+    order: 3
+    title: Record screen + voice
+    startMin: 90
+    durationMin: 90
+    paidDurationMin: 50
+    paidToolId: descript
+    action: "Record the product demo with OBS + voice. Keep takes under 12 minutes."
+    input: "script.md"
+    output: "raw_demo.mkv"
+    doneWhen: "Demo section is complete without major pauses"
+    toolId: obs_studio
+    altToolId: audacity
+    ifStuck: "Record demo first, voice-over second."
+    platforms: [youtube]
+    scalable: true
+
+  - id: s4
+    order: 4
+    title: Edit and captions
+    startMin: 180
+    durationMin: 120
+    paidDurationMin: 60
+    paidToolId: descript
+    action: "Cut dead air, add chapter markers, burn captions, export 1080p."
+    input: "raw_demo.mkv"
+    output: "final.mp4"
+    doneWhen: "≤10 min; captions on; chapters set"
+    toolId: shotcut
+    altToolId: kdenlive
+    ifStuck: "Export without fancy transitions."
+    platforms: [youtube]
+    scalable: true
+
+  - id: s5
+    order: 5
+    title: Thumbnail and title
+    startMin: 300
+    durationMin: 40
+    paidDurationMin: 20
+    paidToolId: canva_pro
+    action: "Make a 1280×720 thumbnail and a title ≤70 chars with the entity first."
+    input: "final.mp4"
+    output: "thumb.png + title"
+    doneWhen: "Readable thumb at phone size"
+    toolId: gimp
+    altToolId: canva_free
+    ifStuck: "Big text + product UI screenshot."
+    platforms: [youtube]
+    scalable: false
+
+  - id: s6
+    order: 6
+    title: Upload and measure
+    startMin: 340
+    durationMin: 30
+    paidDurationMin: 15
+    paidToolId: buffer
+    action: "Upload to YouTube, paste description, schedule. Reminder +48 h for AVD."
+    input: "final.mp4 + thumb"
+    output: "live link + reminder"
+    doneWhen: "Video public or scheduled; reminder set"
+    toolId: youtube_app
+    altToolId: calendar_app
+    ifStuck: "Unlisted first, then public."
+    platforms: [youtube]
+    scalable: false

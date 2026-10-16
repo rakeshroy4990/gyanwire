@@ -1,5 +1,6 @@
 package com.gyanwire.news;
 
+import com.gyanwire.actionplan.NewsIdeasService;
 import com.gyanwire.auth.security.AuthUserPrincipal;
 import com.gyanwire.auth.security.JwtAuthenticationFilter;
 import com.gyanwire.config.ApiExceptionHandler;
@@ -25,8 +26,10 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -58,6 +61,9 @@ class NewsControllerTest {
     UsageService usage;
 
     @MockBean
+    NewsIdeasService newsIdeas;
+
+    @MockBean
     JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @AfterEach
@@ -67,14 +73,16 @@ class NewsControllerTest {
 
     @Test
     void defaultNewsStreamsNdjson() throws Exception {
-        when(news.defaults(eq(5), isNull())).thenReturn(Map.of(
+        when(news.defaults(eq(10), isNull(), any(NewsViewer.class), eq(1))).thenReturn(Map.of(
                 "results", List.of(
                         Map.of("title", "First launch", "url", "https://a.example/1", "opportunityScore", 80),
                         Map.of("title", "Second launch", "url", "https://a.example/2", "opportunityScore", 70)
                 ),
-                "freshness", "last 7 days",
-                "requested", 5,
+                "freshness", "last 30 days",
+                "requested", 10,
                 "returned", 2,
+                "page", 1,
+                "total", 2,
                 "label", "Top searched product news",
                 "message", "Two signals",
                 "isDefaultNews", true,
@@ -82,7 +90,7 @@ class NewsControllerTest {
         ));
 
         String body = mvc.perform(get("/api/news/default")
-                        .param("limit", "5")
+                        .param("limit", "10")
                         .param("intent", "products")
                         .accept(MediaType.parseMediaType("application/x-ndjson")))
                 .andExpect(status().isOk())
@@ -103,6 +111,26 @@ class NewsControllerTest {
     }
 
     @Test
+    void defaultNewsReturnsJsonWhenRequested() throws Exception {
+        when(news.defaults(eq(10), isNull(), any(NewsViewer.class), eq(2))).thenReturn(Map.of(
+                "results", List.of(Map.of("title", "Page two", "opportunityScore", 60)),
+                "freshness", "last 30 days",
+                "page", 2,
+                "total", 12,
+                "totalPages", 2,
+                "label", "Top searched product news",
+                "isDefaultNews", true
+        ));
+        mvc.perform(get("/api/news/default")
+                        .param("page", "2")
+                        .param("limit", "10")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.page").value(2))
+                .andExpect(jsonPath("$.data.results[0].title").value("Page two"));
+    }
+
+    @Test
     void unknownIndustryIsRejected() throws Exception {
         when(industries.listCatalog()).thenReturn(List.of(catalog()));
         mvc.perform(get("/api/news/NotARealIndustry"))
@@ -113,12 +141,14 @@ class NewsControllerTest {
     @Test
     void emptyIndustryReportsWarmingUp() throws Exception {
         when(industries.listCatalog()).thenReturn(List.of(catalog()));
-        when(news.industry(eq("Medical"), isNull(), eq(5), eq("products"), eq(14), isNull()))
+        when(news.industry(eq("Medical"), isNull(), eq(10), eq("products"), eq(30), isNull(), any(NewsViewer.class), eq(1)))
                 .thenReturn(Map.of(
                         "results", List.of(),
                         "freshness", "warming_up",
-                        "requested", 5,
+                        "requested", 10,
                         "returned", 0,
+                        "page", 1,
+                        "total", 0,
                         "label", "Medical products"
                 ));
         mvc.perform(get("/api/news/Medical"))
@@ -128,20 +158,50 @@ class NewsControllerTest {
     }
 
     @Test
-    void widenedWindowIsLabelled() throws Exception {
+    void thirtyDayWindowIsDefault() throws Exception {
         when(industries.listCatalog()).thenReturn(List.of(catalog()));
-        when(news.industry(eq("Medical"), eq("Paediatrics"), eq(5), eq("products"), eq(14), isNull()))
+        when(news.industry(eq("Medical"), eq("Paediatrics"), eq(10), eq("products"), eq(30), isNull(), any(NewsViewer.class), eq(1)))
                 .thenReturn(Map.of(
                         "results", List.of(Map.of("title", "A launch", "opportunityScore", 70)),
                         "freshness", "last 30 days",
-                        "requested", 5,
+                        "requested", 10,
                         "returned", 1,
+                        "page", 1,
+                        "total", 1,
+                        "sort", "publishedAtDesc",
                         "label", "Paediatrics products"
                 ));
-        mvc.perform(get("/api/news/Medical").param("sub", "Paediatrics").param("intent", "products").param("window", "14d"))
+        mvc.perform(get("/api/news/Medical").param("sub", "Paediatrics").param("intent", "products"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.freshness").value("last 30 days"))
+                .andExpect(jsonPath("$.data.sort").value("publishedAtDesc"))
                 .andExpect(jsonPath("$.data.results[0].opportunityScore").value(70));
+        verify(news).industry(eq("Medical"), eq("Paediatrics"), eq(10), eq("products"), eq(30), isNull(), any(NewsViewer.class), eq(1));
+    }
+
+    @Test
+    void pageParamIsPassedThrough() throws Exception {
+        when(industries.listCatalog()).thenReturn(List.of(catalog()));
+        when(news.industry(eq("Medical"), isNull(), eq(10), eq("products"), eq(30), isNull(), any(NewsViewer.class), eq(3)))
+                .thenReturn(Map.of(
+                        "results", List.of(),
+                        "page", 3,
+                        "totalPages", 4,
+                        "hasMore", true,
+                        "label", "Medical products"
+                ));
+        mvc.perform(get("/api/news/Medical").param("page", "3"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.page").value(3))
+                .andExpect(jsonPath("$.data.hasMore").value(true));
+    }
+
+    @Test
+    void pageBelowOneIsRejected() throws Exception {
+        when(industries.listCatalog()).thenReturn(List.of(catalog()));
+        mvc.perform(get("/api/news/Medical").param("page", "0"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
     }
 
     @Test
@@ -155,7 +215,7 @@ class NewsControllerTest {
     @Test
     void countryFilterIsApplied() throws Exception {
         when(industries.listCatalog()).thenReturn(List.of(catalog()));
-        when(news.industry(eq("Medical"), isNull(), eq(5), eq("products"), eq(14), eq("US")))
+        when(news.industry(eq("Medical"), isNull(), eq(10), eq("products"), eq(30), eq("US"), any(NewsViewer.class), eq(1)))
                 .thenReturn(Map.of(
                         "results", List.of(),
                         "country", "US",
@@ -165,6 +225,38 @@ class NewsControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.country").value("US"))
                 .andExpect(jsonPath("$.data.regionPreference").value("Worldwide, India prioritized"));
+    }
+
+    @Test
+    void dismissRequiresItemIdOrUrl() throws Exception {
+        mvc.perform(post("/api/news/dismiss")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
+    }
+
+    @Test
+    void dismissSavesAndInvalidatesViewerCache() throws Exception {
+        UUID itemId = UUID.randomUUID();
+        mvc.perform(post("/api/news/dismiss")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"itemId\":\"" + itemId + "\",\"url\":\"https://a.example/1\",\"industry\":\"AI\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.dismissed").value(true))
+                .andExpect(jsonPath("$.data.itemId").value(itemId.toString()));
+        verify(store).saveDismissal(eq(itemId), eq("https://a.example/1"), isNull(), any(), eq("AI"));
+        verify(news).invalidateViewer(any(NewsViewer.class));
+    }
+
+    @Test
+    void industryUsesThirtyDayWindowByDefault() throws Exception {
+        when(industries.listCatalog()).thenReturn(List.of(catalog()));
+        when(news.industry(eq("Medical"), isNull(), anyInt(), eq("products"), eq(30), isNull(), any(NewsViewer.class), eq(1)))
+                .thenReturn(Map.of("results", List.of(), "label", "Medical products", "freshness", "last 30 days"));
+        mvc.perform(get("/api/news/Medical"))
+                .andExpect(status().isOk());
+        verify(news).industry(eq("Medical"), isNull(), anyInt(), eq("products"), eq(30), isNull(), any(NewsViewer.class), eq(1));
     }
 
     @Test

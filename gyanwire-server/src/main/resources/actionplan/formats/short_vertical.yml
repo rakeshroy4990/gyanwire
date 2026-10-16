@@ -1,0 +1,16 @@
+id: short_vertical
+label: "Short vertical video"
+platforms: [youtube_shorts, instagram_reels, linkedin]
+aspect: "9:16"
+resolution: "1080x1920"
+maxSeconds: 60
+targetSeconds: [35, 50]
+scriptWords: [90, 130]
+beats:
+  - { name: hook, seconds: [0, 3], rule: "Contains the main entity and one concrete fact" }
+  - { name: context, seconds: [3, 15], rule: "Who is affected, one sentence" }
+  - { name: points, seconds: [15, 42], rule: "Exactly 3 facts, one per on-screen text card" }
+  - { name: cta, seconds: [42, 50], rule: "One action: follow / link in comments" }
+defaultBudgetMinutes: 240
+stepTemplate: short_vertical_steps.yml
+moneyRuleId: yt_shorts_ypp
