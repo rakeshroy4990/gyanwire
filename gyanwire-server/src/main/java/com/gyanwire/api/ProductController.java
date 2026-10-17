@@ -109,7 +109,7 @@ public class ProductController {
         response.setHeader("X-Accel-Buffering", "no");
         response.setHeader("Cache-Control", "no-cache, no-transform");
         response.setHeader("X-Content-Type-Options", "nosniff");
-        IdeaNdjson.write(response.getOutputStream(), mapper, () -> ideas.fromNews(userId, body), () -> {
+        IdeaNdjson.write(response.getOutputStream(), mapper, sink -> ideas.fromNews(userId, body, sink), () -> {
             try {
                 response.flushBuffer();
             } catch (IOException ex) {

@@ -115,7 +115,7 @@ Search streams on `POST /api/search/stream` (`status`, `finding`, `done`, `error
 | `GET` | `/api/ideas` | S9 | Saved ideas for the user |
 | `POST` | `/api/ideas/{id}/feedback` | S9 | Thumbs and reason |
 | `POST` | `/api/ideas/{id}/rating` | N2 | `useful` / `not_useful` for angle scoring |
-| `POST` | `/api/action-plans` | N3 | Create executable content plan from news URL + format/budget/demo |
+| `POST` | `/api/action-plans` | N3 | NDJSON create: skeleton plan first, then status + finished plan (news URL + format/budget/demo) |
 | `GET` | `/api/action-plans/{id}` | N3 | Load plan + step done flags |
 | `GET` | `/api/action-plans/{id}/steps/{stepKey}` | N4 | Step drawer (OS + Paid micro-steps, tools, gain) |
 | `PATCH` | `/api/action-plans/{id}/steps/{stepKey}` | N3 | Toggle step done |
@@ -367,6 +367,71 @@ npm run gyanwire-server  # Spring Boot API (+ serves dist/ when present)
 ```
 
 Deploy helpers: Cloud Run / Firebase UI scripts under `scripts/`, `Dockerfile`, `cloudbuild.yaml`.
+
+### 4.10 Open-source placement
+
+Gyanwire stays the workbench. Named open-source tools attach to seams that already exist. They do not become a second chat app or a second model client. Whisper.cpp is the one catalog row shipped from this placement. Docling stays a sidecar design until a PDF step is in scope.
+
+Current seams this placement uses:
+
+- HTML only in `ScrapeService` (Jsoup). PDFs and Office files never become findings.
+- The research composer is a textarea. There is no microphone.
+- Wording stays on `LlmService` / `OpenAiClient`. Another provider, embeddings, and agents stay parked (`docs/PARKED_MODEL_WORK.md`).
+- Action plans already split Open Source vs Paid. The short-vertical assemble step and the YouTube-long edit step link Whisper.cpp (`whisper_cpp` in `actionplan/tools.yml`) for local captions. The composer still has no microphone, so there is no transcribe route. Visual tools stop at GIMP and Inkscape.
+
+```text
+Composer
+   │
+   ▼
+DiscoverService
+   │
+   ├── ScrapeService (HTML)
+   └── (optional) Docling sidecar, off unless a document URL is set
+            │
+            ▼
+     Pointers + cited brief
+            │
+            ▼
+     LlmService (OpenAI only)
+            │
+            ▼
+     Ideas → action plan → Open Source tool chips → user’s machine
+```
+
+**Inside the product (optional, off by default).** Neither engine calls `/chat/completions`.
+
+| Engine | Place | Contract |
+|---|---|---|
+| Docling (MIT) | Beside scrape | PDF, DOCX, or PPTX → Markdown. Same text contract as a scraped page: rank, `page_cache`, cite. HTML stays on Jsoup. Docling does not rank and does not see the user profile. |
+
+**On the user’s machine (catalog links only).** Gyanwire does not host these. Copyleft apps (GPL/AGPL) are links only, never copied into the Spring jar.
+
+| Tool | Place | Rule |
+|---|---|---|
+| Whisper.cpp (MIT) | Short-vertical assemble step and YouTube-long edit step | Catalog chip `whisper_cpp`. The person transcribes a voice-over locally, then times the lines in Subtitle Edit. `POST /api/transcribe` stays unbuilt until a voice step is in scope. |
+| ComfyUI | Action-plan visuals and thumbnails | The one image backend (`covers: visuals, thumbnail`). One graph, local GPU. |
+| InvokeAI, Stable Diffusion WebUI | Same visual steps | Alternate desktops on the same models. Not extra servers. |
+| Upscayl (AGPL) | After a still is exported | Upscale only. It does not generate the image. |
+| Ollama, llama.cpp | Local-model shelf | Ollama is the process manager; llama.cpp is the engine it wraps. They do not replace `OpenAiClient`. |
+| LM Studio, Jan | Same local-model shelf | Desktop apps, linked, not embedded. LM Studio is proprietary freeware, so its chip is tier `free`, not `open_source`. |
+| OpenHands | IT demo-build step only | Catalog chip. Research agents stay parked (P6). Gyanwire does not start an agent. |
+
+**Do not embed.** These are other products, or they are not open source. Embedding them would replace the live research surface or break the model freeze.
+
+| Name | Why it stays out |
+|---|---|
+| AnythingLLM, Open WebUI, NotebookLM | Doc-chat shells. The cited brief plus project export is that job. NotebookLM is Google proprietary. |
+| Perplexity | Paid search product. Optional Paid chip on a “find sources” step. Never a second `DiscoverService`. |
+| Google AI Studio | Proprietary Gemini console. Not a provider. |
+| Napkin AI | Proprietary diagram SaaS. A brief figure uses Mermaid in the outline. Napkin may be a Paid chip, labeled proprietary. |
+| Hugging Face Spaces | A hosting site. Allowlisted domains inside the IT news pack are fine. Not an iframe in the workspace. |
+
+**License lane.** Do not tag a proprietary product as open source.
+
+- Open source engines and links: Docling, Whisper.cpp, llama.cpp, Ollama, ComfyUI, InvokeAI, Stable Diffusion WebUI, Upscayl, OpenHands, AnythingLLM, Open WebUI, Jan.
+- Not open source: Napkin AI, Google AI Studio, Perplexity, NotebookLM, LM Studio. Hugging Face Spaces is a platform; each Space has its own license.
+
+Whisper.cpp is the catalog chip on the caption steps. ComfyUI, Upscayl, and a local-model chip pointing at Ollama wait until a later step asks for them. Docling and the transcribe route wait until a PDF or voice step is in scope.
 
 ---
 

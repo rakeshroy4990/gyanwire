@@ -110,7 +110,7 @@ public final class PlanLinter {
 
     private void checkL4(Map<String, Object> plan, NewsBrief brief, List<String> errors) {
         String label = str(plan.get("label"));
-        String blob = String.valueOf(plan);
+        String blob = copyBlob(plan);
         if (label.toLowerCase(Locale.ROOT).startsWith("post today:")
                 || blob.toLowerCase(Locale.ROOT).contains("post today:")) {
             errors.add("L4: contains Post today: prefix");
@@ -127,6 +127,29 @@ public final class PlanLinter {
                 errors.add("L4: full headline repeated more than once");
             }
         }
+    }
+
+    /** User-facing copy only — skip newsBrief and micro-steps (they intentionally echo the story). */
+    private static String copyBlob(Map<String, Object> plan) {
+        StringBuilder out = new StringBuilder();
+        out.append(str(plan.get("label"))).append(' ');
+        out.append(str(plan.get("hook"))).append(' ');
+        out.append(str(plan.get("script"))).append(' ');
+        if (plan.get("slots") instanceof Map<?, ?> slots) {
+            for (Map.Entry<?, ?> e : slots.entrySet()) {
+                String key = String.valueOf(e.getKey());
+                if ("headline".equals(key) || "publisherUrl".equals(key) || "publisher".equals(key)) {
+                    continue;
+                }
+                out.append(e.getValue() == null ? "" : e.getValue()).append(' ');
+            }
+        }
+        for (Map<String, Object> step : steps(plan)) {
+            out.append(str(step.get("title"))).append(' ');
+            out.append(str(step.get("action"))).append(' ');
+            out.append(str(step.get("ifStuck"))).append(' ');
+        }
+        return out.toString();
     }
 
     @SuppressWarnings("unchecked")
@@ -234,14 +257,48 @@ public final class PlanLinter {
             return;
         }
         java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\\b\\d{3,}\\b").matcher(script);
-        String factBlob = brief.facts().stream()
-                .map(f -> (f.text() == null ? "" : f.text()) + " " + (f.sourceSpan() == null ? "" : f.sourceSpan()))
-                .reduce("", (a, b) -> a + " " + b);
+        StringBuilder factBlob = new StringBuilder();
+        for (NewsBrief.Fact fact : brief.facts()) {
+            factBlob.append(' ')
+                    .append(fact.text() == null ? "" : fact.text())
+                    .append(' ')
+                    .append(fact.sourceSpan() == null ? "" : fact.sourceSpan());
+        }
+        // Verified multi-source pack facts may also ground numbers in the script.
+        appendVideoResearchFacts(factBlob, plan.get("videoResearch"));
+        String blob = factBlob.toString();
         while (matcher.find()) {
             String number = matcher.group();
-            if (!factBlob.contains(number)) {
+            if (!blob.contains(number)) {
                 errors.add("L8: numeric claim not mapped to a fact");
                 return;
+            }
+        }
+    }
+
+    private static void appendVideoResearchFacts(StringBuilder factBlob, Object videoResearch) {
+        if (!(videoResearch instanceof Map<?, ?> pack)) {
+            return;
+        }
+        Object facts = pack.get("facts");
+        if (!(facts instanceof List<?> list)) {
+            return;
+        }
+        for (Object item : list) {
+            if (!(item instanceof Map<?, ?> row)) {
+                continue;
+            }
+            factBlob.append(' ').append(str(row.get("text")));
+            factBlob.append(' ').append(str(row.get("sourceSpan")));
+        }
+        Object reactions = pack.get("reactions");
+        if (reactions instanceof List<?> reactionList) {
+            for (Object item : reactionList) {
+                if (!(item instanceof Map<?, ?> row)) {
+                    continue;
+                }
+                factBlob.append(' ').append(str(row.get("text")));
+                factBlob.append(' ').append(str(row.get("sourceSpan")));
             }
         }
     }

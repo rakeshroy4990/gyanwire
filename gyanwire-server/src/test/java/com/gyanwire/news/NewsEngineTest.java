@@ -25,7 +25,81 @@ class NewsEngineTest {
                 .extracting(NewsRow::title)
                 .containsExactly("xAI launches Grok 4.7 for coding");
         assertThat(NewsQueryService.labRows("AI", null, List.of(gpt, claude))).hasSize(2);
-        assertThat(NewsQueryService.labRows("Medical", "Cardiology", List.of(gpt))).hasSize(1);
+    }
+
+    @Test
+    void medicalSubChipDropsParentMedicalNoise() {
+        NewsRow paediatric = new NewsRow()
+                .title("CDSCO approves a paediatric heart valve for clinics");
+        NewsRow tagged = new NewsRow()
+                .sub("Paediatrics")
+                .title("Hospital expands NICU capacity in Bengaluru");
+        NewsRow devices = new NewsRow()
+                .title("NITI Aayog explores policies to boost India's medical and dental device manufacturing industry");
+        NewsRow celebrityEcg = new NewsRow()
+                .title("Puneeth Rajkumar’s doctor recalls his ECG showing ‘strain’: ‘He did kickboxing for one and a half hours’");
+        NewsRow celebrityTumour = new NewsRow()
+                .title("Saba Ali Khan recalls brain tumour diagnosis at 27 after suddenly fainting: ‘Thought it was my stomach’");
+        NewsRow cardiac = new NewsRow()
+                .title("FDA clears a new coronary stent for heart failure clinics");
+
+        assertThat(NewsQueryService.labRows(
+                "Medical", "Paediatrics", List.of(paediatric, tagged, devices, celebrityEcg, celebrityTumour, cardiac)))
+                .extracting(NewsRow::title)
+                .containsExactly(
+                        "CDSCO approves a paediatric heart valve for clinics",
+                        "Hospital expands NICU capacity in Bengaluru");
+        assertThat(NewsQueryService.labRows("Medical", "Cardiology", List.of(devices, cardiac, paediatric)))
+                .extracting(NewsRow::title)
+                .containsExactly(
+                        "FDA clears a new coronary stent for heart failure clinics",
+                        "CDSCO approves a paediatric heart valve for clinics");
+        assertThat(NewsQueryService.labRows("Medical", null, List.of(devices, celebrityEcg))).hasSize(2);
+    }
+
+    @Test
+    void everyIndustrySubChipDropsGenericParentNews() {
+        NewsRow genericIt = new NewsRow().title("Enterprise SaaS platform raises Series B for India expansion");
+        NewsRow chips = new NewsRow().title("NVIDIA launches new AI GPU accelerator for data centers");
+        assertThat(NewsQueryService.labRows("IT", "Semiconductors", List.of(genericIt, chips)))
+                .extracting(NewsRow::title)
+                .containsExactly("NVIDIA launches new AI GPU accelerator for data centers");
+
+        NewsRow genericSpace = new NewsRow().title("ISRO shares annual space sector outlook for India");
+        NewsRow lunar = new NewsRow().title("NASA Artemis lunar lander clears key mission review");
+        assertThat(NewsQueryService.labRows("Space", "Lunar", List.of(genericSpace, lunar)))
+                .extracting(NewsRow::title)
+                .containsExactly("NASA Artemis lunar lander clears key mission review");
+
+        NewsRow marketWrap = new NewsRow().title("Sensex and Nifty close mixed as FIIs stay cautious");
+        NewsRow evStock = new NewsRow().title("Tata Motors EV deliveries jump; Ola Electric share catalyst");
+        assertThat(NewsQueryService.labRows("Share Market", "EV", List.of(marketWrap, evStock)))
+                .extracting(NewsRow::title)
+                .containsExactly("Tata Motors EV deliveries jump; Ola Electric share catalyst");
+
+        NewsRow genericSocial = new NewsRow().title("Meta updates community guidelines across its apps");
+        NewsRow reels = new NewsRow().title("Instagram Reels rolls out new monetisation for short video creators");
+        assertThat(NewsQueryService.labRows("Social Media", "Short Video", List.of(genericSocial, reels)))
+                .extracting(NewsRow::title)
+                .containsExactly("Instagram Reels rolls out new monetisation for short video creators");
+
+        NewsRow genericGame = new NewsRow().title("Gaming industry revenue outlook revised for India");
+        NewsRow console = new NewsRow().title("Sony PlayStation unveils new PS5 exclusive console title");
+        assertThat(NewsQueryService.labRows("Gaming", "Console", List.of(genericGame, console)))
+                .extracting(NewsRow::title)
+                .containsExactly("Sony PlayStation unveils new PS5 exclusive console title");
+
+        NewsRow genericRe = new NewsRow().title("India real estate sector sees strong investor interest");
+        NewsRow rera = new NewsRow().title("Maharashtra RERA issues new registration guidelines for housing projects");
+        assertThat(NewsQueryService.labRows("Real Estate", "RERA", List.of(genericRe, rera)))
+                .extracting(NewsRow::title)
+                .containsExactly("Maharashtra RERA issues new registration guidelines for housing projects");
+
+        NewsRow genericAstro = new NewsRow().title("Astrology apps see festive season surge in India");
+        NewsRow tarot = new NewsRow().title("New tarot reading app launches deck guides for beginners");
+        assertThat(NewsQueryService.labRows("Astrology", "Tarot", List.of(genericAstro, tarot)))
+                .extracting(NewsRow::title)
+                .containsExactly("New tarot reading app launches deck guides for beginners");
     }
 
     @Test
@@ -48,6 +122,16 @@ class NewsEngineTest {
     }
 
     @Test
+    void industryWindowsChunkTowardThirtyDays() {
+        assertThat(NewsQueryService.windowsFor(30)).containsExactly(1, 7, 30);
+        assertThat(NewsQueryService.windowsFor(7)).containsExactly(1, 7);
+        assertThat(NewsQueryService.windowsFor(1)).containsExactly(1);
+        assertThat(FreshnessGate.labelForDays(1)).isEqualTo("fresh");
+        assertThat(FreshnessGate.labelForDays(7)).isEqualTo("last 7 days");
+        assertThat(FreshnessGate.labelForDays(30)).isEqualTo("last 30 days");
+    }
+
+    @Test
     void freshnessGateStillWidensWhenAsked() {
         Instant now = Instant.parse("2026-10-16T12:00:00Z");
         NewsRow today = row("Today launch", now.minus(Duration.ofHours(6)), false, 70, "launch", "a.com");
@@ -59,6 +143,43 @@ class NewsEngineTest {
         assertThat(weekWiden.freshness()).isEqualTo("last 7 days");
         FreshnessGate.Result monthWiden = FreshnessGate.select(List.of(month), 1, new int[]{1, 7, 30}, now);
         assertThat(monthWiden.freshness()).isEqualTo("last 30 days");
+    }
+
+    @Test
+    void firstPagePaintsTodayBeforeFillingFromWiderWindows() {
+        Instant now = Instant.parse("2026-10-16T12:00:00Z");
+        NewsRow today = row("Today launch", now.minus(Duration.ofHours(6)), false, 70, "launch", "a.com");
+        NewsRow week = row("Week launch", now.minus(Duration.ofDays(5)), false, 90, "launch", "b.com");
+        NewsRow month = row("Month launch", now.minus(Duration.ofDays(20)), false, 95, "launch", "c.com");
+        List<NewsRow> ordered = List.of(today, week, month);
+        NewsQueryService.FirstPage page = NewsQueryService.firstPage(ordered, 10, now);
+        assertThat(page.freshness()).isEqualTo("fresh");
+        assertThat(page.windowDays()).isEqualTo(1);
+        assertThat(page.paintFirst()).isEqualTo(1);
+        assertThat(page.items()).extracting(NewsRow::title)
+                .containsExactly("Today launch", "Week launch", "Month launch");
+    }
+
+    @Test
+    void firstPageUsesWeekWhenTodayIsEmpty() {
+        Instant now = Instant.parse("2026-10-16T12:00:00Z");
+        NewsRow week = row("Week launch", now.minus(Duration.ofDays(3)), false, 70, "launch", "b.com");
+        NewsRow month = row("Month launch", now.minus(Duration.ofDays(20)), false, 95, "launch", "c.com");
+        NewsQueryService.FirstPage page = NewsQueryService.firstPage(List.of(week, month), 10, now);
+        assertThat(page.freshness()).isEqualTo("last 7 days");
+        assertThat(page.windowDays()).isEqualTo(7);
+        assertThat(page.paintFirst()).isEqualTo(1);
+        assertThat(page.items()).extracting(NewsRow::title)
+                .containsExactly("Week launch", "Month launch");
+    }
+
+    @Test
+    void firstPageReportsWarmingUpWhenNothingIsStored() {
+        Instant now = Instant.parse("2026-10-16T12:00:00Z");
+        NewsQueryService.FirstPage page = NewsQueryService.firstPage(List.of(), 10, now);
+        assertThat(page.freshness()).isEqualTo("warming_up");
+        assertThat(page.items()).isEmpty();
+        assertThat(page.paintFirst()).isZero();
     }
 
     @Test
@@ -170,6 +291,14 @@ class NewsEngineTest {
         assertThat(NewsTexts.nearDuplicate(
                 "Acme launches paediatric vitamin drops",
                 "RBI issues a banking circular on UPI")).isFalse();
+        assertThat(NewsTexts.nearDuplicate(
+                "Today’s Gold Rate in India October 16: Gold prices steady in Coimbatore, Nagpur, Visakhapatnam, Surat, Jaipur",
+                "Today’s Gold Rate in India October 16: Gold prices steady in Delhi, Mumbai, Kolkata, Chennai, Bengaluru"))
+                .isTrue();
+        assertThat(NewsTexts.templateKey(
+                "Today’s Gold Rate in India October 16: Gold prices steady in Delhi, Mumbai, Kolkata, Chennai, Bengaluru"))
+                .doesNotContain("delhi")
+                .doesNotContain("october");
 
         Instant now = Instant.parse("2026-10-10T00:00:00Z");
         NewsRow fresh = row("Fresh launch", now.minus(Duration.ofDays(2)), false, 80, "launch", "a.com");

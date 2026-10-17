@@ -1,49 +1,42 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed } from 'vue';
 
 const props = defineProps({
   fact: { type: Object, required: true },
+  open: { type: Boolean, default: false },
 });
 
-const root = ref(null);
-const open = ref(false);
+const emit = defineEmits(['toggle']);
+
 const label = computed(() => props.fact?.id || 'fact');
-const span = computed(() => props.fact?.sourceSpan || props.fact?.text || '');
-
-function toggle() {
-  open.value = !open.value;
-}
-
-function onDocClick(e) {
-  if (!root.value?.contains(e.target)) open.value = false;
-}
-
-function onKey(e) {
-  if (e.key === 'Escape') open.value = false;
-}
-
-onMounted(() => {
-  document.addEventListener('click', onDocClick);
-  document.addEventListener('keydown', onKey);
+const explanation = computed(() => {
+  const text = String(props.fact?.text || '').trim();
+  const span = String(props.fact?.sourceSpan || '').trim();
+  return text || span;
 });
-
-onBeforeUnmount(() => {
-  document.removeEventListener('click', onDocClick);
-  document.removeEventListener('keydown', onKey);
+const quote = computed(() => {
+  const text = String(props.fact?.text || '').trim();
+  const span = String(props.fact?.sourceSpan || '').trim();
+  if (!span || !text || span === text) return '';
+  return span;
 });
+const tip = computed(() => explanation.value || label.value);
 </script>
 
 <template>
-  <span ref="root" class="evidence-chip" :class="{ 'is-open': open }">
+  <span class="evidence-chip" :class="{ 'is-open': open }" @click.stop>
     <button
       type="button"
       class="evidence-chip__btn"
-      :title="span"
+      :title="tip"
       :aria-expanded="open"
-      @click.stop="toggle"
+      @click="emit('toggle')"
     >
       {{ label }}
     </button>
-    <span v-if="open && span" class="evidence-chip__pop" role="tooltip">{{ span }}</span>
+    <span v-if="open && explanation" class="evidence-chip__pop" role="tooltip">
+      <span class="evidence-chip__text">{{ explanation }}</span>
+      <span v-if="quote" class="evidence-chip__quote">{{ quote }}</span>
+    </span>
   </span>
 </template>

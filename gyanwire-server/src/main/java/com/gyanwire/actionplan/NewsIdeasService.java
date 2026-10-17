@@ -5,7 +5,10 @@ import com.gyanwire.actionplan.format.FormatRegistry;
 import com.gyanwire.actionplan.format.FormatSpec;
 import com.gyanwire.actionplan.news.NewsBrief;
 import com.gyanwire.actionplan.news.NewsBriefService;
+import com.gyanwire.actionplan.research.VideoResearchService;
 import com.gyanwire.config.PlanLimitException;
+import com.gyanwire.ideas.CollectingIdeaSink;
+import com.gyanwire.ideas.IdeaSink;
 import com.gyanwire.news.NewsRow;
 import com.gyanwire.news.NewsStore;
 import com.gyanwire.research.ResearchException;
@@ -32,6 +35,7 @@ public class NewsIdeasService {
     private final FormatRegistry formats;
     private final UsageService usage;
     private final JdbcTemplate jdbc;
+    private final VideoResearchService videoResearch;
 
     public NewsIdeasService(
             NewsStore newsStore,
@@ -39,7 +43,8 @@ public class NewsIdeasService {
             AngleService angles,
             FormatRegistry formats,
             UsageService usage,
-            JdbcTemplate jdbc
+            JdbcTemplate jdbc,
+            VideoResearchService videoResearch
     ) {
         this.newsStore = newsStore;
         this.briefs = briefs;
@@ -47,14 +52,30 @@ public class NewsIdeasService {
         this.formats = formats;
         this.usage = usage;
         this.jdbc = jdbc;
+        this.videoResearch = videoResearch;
     }
 
     public Map<String, Object> ideasFromNewsId(UUID userId, String ipHash, UUID newsId) {
+        CollectingIdeaSink sink = new CollectingIdeaSink();
+        ideasFromNewsId(userId, ipHash, newsId, sink);
+        return sink.result();
+    }
+
+    public void ideasFromNewsId(UUID userId, String ipHash, UUID newsId, IdeaSink sink) {
         NewsRow row = newsStore.findById(newsId);
         if (row == null) {
             throw new ResearchException("News item not found.", "NOT_FOUND", 404);
         }
-        return ideasFromUrl(userId, ipHash, row.url(), row.title(), row.sourceName(), row.summary(), row.industry());
+        ideasFromUrl(
+                userId,
+                ipHash,
+                newsId,
+                row.url(),
+                row.title(),
+                row.sourceName(),
+                row.summary(),
+                row.industry(),
+                sink == null ? IdeaSink.noop() : sink);
     }
 
     public Map<String, Object> ideasFromUrl(
@@ -66,7 +87,38 @@ public class NewsIdeasService {
             String summary,
             String industry
     ) {
+        CollectingIdeaSink sink = new CollectingIdeaSink();
+        ideasFromUrl(userId, ipHash, null, url, title, source, summary, industry, sink);
+        return sink.result();
+    }
+
+    public void ideasFromUrl(
+            UUID userId,
+            String ipHash,
+            String url,
+            String title,
+            String source,
+            String summary,
+            String industry,
+            IdeaSink sink
+    ) {
+        ideasFromUrl(userId, ipHash, null, url, title, source, summary, industry, sink);
+    }
+
+    public void ideasFromUrl(
+            UUID userId,
+            String ipHash,
+            UUID newsId,
+            String url,
+            String title,
+            String source,
+            String summary,
+            String industry,
+            IdeaSink sink
+    ) {
+        IdeaSink out = sink == null ? IdeaSink.noop() : sink;
         assertIdeaQuota(userId, ipHash);
+        out.status("brief");
         NewsBrief brief = briefs.extract(url, title, source, null, userId);
         if (!brief.usable()) {
             // Try with summary as paste so thin RSS still yields ideas.
@@ -82,6 +134,18 @@ public class NewsIdeasService {
                     Map.of("reason", "insufficient_facts", "pasteRequired", true));
         }
 
+        Map<String, Object> meta = new LinkedHashMap<>();
+        meta.put("newsId", newsId == null ? brief.newsId() : newsId.toString());
+        meta.put("headline", brief.headline());
+        meta.put("url", brief.publisherUrl());
+        meta.put("industry", industry == null ? "" : industry);
+        meta.put("brief", brief.toMap());
+        out.meta(meta);
+
+        // Kick multi-source video research without waiting; ideas stream continues.
+        boolean researchStarted = videoResearch.startIfNeeded(newsId, url, brief, userId);
+
+        out.status("angles");
         FormatSpec format = formats.select(240, false);
         List<Map<String, Object>> anglesList = angles.pick(brief, format, userId);
         List<Map<String, Object>> ideas = new ArrayList<>();
@@ -117,15 +181,13 @@ public class NewsIdeasService {
             first.put("effortLabel", "4 h");
         }
 
+        for (Map<String, Object> idea : ideas) {
+            out.item(idea);
+        }
+        if (researchStarted) {
+            out.research(Map.of("status", "started"));
+        }
         usage.recordUsage(userId, ipHash, "idea", java.math.BigDecimal.ZERO);
-        Map<String, Object> out = new LinkedHashMap<>();
-        out.put("newsId", brief.newsId());
-        out.put("headline", brief.headline());
-        out.put("url", brief.publisherUrl());
-        out.put("industry", industry == null ? "" : industry);
-        out.put("brief", brief.toMap());
-        out.put("ideas", ideas);
-        return out;
     }
 
     public void rate(UUID userId, String ideaKey, String rating) {

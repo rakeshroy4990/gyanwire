@@ -9,6 +9,42 @@ allow_domains:
   - blog.google
   - ai.meta.com
   - blogs.microsoft.com
+# Must name an AI product, lab, or model — blocks D2C/fitness "origin story" pages on shared domains.
+require_keywords:
+  - ai
+  - openai
+  - anthropic
+  - chatgpt
+  - chat gpt
+  - claude
+  - gemini
+  - grok
+  - copilot
+  - deepmind
+  - llama
+  - mistral
+  - xai
+  - gpt
+  - llm
+  - llms
+  - genai
+  - gen ai
+  - generative ai
+  - artificial intelligence
+  - machine learning
+  - foundation model
+  - language model
+  - ai model
+  - ai feature
+  - ai agent
+  - open-source model
+  - open source model
+  - midjourney
+  - stable diffusion
+  - huggingface
+  - hugging face
+  - perplexity
+require_signal_match: true
 deny:
   domains: []
   keywords:
@@ -17,9 +53,21 @@ deny:
     - match score
     - horoscope today
     - gossip
+    - boldfit
+    - sportswear
+    - yoga mat
+    - fitness brand
+    - athletic footwear
+    - origin story
+    - d2c brand
+    - cricket score
+    - nifty
+    - sensex
+    - share market
+    - stock market
 signals:
-  launch: [launches, introduces, rolls out, announces, unveils, release]
+  launch: [launches, introduces, rolls out, announces, unveils, ships, rollout]
   money: [pricing, free tier, funding, raises, acquires, subsidy]
   rule: [regulation, ban, guidelines, mandate, policy, safety]
-  pain: [shortage, outage, complaint, backlash, cost, hallucination]
-  tool: [API, open-source, SDK, plugin, model, weights]
+  pain: [shortage, outage, complaint, backlash, hallucination]
+  tool: [API, open-source, open source, SDK, plugin, weights, checkpoint]

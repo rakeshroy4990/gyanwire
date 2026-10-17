@@ -1,0 +1,135 @@
+format: youtube_long
+steps:
+  s1:
+    goal: 5 chapter titles
+    commonMistakes: Vague chapter names without a demo beat or CTA.
+    open_source:
+      microSteps:
+        - "Open notes from NewsBrief + product: {{headline}} ({{publisherUrl}})."
+        - Draft five chapter titles: hook / why / demo / tips / CTA.
+        - Keep each title ≤8 words; put the product or entity first in the hook.
+        - Save as outline.md with one title per line.
+      tools: [notes_app, text_editor]
+      minutes: 30
+    paid:
+      microSteps:
+        - "Paste {{headline}} + product notes into a paid AI chat; ask for 5 chapter titles."
+        - Edit to hook / why / demo / tips / CTA; keep product name in the hook.
+        - Save the five titles to outline.md.
+      tools: [chatgpt_plus]
+      minutes: 15
+      giveUp: Monthly cost; you still own the outline structure.
+    free_not_os: []
+  s1b:
+    goal: One screenshot showing a real product result
+    commonMistakes: Stock UI or a fake prompt result.
+    open_source:
+      microSteps:
+        - Open the product and run one real prompt tied to {{headline}}.
+        - Capture a full-window screenshot (OBS or ShareX).
+        - Save as demo.png for the chapter outline.
+      tools: [obs_studio, sharex]
+      minutes: 15
+    paid:
+      microSteps:
+        - Capture the same product result; crop in a paid editor if needed.
+        - Save demo.png next to outline.md.
+      tools: [descript]
+      minutes: 10
+      giveUp: Subscription for a single crop.
+    free_not_os: []
+  s2:
+    goal: Word count in range (900–1500)
+    commonMistakes: Script without timestamps or a live-demo beat.
+    open_source:
+      microSteps:
+        - Open outline.md; write spoken lines for each chapter.
+        - Target 900–1500 words; mark [mm:ss] before each chapter.
+        - "Keep the hook grounded in {{hook}} and cite {{publisherUrl}} once."
+        - Save as script.md.
+      tools: [text_editor, notes_app]
+      minutes: 60
+    paid:
+      microSteps:
+        - "Ask a paid AI for a 900–1500 word demo script from outline.md for {{headline}}."
+        - Add [mm:ss] chapter markers; cut fluff; verify product claims.
+        - Save as script.md.
+      tools: [chatgpt_plus]
+      minutes: 30
+      giveUp: Generic AI tone; edit for your voice.
+    free_not_os: []
+  s3:
+    goal: Demo section complete without major pauses
+    commonMistakes: One long take with dead air and no B-roll plan.
+    open_source:
+      microSteps:
+        - Set OBS to 1080p; mic check in a quiet room.
+        - Record screen + voice in takes under 12 minutes.
+        - Prefer demo first, then voice-over if you stumble.
+        - Save the best take as raw_demo.mkv.
+      tools: [obs_studio, audacity]
+      minutes: 90
+    paid:
+      microSteps:
+        - Record in Descript (or import OBS take).
+        - Use studio sound / filler-word tools lightly; keep demo authentic.
+        - Export raw_demo for the edit step.
+      tools: [descript]
+      minutes: 50
+      giveUp: Subscription; over-cleaned audio can sound fake.
+    free_not_os: []
+  s4:
+    goal: ≤10 min; captions on; chapters set
+    commonMistakes: Fancy transitions that delay export; captions covering faces/UI.
+    open_source:
+      microSteps:
+        - Import raw_demo.mkv into Shotcut (or Kdenlive); cut dead air.
+        - Add chapter markers matching outline.md.
+        - Transcribe locally with Whisper.cpp; burn or soft-sub captions.
+        - Export 1080p H.264 as final.mp4 (≤10 min).
+      tools: [shotcut, kdenlive, whisper_cpp]
+      minutes: 120
+    paid:
+      microSteps:
+        - Import → auto-caption → trim silences → set chapters → export 1080p.
+        - Spot-check captions against the product UI on screen.
+      tools: [descript]
+      minutes: 60
+      giveUp: Subscription; verify auto-captions on technical terms.
+    free_not_os: [davinci_resolve]
+  s5:
+    goal: Readable thumb at phone size
+    commonMistakes: Tiny text; cluttered collage; title over 70 characters.
+    open_source:
+      microSteps:
+        - Make a 1280×720 canvas in GIMP; big text + product UI crop.
+        - "Draft a title ≤70 chars with the entity first (from {{headline}})."
+        - Export thumb.png; check readability on a phone.
+      tools: [gimp]
+      minutes: 40
+    paid:
+      microSteps:
+        - Pick a YouTube thumbnail template → paste text → export 1280×720.
+        - "Keep title ≤70 chars with entity first for {{headline}}."
+      tools: [canva_pro]
+      minutes: 20
+      giveUp: Subscription; template look-alike risk.
+    free_not_os: [canva_free]
+  s6:
+    goal: Video public or scheduled; reminder set
+    commonMistakes: Wrong visibility; no chapters in description; no +48 h check.
+    open_source:
+      microSteps:
+        - Upload final.mp4 + thumb.png to YouTube; paste description with chapter timestamps.
+        - "Title from the thumb step; set not made for kids; schedule or publish."
+        - "Calendar reminder +48 h titled with the test metric for {{headline}}."
+      tools: [youtube_app, calendar_app]
+      minutes: 30
+    paid:
+      microSteps:
+        - Schedule the upload from a social scheduler; paste description + chapters.
+        - Confirm the +48 h analytics reminder fires.
+      tools: [buffer]
+      minutes: 15
+      giveUp: Monthly scheduler cost for infrequent uploads.
+    free_not_os: []

@@ -6,8 +6,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -46,13 +44,20 @@ public class NewsRelevanceService {
             if (hiddenSources != null && row.sourceId() != null && hiddenSources.contains(row.sourceId())) {
                 continue;
             }
+            if (SignalRules.isFyi(row.signalType())
+                    || SignalRules.isFyi(SignalRules.detect(row.title()))) {
+                continue;
+            }
             if (pack != null) {
                 if (pack.domainDenied(row.domain()) || !pack.domainAllowed(row.domain())) {
                     continue;
                 }
                 String blob = ((row.title() == null ? "" : row.title()) + " "
                         + (row.summary() == null ? "" : row.summary()));
-                if (pack.keywordDenied(blob)) {
+                if (!pack.requireMatched(blob) || pack.keywordDenied(blob)) {
+                    continue;
+                }
+                if (pack.requireSignalMatch() && pack.matchedSignals(blob).isEmpty()) {
                     continue;
                 }
                 Scored scored = score(pack, row, when);
@@ -110,7 +115,8 @@ public class NewsRelevanceService {
         if (pack.signals() != null) {
             for (Map.Entry<String, List<String>> e : pack.signals().entrySet()) {
                 for (String term : e.getValue()) {
-                    if (term != null && !term.isBlank() && blob.contains(term.toLowerCase(Locale.ROOT))) {
+                    if (term != null && !term.isBlank()
+                            && NewsPackRegistry.Pack.termMatches(blob, term.toLowerCase(Locale.ROOT))) {
                         hit.add(e.getKey());
                         points += 18;
                         break;
@@ -158,12 +164,10 @@ public class NewsRelevanceService {
 
     static List<NewsRow> dedupeTitles(List<NewsRow> rows) {
         List<NewsRow> out = new ArrayList<>();
-        List<String> norms = new ArrayList<>();
         for (NewsRow row : rows) {
-            String norm = normalizeTitle(row.title());
             boolean dup = false;
-            for (String existing : norms) {
-                if (similar(norm, existing)) {
+            for (NewsRow existing : out) {
+                if (NewsTexts.nearDuplicate(existing.title(), row.title())) {
                     dup = true;
                     break;
                 }
@@ -171,47 +175,7 @@ public class NewsRelevanceService {
             if (dup) {
                 continue;
             }
-            norms.add(norm);
             out.add(row);
-        }
-        return out;
-    }
-
-    static String normalizeTitle(String title) {
-        if (title == null) {
-            return "";
-        }
-        return title.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9\\s]", " ").replaceAll("\\s+", " ").trim();
-    }
-
-    static boolean similar(String a, String b) {
-        if (a.isEmpty() || b.isEmpty()) {
-            return false;
-        }
-        if (a.equals(b)) {
-            return true;
-        }
-        Set<String> ta = tokens(a);
-        Set<String> tb = tokens(b);
-        if (ta.isEmpty() || tb.isEmpty()) {
-            return false;
-        }
-        int overlap = 0;
-        for (String t : ta) {
-            if (tb.contains(t)) {
-                overlap++;
-            }
-        }
-        double jaccard = (double) overlap / (ta.size() + tb.size() - overlap);
-        return jaccard >= 0.72;
-    }
-
-    static Set<String> tokens(String text) {
-        Set<String> out = new LinkedHashSet<>();
-        for (String part : text.split("\\s+")) {
-            if (part.length() >= 3) {
-                out.add(part);
-            }
         }
         return out;
     }

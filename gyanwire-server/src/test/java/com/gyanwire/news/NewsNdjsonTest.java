@@ -93,6 +93,46 @@ class NewsNdjsonTest {
         assertThat(log.flushedAt).hasSize(2);
     }
 
+    @Test
+    void clientDisconnectDuringFeedIsSwallowed() throws Exception {
+        DropAfterOpen drop = new DropAfterOpen();
+        NewsNdjson.writeDefault(drop, mapper, () -> {
+            Map<String, Object> data = new LinkedHashMap<>();
+            data.put("results", List.of(Map.of("title", "Only", "url", "https://a.example/only")));
+            data.put("label", "AI");
+            return data;
+        });
+        assertThat(drop.text()).contains("\"type\":\"open\"");
+        assertThat(drop.text()).doesNotContain("\"type\":\"error\"");
+    }
+
+    private static final class DropAfterOpen extends OutputStream {
+        private final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        private int lines;
+
+        @Override
+        public void write(int b) throws IOException {
+            if (b == '\n') {
+                lines++;
+                if (lines > 1) {
+                    throw new IOException("Broken pipe");
+                }
+            }
+            bytes.write(b);
+        }
+
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            for (int i = off; i < off + len; i++) {
+                write(b[i]);
+            }
+        }
+
+        String text() {
+            return bytes.toString(java.nio.charset.StandardCharsets.UTF_8);
+        }
+    }
+
     private static final class FlushLog extends OutputStream {
         private final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         private final List<Integer> flushedAt = new ArrayList<>();

@@ -7,7 +7,7 @@ steps:
     paidDurationMin: 10
     paidToolId: chatgpt_plus
     action: "Open the source article and write exactly 3 fact lines into facts.md. Each line must include a copied source sentence."
-    input: "NewsBrief facts"
+    input: "NewsBrief facts + video research sources"
     output: "facts.md (3 lines, each with source link)"
     doneWhen: "Each fact has a source sentence"
     toolId: notes_app
@@ -97,6 +97,7 @@ steps:
     doneWhen: "Length ≤55 s, captions on"
     toolId: shotcut
     altToolId: capcut
+    captionToolId: whisper_cpp
     ifStuck: "Drop cards on a single timeline over the voice-over. Skip fancy transitions."
     platforms: [all]
     scalable: true

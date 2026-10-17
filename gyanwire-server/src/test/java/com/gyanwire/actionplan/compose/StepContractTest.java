@@ -1,6 +1,7 @@
 package com.gyanwire.actionplan.compose;
 
 import com.gyanwire.actionplan.KnowledgeCatalog;
+import com.gyanwire.actionplan.StepDetailService;
 import com.gyanwire.actionplan.format.FormatRegistry;
 import com.gyanwire.actionplan.news.NewsBrief;
 
@@ -11,12 +12,14 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class StepContractTest {
 
     @Test
     void everyStepHasMandatoryFields() {
-        StepComposer composer = new StepComposer(new FormatRegistry(), new KnowledgeCatalog());
+        KnowledgeCatalog catalog = new KnowledgeCatalog();
+        StepComposer composer = new StepComposer(new FormatRegistry(), catalog, new StepDetailService(catalog));
         NewsBrief brief = new NewsBrief(
                 "n1",
                 "Anthropic launches Claude Haiku 5.5",
@@ -50,7 +53,63 @@ class StepContractTest {
             assertFalse(blank(step.get("ifStuck")));
             assertNotNull(step.get("startMin"));
             assertNotNull(step.get("durationMin"));
+            @SuppressWarnings("unchecked")
+            List<String> micro = (List<String>) step.get("microSteps");
+            assertNotNull(micro);
+            assertFalse(micro.isEmpty(), "step " + step.get("id") + " needs micro-steps");
         }
+        @SuppressWarnings("unchecked")
+        List<String> s1 = (List<String>) steps.get(0).get("microSteps");
+        assertTrue(s1.get(0).contains("https://example.com"));
+        assertTrue(s1.stream().anyMatch(line -> line.contains("facts.md")));
+        assertTrue(s1.stream().anyMatch(line -> line.toLowerCase().contains("hook fact")));
+    }
+
+    @Test
+    void youtubeLongStepsHaveMicroSteps() {
+        KnowledgeCatalog catalog = new KnowledgeCatalog();
+        FormatRegistry formats = new FormatRegistry();
+        StepComposer composer = new StepComposer(formats, catalog, new StepDetailService(catalog));
+        NewsBrief brief = new NewsBrief(
+                "n1",
+                "Anthropic launches Claude Haiku 5.5",
+                "https://example.com",
+                "example.com",
+                null,
+                List.of("Anthropic", "Claude Haiku 5.5"),
+                List.of(
+                        new NewsBrief.Fact("f1", "Anthropic launched Claude Haiku 5.5", "Anthropic launched Claude Haiku 5.5", "high"),
+                        new NewsBrief.Fact("f2", "It is fast and free", "It is fast and free", "high"),
+                        new NewsBrief.Fact("f3", "Students benefit", "Students benefit", "medium")),
+                List.of("developers"),
+                null);
+        Map<String, Object> plan = composer.compose(
+                brief,
+                Map.of("id", "a1", "oneLine", "Explain the launch", "forWhom", "developers", "whyNow", "fresh", "test", "100 views in 48 h"),
+                formats.require("youtube_long"),
+                480,
+                null,
+                true);
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> steps = (List<Map<String, Object>>) plan.get("steps");
+        for (Map<String, Object> step : steps) {
+            @SuppressWarnings("unchecked")
+            List<String> micro = (List<String>) step.get("microSteps");
+            assertNotNull(micro);
+            assertFalse(micro.isEmpty(), "step " + step.get("id") + " needs micro-steps");
+            @SuppressWarnings("unchecked")
+            List<String> paid = (List<String>) step.get("paidMicroSteps");
+            assertNotNull(paid);
+            assertFalse(paid.isEmpty(), "step " + step.get("id") + " needs paid micro-steps");
+        }
+        @SuppressWarnings("unchecked")
+        List<String> s1 = (List<String>) steps.stream()
+                .filter(step -> "s1".equals(step.get("id")))
+                .findFirst()
+                .orElseThrow()
+                .get("microSteps");
+        assertTrue(s1.get(0).contains("https://example.com"));
+        assertTrue(s1.stream().anyMatch(line -> line.contains("outline.md")));
     }
 
     private static boolean blank(Object value) {

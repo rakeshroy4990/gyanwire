@@ -3141,6 +3141,11 @@ a.btn {
   background: var(--canvas);
   color: var(--ink);
 }
+.action-plan-page__stage {
+  margin: 0.5rem 0 1rem;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
 .launch-plan__money {
   color: var(--ink-soft);
   font-size: 0.92rem;
@@ -3239,6 +3244,49 @@ a.btn {
   margin: 0;
 }
 
+.ideas-panel__research {
+  margin: 0 1.25rem 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent, #4f46e5) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent, #4f46e5) 18%, transparent);
+}
+
+.ideas-panel__research-status,
+.ideas-panel__research-kicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted, #64748b);
+}
+
+.ideas-panel__research-body,
+.ideas-panel__research-why {
+  margin: 0 0 0.5rem;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.ideas-panel__research-why {
+  color: var(--muted, #64748b);
+}
+
+.ideas-panel__research-facts {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.ideas-panel__research-facts a {
+  margin-left: 0.35rem;
+  font-size: 0.8rem;
+}
+
 .ideas-panel__list {
   display: grid;
   gap: var(--space-4);
@@ -3293,6 +3341,8 @@ a.btn {
   z-index: 2;
   left: 0;
   top: calc(100% + 0.35rem);
+  display: grid;
+  gap: 0.35rem;
   width: max(12rem, 100%);
   max-width: 18rem;
   padding: 0.55rem 0.7rem;
@@ -3303,6 +3353,19 @@ a.btn {
   font-size: 0.82rem;
   line-height: 1.35;
   box-shadow: 0 8px 24px color-mix(in oklab, var(--ink) 12%, transparent);
+}
+
+.evidence-chip__text {
+  display: block;
+}
+
+.evidence-chip__quote {
+  display: block;
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+  font-style: italic;
+  border-left: 2px solid var(--line);
+  padding-left: 0.45rem;
 }
 
 .plan-choice-sheet {
@@ -3365,6 +3428,12 @@ a.btn {
   font-weight: 650;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.plan-choice-sheet__hint {
+  margin: 0;
+  font-size: 0.85rem;
   color: var(--ink-soft);
 }
 

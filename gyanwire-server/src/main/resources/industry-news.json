@@ -476,32 +476,37 @@
   {
     "name": "Real Estate",
     "label": "Real Estate products",
-    "why": "Housing, commercial, PropTech, or RERA product move that just shipped.",
+    "why": "Flat, villa, and apartment prices in Indian cities — plus new project launches.",
     "queries": [
-      "housing OR apartment OR villa project launches India when:30d",
-      "PropTech OR real estate app launches OR unveils feature India",
-      "RERA OR home loan OR stamp duty product OR rule update India"
+      "flat prices OR apartment prices OR villa prices OR property prices OR per sq ft India Mumbai Delhi Bengaluru when:7d",
+      "apartment OR villa OR flat new project launch OR opens booking India when:7d",
+      "property prices rise OR fall OR capital values India -home loan -pay commission when:7d"
     ],
     "blockGeneric": [
       "share market live",
       "stock market today",
-      "nifty closes"
+      "nifty closes",
+      "sensex",
+      "mutual fund",
+      "pay commission",
+      "home loan interest",
+      "repo rate"
     ],
     "subs": [
       {
         "name": "Residential",
         "label": "Residential products",
-        "why": "Newest residential project or housing product launch.",
+        "why": "Flat and villa prices plus residential project launches by city.",
         "queries": [
-          "residential apartment villa housing project launch India",
-          "housing opens booking OR unveils project India",
-          "home loan EMI stamp duty housing update India"
+          "flat prices OR apartment prices OR villa prices India",
+          "apartment villa housing project launch OR opens booking India",
+          "per sq ft OR psf residential property prices India"
         ]
       },
       {
         "name": "Commercial",
         "label": "Commercial products",
-        "why": "Newest commercial, office, warehouse, or REIT move.",
+        "why": "Commercial, office, warehouse, or REIT launch and leasing moves.",
         "queries": [
           "commercial office warehouse mall leasing launch India",
           "REIT commercial real estate listing OR funding India",
@@ -511,29 +516,29 @@
       {
         "name": "PropTech",
         "label": "PropTech products",
-        "why": "Newest PropTech app or brokerage feature launch.",
+        "why": "PropTech listing, brokerage, or buyer-offer feature launches.",
         "queries": [
           "PropTech property app brokerage launches OR rolls out India",
-          "home search OR listing platform feature launch India",
-          "PropTech startup funding OR product update India"
+          "Magicbricks OR 99acres OR Housing.com offer OR feature launch India",
+          "home search listing platform buy offer India"
         ]
       },
       {
         "name": "Construction",
         "label": "Construction products",
-        "why": "Newest construction material or prefab product move.",
+        "why": "Construction or prefab moves tied to housing projects.",
         "queries": [
-          "construction cement prefab building material product launch India",
-          "building material price OR shortage OR product update India",
-          "construction tech OR prefab housing product news India"
+          "construction prefab housing apartment project launch India",
+          "building material housing project product update India",
+          "construction tech prefab housing product news India"
         ]
       },
       {
         "name": "RERA",
         "label": "RERA products",
-        "why": "Newest RERA rule, clearance, or compliance product signal.",
+        "why": "RERA rule, clearance, or registration signal for housing projects.",
         "queries": [
-          "RERA notification guidelines order approves India",
+          "RERA notification guidelines order approves housing India",
           "real estate regulator registration rule update India",
           "RERA penalty OR clearance housing project India"
         ]

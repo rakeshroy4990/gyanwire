@@ -4,7 +4,9 @@ import com.gyanwire.actionplan.NewsIdeasService;
 import com.gyanwire.auth.security.AuthUserPrincipal;
 import com.gyanwire.auth.security.JwtAuthenticationFilter;
 import com.gyanwire.config.ApiExceptionHandler;
+import com.gyanwire.ideas.IdeaNdjson;
 import com.gyanwire.ideas.IdeaService;
+import com.gyanwire.ideas.IdeaSink;
 import com.gyanwire.persistence.FlowStore;
 import com.gyanwire.plans.LearningPlanService;
 import com.gyanwire.profile.ProfileService;
@@ -31,6 +33,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -93,16 +96,21 @@ class ProductControllerTest {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(new AuthUserPrincipal(id, "a@gyanwire.com", "user"), null)
         );
-        when(ideas.fromNews(eq(id), any())).thenReturn(Map.of(
-                "runId", "run-1",
-                "cached", false,
-                "pipeline", "idea-pipeline.v2",
-                "gate", Map.of("proceed", true),
-                "ideas", List.of(
-                        Map.of("id", "1", "title", "First idea", "score", 80),
-                        Map.of("id", "2", "title", "Second idea", "score", 70)
-                )
-        ));
+        doAnswer(invocation -> {
+            IdeaSink sink = invocation.getArgument(2);
+            Map<String, Object> data = Map.of(
+                    "runId", "run-1",
+                    "cached", false,
+                    "pipeline", "idea-pipeline.v2",
+                    "gate", Map.of("proceed", true),
+                    "ideas", List.of(
+                            Map.of("id", "1", "title", "First idea", "score", 80),
+                            Map.of("id", "2", "title", "Second idea", "score", 70)
+                    )
+            );
+            IdeaNdjson.emitMap(sink, data);
+            return data;
+        }).when(ideas).fromNews(eq(id), any(), any());
 
         String body = mvc.perform(post("/api/ideas/from-news")
                         .contentType(MediaType.APPLICATION_JSON)

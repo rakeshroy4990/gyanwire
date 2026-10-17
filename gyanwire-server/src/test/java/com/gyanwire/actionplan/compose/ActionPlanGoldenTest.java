@@ -1,6 +1,7 @@
 package com.gyanwire.actionplan.compose;
 
 import com.gyanwire.actionplan.KnowledgeCatalog;
+import com.gyanwire.actionplan.StepDetailService;
 import com.gyanwire.actionplan.format.FormatRegistry;
 import com.gyanwire.actionplan.format.FormatSpec;
 import com.gyanwire.actionplan.lint.PlanLinter;
@@ -22,7 +23,7 @@ class ActionPlanGoldenTest {
     void haikuShortVerticalIsTimeBoxedAndClean() {
         FormatRegistry formats = new FormatRegistry();
         KnowledgeCatalog catalog = new KnowledgeCatalog();
-        StepComposer composer = new StepComposer(formats, catalog);
+        StepComposer composer = new StepComposer(formats, catalog, new StepDetailService(catalog));
         PlanLinter linter = new PlanLinter(catalog);
 
         NewsBrief brief = new NewsBrief(
@@ -90,6 +91,27 @@ class ActionPlanGoldenTest {
         assertFalse(defaultToolNames(steps).contains("thiefmd"));
         assertFalse(defaultToolNames(steps).contains("fountain"));
         assertFalse(defaultToolNames(steps).contains("jasper"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> caption = (Map<String, Object>) steps.stream()
+                .filter(step -> "s6".equals(step.get("id")))
+                .findFirst()
+                .orElseThrow()
+                .get("captionTool");
+        assertEquals("whisper_cpp", caption.get("id"));
+        assertEquals("open_source", caption.get("tier"));
+        assertEquals(true, caption.get("openSource"));
+
+        @SuppressWarnings("unchecked")
+        List<String> s1Micro = (List<String>) steps.stream()
+                .filter(step -> "s1".equals(step.get("id")))
+                .findFirst()
+                .orElseThrow()
+                .get("microSteps");
+        assertTrue(s1Micro.get(0).contains("https://example.com/anthropic-haiku"));
+        assertTrue(s1Micro.get(0).contains("publisher article"));
+        assertTrue(s1Micro.get(1).contains("name, number or date"));
+        assertTrue(s1Micro.get(2).contains("facts.md"));
+        assertTrue(s1Micro.get(3).toLowerCase(Locale.ROOT).contains("hook fact"));
 
         @SuppressWarnings("unchecked")
         Map<String, Object> money = (Map<String, Object>) plan.get("money");
@@ -97,6 +119,40 @@ class ActionPlanGoldenTest {
         assertTrue(String.valueOf(money.get("claim")).toLowerCase(Locale.ROOT).contains("not instant"));
 
         assertTrue(lint.passed(), String.valueOf(lint.errors()));
+    }
+
+    @Test
+    void youtubeEditStepLinksWhisperCpp() {
+        FormatRegistry formats = new FormatRegistry();
+        KnowledgeCatalog catalog = new KnowledgeCatalog();
+        StepComposer composer = new StepComposer(formats, catalog, new StepDetailService(catalog));
+        NewsBrief brief = new NewsBrief(
+                "n-yt",
+                "Anthropic launches Claude Haiku 5.5",
+                "https://example.com",
+                "example.com",
+                null,
+                List.of("Anthropic"),
+                List.of(new NewsBrief.Fact("f1", "Anthropic launched Claude Haiku 5.5", "Anthropic launched Claude Haiku 5.5", "high")),
+                List.of("developers"),
+                null);
+        Map<String, Object> plan = composer.compose(
+                brief,
+                Map.of("id", "a1", "oneLine", "Explain the launch", "forWhom", "developers", "whyNow", "fresh", "test", "100 views in 48 h"),
+                formats.require("youtube_long"),
+                480,
+                null,
+                true);
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> steps = (List<Map<String, Object>>) plan.get("steps");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> caption = (Map<String, Object>) steps.stream()
+                .filter(step -> "s4".equals(step.get("id")))
+                .findFirst()
+                .orElseThrow()
+                .get("captionTool");
+        assertEquals("whisper_cpp", caption.get("id"));
+        assertEquals("Whisper.cpp", caption.get("name"));
     }
 
     private static String defaultToolNames(List<Map<String, Object>> steps) {

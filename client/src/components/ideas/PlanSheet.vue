@@ -84,6 +84,7 @@ function confirm() {
 
       <fieldset class="plan-choice-sheet__group">
         <legend>Budget</legend>
+        <p class="plan-choice-sheet__hint">How much time you can spend on this plan</p>
         <div class="plan-choice-sheet__options">
           <label v-for="opt in budgets" :key="opt.value" class="plan-choice-sheet__option">
             <input v-model.number="form.budgetMinutes" type="radio" name="budget" :value="opt.value" />

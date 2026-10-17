@@ -57,6 +57,20 @@ class SignalRulesTest {
     }
 
     @Test
+    void dailyGoldCityRateRoundupsAreFyi() {
+        assertThat(SignalRules.detect(
+                "Today’s Gold Rate in India October 16: Gold prices steady in Coimbatore, Nagpur, Visakhapatnam, Surat, Jaipur"))
+                .isEqualTo("fyi");
+        assertThat(SignalRules.detect(
+                "Today's Gold Rate in India October 16: Gold prices steady in Delhi, Mumbai, Kolkata, Chennai, Bengaluru"))
+                .isEqualTo("fyi");
+        assertThat(SignalRules.detect("Silver rate in India holds steady as jewellery demand softens"))
+                .isEqualTo("fyi");
+        assertThat(SignalRules.detect("Broker cuts equity trading fees after SEBI circular"))
+                .isEqualTo("regulation");
+    }
+
+    @Test
     void plantInspectionObservationsAreFyi() {
         assertThat(SignalRules.detect(
                 "Dr Reddy’s Laboratories receives two observations for Andhra Pradesh facility"))

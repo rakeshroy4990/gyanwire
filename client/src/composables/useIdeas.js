@@ -1,6 +1,14 @@
 import { nextTick, ref } from 'vue';
 import { requestIdeas, requestLaunchPlan, saveIdea } from '../services/product.service.js';
 
+const STAGE_LABELS = {
+  signals: 'Reading the story',
+  gate: 'Checking for a real buyer',
+  angles: 'Finding angles',
+  'idea-build': 'Building offers',
+  critic: 'Reviewing offers',
+};
+
 function anglePriority(row) {
   const angle = String(row?.angleType || row?.format || '').toLowerCase();
   if (angle === 'comparison_content' || angle.includes('social')) return 0;
@@ -26,6 +34,7 @@ export function useIdeas() {
   const removed = ref([]);
   const pipeline = ref(false);
   const emptyReason = ref('');
+  const stageLabel = ref('');
   const launchPlan = ref(null);
   const planError = ref('');
   const planLoadingId = ref('');
@@ -49,11 +58,14 @@ export function useIdeas() {
     removed.value = [];
     // Keep last pipeline mode until meta arrives so the page title does not flash.
     emptyReason.value = '';
+    stageLabel.value = 'Scoring ideas';
     launchPlan.value = null;
     planError.value = '';
     try {
       const data = await requestIdeas(body, async (event) => {
-        if (event.type === 'meta') {
+        if (event.type === 'status' && event.stage) {
+          stageLabel.value = STAGE_LABELS[event.stage] || 'Scoring ideas';
+        } else if (event.type === 'meta') {
           applyIdeaFrame(event.data);
         } else if (event.type === 'item' && event.item) {
           const row = event.item;
@@ -75,8 +87,10 @@ export function useIdeas() {
     } catch (err) {
       if (err.status === 402) limitReached.value = true;
       error.value = err.message || 'Could not build ideas.';
+      // Keep any cards that already arrived on the stream.
     } finally {
       loading.value = false;
+      stageLabel.value = '';
     }
   }
 
@@ -120,6 +134,7 @@ export function useIdeas() {
     removed,
     pipeline,
     emptyReason,
+    stageLabel,
     launchPlan,
     planError,
     planLoadingId,

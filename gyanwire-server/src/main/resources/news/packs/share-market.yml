@@ -17,6 +17,12 @@ deny:
     - horoscope today
     - cricket score
     - gossip
+    - gold rate
+    - silver rate
+    - gold prices steady
+    - silver prices steady
+    - gold price today
+    - silver price today
 signals:
   launch: [launches, introduces, rolls out, announces, unveils]
   money: [pricing, free tier, funding, raises, acquires, subsidy, fee]

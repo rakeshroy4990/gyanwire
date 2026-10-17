@@ -60,7 +60,6 @@ async function onOpen(stepKey) {
 <template>
   <article v-if="actionPlan" class="launch-plan launch-plan--action">
     <PlanCard :plan="plan" />
-    <p v-if="plan.lint && plan.lint.passed === false" class="action-plan-card__warn">Check this plan</p>
     <p v-if="plan.money?.claim" class="launch-plan__money">{{ plan.money.claim }}</p>
     <PathSwitch :model-value="path" @update:model-value="setPath" />
     <PlanProgress :progress="progress" :path-totals="pathTotals || plan.pathTotals" />

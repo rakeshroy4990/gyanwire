@@ -1,6 +1,7 @@
 package com.gyanwire.actionplan.compose;
 
 import com.gyanwire.actionplan.KnowledgeCatalog;
+import com.gyanwire.actionplan.StepDetailService;
 import com.gyanwire.actionplan.format.FormatRegistry;
 import com.gyanwire.actionplan.format.FormatSpec;
 import com.gyanwire.actionplan.news.NewsBrief;
@@ -10,7 +11,6 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -19,10 +19,12 @@ public class StepComposer {
 
     private final FormatRegistry formats;
     private final KnowledgeCatalog catalog;
+    private final StepDetailService stepDetails;
 
-    public StepComposer(FormatRegistry formats, KnowledgeCatalog catalog) {
+    public StepComposer(FormatRegistry formats, KnowledgeCatalog catalog, StepDetailService stepDetails) {
         this.formats = formats;
         this.catalog = catalog;
+        this.stepDetails = stepDetails;
     }
 
     public Map<String, Object> compose(
@@ -51,7 +53,7 @@ public class StepComposer {
 
         List<Map<String, Object>> steps = new ArrayList<>();
         for (Map<String, Object> row : rawSteps) {
-            steps.add(materialize(row, filled));
+            steps.add(materialize(row, filled, spec.id()));
         }
 
         String moneyRuleId = spec.moneyRuleId().isBlank() ? "yt_shorts_ypp" : spec.moneyRuleId();
@@ -120,9 +122,10 @@ public class StepComposer {
         return plan;
     }
 
-    private Map<String, Object> materialize(Map<String, Object> row, Map<String, String> slots) {
+    private Map<String, Object> materialize(Map<String, Object> row, Map<String, String> slots, String formatId) {
         Map<String, Object> step = new LinkedHashMap<>();
-        step.put("id", str(row.get("id")));
+        String stepId = str(row.get("id"));
+        step.put("id", stepId);
         step.put("order", intVal(row.get("order"), 0));
         step.put("title", str(row.get("title")));
         step.put("startMin", intVal(row.get("startMin"), 0));
@@ -143,10 +146,16 @@ public class StepComposer {
         if (!alt.isBlank()) {
             step.put("altTool", toolRef(alt));
         }
+        String caption = str(row.get("captionToolId"));
+        if (!caption.isBlank()) {
+            step.put("captionTool", toolRef(caption));
+        }
         step.put("ifStuck", str(row.get("ifStuck")));
         step.put("platforms", row.get("platforms") instanceof List<?> list ? list : List.of("all"));
         double gain = osMin <= 0 ? 0 : Math.round(((osMin - paidMin) * 1000.0 / osMin)) / 10.0;
         step.put("gain", Map.of("pct", gain, "basis", "estimate", "label", "estimate"));
+        step.put("microSteps", fillAll(stepDetails.microSteps(formatId, stepId, "open_source"), slots));
+        step.put("paidMicroSteps", fillAll(stepDetails.microSteps(formatId, stepId, "paid"), slots));
         return step;
     }
 
@@ -254,6 +263,9 @@ public class StepComposer {
         String f1 = facts.size() > 0 ? facts.get(0).text() : brief.headline();
         String f2 = facts.size() > 1 ? facts.get(1).text() : "Who it affects is in the article.";
         String f3 = facts.size() > 2 ? facts.get(2).text() : "Here is why it matters today.";
+        slots.putIfAbsent("publisherUrl", brief.publisherUrl() == null ? "" : brief.publisherUrl());
+        slots.putIfAbsent("headline", brief.headline() == null ? "" : brief.headline());
+        slots.putIfAbsent("publisher", brief.publisher() == null ? "" : brief.publisher());
         slots.putIfAbsent("hook", entity + ": " + trimWords(f1, 12));
         slots.putIfAbsent("point_1", trimWords(f1, 20));
         slots.putIfAbsent("point_2", trimWords(f2, 20));
@@ -296,6 +308,17 @@ public class StepComposer {
                 slots.put("hook", trimWords(slots.getOrDefault("hook", ""), 16));
             }
         }
+    }
+
+    private static List<String> fillAll(List<String> lines, Map<String, String> slots) {
+        if (lines == null || lines.isEmpty()) {
+            return List.of();
+        }
+        List<String> out = new ArrayList<>(lines.size());
+        for (String line : lines) {
+            out.add(fill(line, slots));
+        }
+        return out;
     }
 
     private static String fill(String text, Map<String, String> slots) {

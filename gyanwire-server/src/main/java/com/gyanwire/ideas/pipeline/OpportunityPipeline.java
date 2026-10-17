@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gyanwire.actionplan.ActionPlanPipeline;
 import com.gyanwire.digests.DigestDeduper;
+import com.gyanwire.ideas.IdeaNdjson;
+import com.gyanwire.ideas.IdeaSink;
 import com.gyanwire.news.SignalRules;
 import com.gyanwire.persistence.FlowStore;
 import com.gyanwire.research.ResearchException;
@@ -57,6 +59,16 @@ public class OpportunityPipeline {
     }
 
     public Map<String, Object> fromNews(UUID userId, Map<String, Object> body, Map<String, Object> profile) {
+        return fromNews(userId, body, profile, IdeaSink.noop());
+    }
+
+    public Map<String, Object> fromNews(
+            UUID userId,
+            Map<String, Object> body,
+            Map<String, Object> profile,
+            IdeaSink sink
+    ) {
+        IdeaSink out = sink == null ? IdeaSink.noop() : sink;
         String url = String.valueOf(body.getOrDefault("url", "")).trim();
         String title = String.valueOf(body.getOrDefault("title", "News")).trim();
         String description = String.valueOf(body.getOrDefault("description", "")).trim();
@@ -76,7 +88,9 @@ public class OpportunityPipeline {
         }
         if (isFyiNews(signalType, title, description)) {
             PipelineLog.gate(fyiGate());
-            return fyiResponse();
+            Map<String, Object> fyi = fyiResponse();
+            IdeaNdjson.emitMap(out, fyi);
+            return fyi;
         }
         String urlHash = DigestDeduper.urlHash(url);
         String persona = String.valueOf(profile.getOrDefault("persona", "working"));
@@ -85,73 +99,114 @@ public class OpportunityPipeline {
                 + ":" + profile.getOrDefault("hoursPerWeek", 10);
         UUID existing = store.findIdeaRun(key);
         if (existing != null && !force) {
-            return cached(userId, existing, title, description, industry);
+            Map<String, Object> hit = cached(userId, existing, title, description, industry);
+            IdeaNdjson.emitMap(out, hit);
+            return hit;
         }
 
+        UUID runId = existing == null ? UUID.randomUUID() : existing;
+        if (existing != null) {
+            store.deleteIdeasForRun(userId, existing);
+        } else {
+            store.insertIdeaRun(runId, userId, url, urlHash, title, industry, "{}", VERSION, key);
+        }
+
+        IdeaScoreCalculator calculator = new IdeaScoreCalculator(weights);
+        List<ScoredIdea> socialSeed = SocialMediaIdea.ensure(
+                List.of(), calculator, title, description, null);
+        List<Map<String, Object>> rows = new ArrayList<>(persist(userId, runId, industry, null, socialSeed, out));
+
+        out.status("signals");
         NewsSignals signals = new ExtractSignalsStage().run(client, userId, title, description);
         PipelineLog.signals(signals);
         if (signals == null) {
             PipelineLog.unread("Could not read a usable signal from this article.");
-            return saveRun(
-                    userId, existing, url, urlHash, title, description, industry, key,
-                    null, socialGate(), List.of(), List.of());
+            return finishRun(userId, runId, signals, socialGate(), List.of(), rows, out);
         }
+
+        out.status("gate");
         OpportunityGate gate = new GateStage(mapper).run(client, userId, signals);
         PipelineLog.gate(gate);
         if (gate == null) {
             PipelineLog.unread("Could not read a usable signal from this article.");
-            return saveRun(
-                    userId, existing, url, urlHash, title, description, industry, key,
-                    signals, socialGate(), List.of(), List.of());
+            return finishRun(userId, runId, signals, socialGate(), List.of(), rows, out);
         }
 
         List<ScoredIdea> scored = List.of();
         List<Removal> removed = new ArrayList<>();
+        OpportunityGate responseGate = gate;
         if (gate.proceed()) {
+            emitMeta(out, runId, false, gate, removed, "");
+            out.status("angles");
             List<String> angles = new AngleStage(mapper).run(client, userId, signals);
             PipelineLog.angles(angles);
             if (!angles.isEmpty()) {
+                out.status("idea-build");
                 ParsedIdeas built = new IdeaBuilderStage(mapper).run(client, userId, signals, angles, profile);
                 removed.addAll(built.rejected());
+                out.status("critic");
                 CriticResult critic = new CriticStage(mapper).run(client, userId, signals, built.valid());
                 removed.addAll(critic.removed());
                 scored = new ScoreStage(weights).run(critic.kept(), signals, profile);
             }
+        } else {
+            responseGate = socialGate();
+            emitMeta(out, runId, false, responseGate, removed, "");
         }
-        if (!gate.proceed()) {
-            gate = socialGate();
-        }
-        return saveRun(userId, existing, url, urlHash, title, description, industry, key, signals, gate, removed, scored);
+
+        List<ScoredIdea> extras = withoutSocial(scored);
+        rows.addAll(persist(userId, runId, industry, signals, extras, out));
+        return finishRun(userId, runId, signals, responseGate, removed, rows, out);
     }
 
-    private Map<String, Object> saveRun(
+    private Map<String, Object> finishRun(
             UUID userId,
-            UUID existing,
-            String url,
-            String urlHash,
-            String title,
-            String description,
-            String industry,
-            String key,
+            UUID runId,
             NewsSignals signals,
             OpportunityGate gate,
             List<Removal> removed,
-            List<ScoredIdea> scored
+            List<Map<String, Object>> rows,
+            IdeaSink sink
     ) {
-        scored = SocialMediaIdea.ensure(scored, new IdeaScoreCalculator(weights), title, description, signals);
-        String emptyReason = scored.isEmpty() ? "No idea was specific enough to show." : "";
-        UUID runId = existing == null ? UUID.randomUUID() : existing;
-        String payload = writePayload(signals, gate, removed);
-        if (existing != null) {
-            store.deleteIdeasForRun(userId, existing);
-            store.updateIdeaRunSignals(userId, existing, payload);
-        } else {
-            store.insertIdeaRun(runId, userId, url, urlHash, title, industry, payload, VERSION, key);
-        }
-        List<Map<String, Object>> rows = persist(userId, runId, industry, signals, scored);
+        String emptyReason = rows.isEmpty() ? "No idea was specific enough to show." : "";
+        store.updateIdeaRunSignals(userId, runId, writePayload(signals, gate, removed));
         usage.recordUsage(userId, null, "idea", java.math.BigDecimal.ZERO);
         PipelineLog.done(runId, rows.size(), false, emptyReason);
-        return response(runId, rows, false, gate, removed, emptyReason);
+        Map<String, Object> body = response(runId, rows, false, gate, removed, emptyReason);
+        // Meta may already have been sent with the gate; refresh emptyReason and removed.
+        sink.meta(metaFrame(body));
+        return body;
+    }
+
+    private static List<ScoredIdea> withoutSocial(List<ScoredIdea> scored) {
+        if (scored == null || scored.isEmpty()) {
+            return List.of();
+        }
+        List<ScoredIdea> out = new ArrayList<>();
+        for (ScoredIdea item : scored) {
+            if (item != null && item.idea() != null && "comparison_content".equals(item.idea().angleType())) {
+                continue;
+            }
+            out.add(item);
+        }
+        return out;
+    }
+
+    private void emitMeta(
+            IdeaSink sink,
+            UUID runId,
+            boolean cached,
+            OpportunityGate gate,
+            List<?> removed,
+            String emptyReason
+    ) {
+        sink.meta(metaFrame(response(runId, List.of(), cached, gate, removed, emptyReason)));
+    }
+
+    private static Map<String, Object> metaFrame(Map<String, Object> body) {
+        Map<String, Object> frame = new LinkedHashMap<>(body);
+        frame.remove("ideas");
+        return frame;
     }
 
     private static OpportunityGate socialGate() {
@@ -234,7 +289,7 @@ public class OpportunityPipeline {
         if (!SocialMediaIdea.presentRows(ideas)) {
             List<ScoredIdea> added = SocialMediaIdea.ensure(
                     List.of(), new IdeaScoreCalculator(weights), title, description, null);
-            ideas.addAll(0, persist(userId, runId, industry, null, added));
+            ideas.addAll(0, persist(userId, runId, industry, null, added, IdeaSink.noop()));
         }
         OpportunityGate gate = null;
         List<Map<String, Object>> removed = List.of();
@@ -259,8 +314,19 @@ public class OpportunityPipeline {
         return response(runId, ideas, true, gate, removed, emptyReason);
     }
 
-    private List<Map<String, Object>> persist(UUID userId, UUID runId, String industry, NewsSignals signals, List<ScoredIdea> scored) {
+    private List<Map<String, Object>> persist(
+            UUID userId,
+            UUID runId,
+            String industry,
+            NewsSignals signals,
+            List<ScoredIdea> scored,
+            IdeaSink sink
+    ) {
         List<Map<String, Object>> rows = new ArrayList<>();
+        if (scored == null) {
+            return rows;
+        }
+        IdeaSink out = sink == null ? IdeaSink.noop() : sink;
         for (ScoredIdea item : scored) {
             UUID ideaId = UUID.randomUUID();
             Map<String, Object> row = toRow(item, signals, industry);
@@ -280,6 +346,7 @@ public class OpportunityPipeline {
             }
             row.put("id", ideaId.toString());
             rows.add(row);
+            out.item(row);
         }
         return rows;
     }

@@ -5,15 +5,15 @@ steps:
     commonMistakes: Using aggregator blurbs instead of the publisher article.
     open_source:
       microSteps:
-        - Open the publisher article, not the aggregator link.
+        - "Open the publisher article, not the aggregator link: {{publisherUrl}}"
         - Copy 3 sentences that contain a name, number or date.
-        - Paste into facts.md, one line each with the article URL.
+        - "Paste into facts.md, one line each with the article URL ({{publisherUrl}})."
         - Mark the single most surprising one as the hook fact.
       tools: [notes_app, text_editor]
       minutes: 15
     paid:
       microSteps:
-        - Paste the article into a paid AI chat and ask for claims with quotes.
+        - "Paste the article ({{publisherUrl}}) into a paid AI chat and ask for claims with quotes."
         - Check each quote against the page.
         - Keep three verified lines in facts.md.
       tools: [chatgpt_plus]
@@ -25,16 +25,18 @@ steps:
     commonMistakes: Hook without the product/company name.
     open_source:
       microSteps:
-        - Hook (≤3 s): entity + hook fact in one sentence.
-        - Context: who is affected, one sentence.
-        - Three points, one fact each, ≤15 words.
-        - CTA: one action. Count words.
+        - "Hook (≤3 s): {{hook}}"
+        - "Context: who is affected — write one sentence from the article."
+        - "Point 1 (≤15 words): {{point_1}}"
+        - "Point 2 (≤15 words): {{point_2}}"
+        - "Point 3 (≤15 words): {{point_3}}"
+        - "CTA: {{cta}}. Count words (90–130)."
       tools: [text_editor]
       minutes: 30
     paid:
       microSteps:
-        - Run a saved prompt on facts.md that returns script + on-screen text + 3 captions.
-        - Edit for voice and accuracy.
+        - "Run a saved prompt on facts.md that returns script + on-screen text + 3 captions for {{headline}}."
+        - "Edit for voice and accuracy; keep {{hook}} as the opening."
       tools: [chatgpt_plus]
       minutes: 15
       giveUp: Prompt lock-in; edit carefully for accuracy.
@@ -101,8 +103,8 @@ steps:
       microSteps:
         - New 9:16 project, 1080×1920, 30 fps.
         - Place voiceover.wav; sync each card to spoken lines.
-        - Captions via Whisper + Subtitle Edit; music ≤ −20 dB if licensed.
-      tools: [shotcut, kdenlive]
+        - Transcribe voiceover.wav locally with Whisper.cpp, then time the lines in Subtitle Edit. Music ≤ −20 dB if licensed.
+      tools: [shotcut, kdenlive, whisper_cpp]
       minutes: 40
     paid:
       microSteps:
@@ -134,12 +136,15 @@ steps:
     open_source:
       microSteps:
         - Export H.264 MP4, 1080×1920, ≤60 s.
-        - YouTube title ≤70 chars with entity first; Instagram hook + 3–5 hashtags; LinkedIn insight + question.
+        - "YouTube caption: {{caption_youtube}}"
+        - "Instagram caption: {{caption_instagram}}"
+        - "LinkedIn caption: {{caption_linkedin}}"
       tools: [shotcut, text_editor]
       minutes: 20
     paid:
       microSteps:
-        - AI drafts three captions from facts.md; you edit once.
+        - "AI drafts three captions from facts.md for {{headline}}; you edit once."
+        - "Keep YouTube as {{caption_youtube}} unless the edit is clearer."
       tools: [chatgpt_plus]
       minutes: 10
       giveUp: Generic AI captions need a human pass.
@@ -149,14 +154,14 @@ steps:
     commonMistakes: Wrong aspect or forgetting #Shorts.
     open_source:
       microSteps:
-        - YouTube Studio: vertical ≤60 s, title + #Shorts, not made for kids, schedule.
-        - Instagram Reel: cover = hook card; paste caption.
-        - LinkedIn: new post → video; hook as first line.
+        - "YouTube Studio: vertical ≤60 s, title {{title}} + #Shorts, not made for kids, schedule."
+        - "Instagram Reel: cover = hook card; paste {{caption_instagram}}."
+        - "LinkedIn: new post → video; first line {{hook}}."
       tools: [youtube_app, instagram_app]
       minutes: 20
     paid:
       microSteps:
-        - Scheduler posts to all three with per-platform captions from one screen.
+        - "Scheduler posts to all three with title {{title}} and per-platform captions from one screen."
       tools: [buffer]
       minutes: 10
       giveUp: Monthly scheduler cost.
@@ -166,7 +171,7 @@ steps:
     commonMistakes: Reminder without the three links.
     open_source:
       microSteps:
-        - Calendar event at +48 h titled with the test metric.
+        - "Calendar event at +48 h titled with the test metric for {{headline}}."
         - Paste the three video links.
         - At the reminder: record views / AVD / profile visits; mark worked or not.
       tools: [calendar_app]

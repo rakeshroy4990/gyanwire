@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import ToolChip from './ToolChip.vue';
 import GainBadge from './GainBadge.vue';
+import MicroSteps from './MicroSteps.vue';
 
 const props = defineProps({
   step: { type: Object, required: true },
@@ -20,6 +21,16 @@ const durationMin = computed(() => {
 const activeTool = computed(() => {
   if (props.path === 'paid' && props.step.paidTool) return props.step.paidTool;
   return props.step.tool;
+});
+
+const microSteps = computed(() => {
+  if (props.path === 'paid' && Array.isArray(props.step.paidMicroSteps) && props.step.paidMicroSteps.length) {
+    return props.step.paidMicroSteps;
+  }
+  if (Array.isArray(props.step.microSteps) && props.step.microSteps.length) {
+    return props.step.microSteps;
+  }
+  return [];
 });
 
 const gain = computed(() => props.step.gain || null);
@@ -76,8 +87,8 @@ function onKey(e) {
       </div>
     </header>
 
-    <p class="step-card__label">Do this</p>
-    <p>{{ step.action }}</p>
+    <p class="step-card__label">Micro-steps</p>
+    <MicroSteps :steps="microSteps" />
 
     <p class="step-card__label">Input → Output</p>
     <p>{{ step.input }} → {{ step.output }}</p>
@@ -88,6 +99,7 @@ function onKey(e) {
     <p class="step-card__label">Tool</p>
     <div class="step-card__tools">
       <ToolChip :tool="activeTool" />
+      <ToolChip v-if="path !== 'paid' && step.captionTool" :tool="step.captionTool" />
       <ToolChip v-if="path !== 'paid' && step.altTool" :tool="step.altTool" alt />
       <ToolChip v-if="path === 'mix' && step.paidTool" :tool="step.paidTool" alt />
     </div>

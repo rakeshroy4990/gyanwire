@@ -18,6 +18,16 @@ describe('newsFyi', () => {
     ])).toHaveLength(1);
   });
 
+  it('drops daily gold city rate roundups', () => {
+    const title =
+      'Today’s Gold Rate in India October 16: Gold prices steady in Delhi, Mumbai, Kolkata, Chennai, Bengaluru';
+    expect(isFyiNewsItem({ title, signalType: 'pricing' })).toBe(true);
+    expect(withoutFyiNews([
+      { title, signalType: 'pricing' },
+      { title: 'Zerodha launches a new mutual fund screener', signalType: 'launch' },
+    ])).toHaveLength(1);
+  });
+
   it('drops plant inspection observations', () => {
     const title = 'Dr Reddy’s Laboratories receives two observations for Andhra Pradesh facility';
     expect(isFyiNewsItem({ title, signalType: 'other' })).toBe(true);

@@ -1,11 +1,20 @@
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import {
-  createActionPlan,
   fetchActionPlan,
   fetchStepDetail,
   postTiming,
   toggleActionPlanStep,
 } from '../services/actionPlan.service.js';
+import {
+  clearSession,
+  matchesPlanId,
+  sessionActive,
+  sessionError,
+  sessionPlan,
+  sessionStage,
+  stageLabel,
+  startCreate,
+} from './actionPlanSession.js';
 
 export function useActionPlan() {
   const plan = ref(null);
@@ -13,6 +22,8 @@ export function useActionPlan() {
   const error = ref('');
   const pasteRequired = ref(false);
   const limitReached = ref(false);
+  const buildStopped = ref(false);
+  const stage = ref('');
 
   const path = ref('open_source');
   const openStepKey = ref(null);
@@ -26,6 +37,10 @@ export function useActionPlan() {
   const steps = computed(() => (Array.isArray(plan.value?.steps) ? plan.value.steps : []));
   const doneCount = computed(() => steps.value.filter((s) => s.done).length);
   const pathTotals = computed(() => plan.value?.pathTotals || null);
+  const buildStatus = computed(() => String(plan.value?.buildStatus || 'ready'));
+  const isBuilding = computed(() => buildStatus.value === 'building');
+  const isReady = computed(() => buildStatus.value === 'ready' || !plan.value?.buildStatus);
+  const stageText = computed(() => stageLabel(stage.value) || stageLabel(sessionStage.value));
 
   const progress = computed(() => {
     const total = steps.value.length;
@@ -49,20 +64,54 @@ export function useActionPlan() {
 
   const drawerOpen = computed(() => !!openStepKey.value);
 
+  watch(sessionPlan, (value) => {
+    if (value && matchesPlanId(value.planId) && plan.value?.planId === value.planId) {
+      plan.value = value;
+      if (value.buildStatus === 'paste') {
+        pasteRequired.value = true;
+      }
+      if (value.buildStatus === 'ready') {
+        pasteRequired.value = false;
+        buildStopped.value = false;
+      }
+    }
+  });
+
+  watch(sessionStage, (value) => {
+    if (sessionActive.value && matchesPlanId(plan.value?.planId)) {
+      stage.value = value || '';
+    }
+  });
+
+  watch(sessionError, (value) => {
+    if (!value || !matchesPlanId(plan.value?.planId)) return;
+    if (plan.value?.buildStatus === 'paste') {
+      pasteRequired.value = true;
+      error.value = '';
+      return;
+    }
+    error.value = value;
+  });
+
   async function generate(payload) {
     loading.value = true;
     error.value = '';
     pasteRequired.value = false;
     limitReached.value = false;
+    buildStopped.value = false;
+    stage.value = '';
     try {
-      plan.value = await createActionPlan(payload);
-      return plan.value;
+      const first = await startCreate(payload);
+      plan.value = first;
+      loading.value = false;
+      return first;
     } catch (err) {
       if (err.status === 402 || err.code === 'LIMIT_REACHED') {
         limitReached.value = true;
       }
       if (err.status === 422 || err.code === 'ARTICLE_UNREADABLE') {
         pasteRequired.value = true;
+        if (sessionPlan.value) plan.value = sessionPlan.value;
       }
       error.value = err.message || 'Could not build the plan.';
       throw err;
@@ -72,11 +121,30 @@ export function useActionPlan() {
   }
 
   async function load(id) {
+    if (matchesPlanId(id) && sessionPlan.value) {
+      plan.value = sessionPlan.value;
+      loading.value = false;
+      error.value = '';
+      pasteRequired.value = sessionPlan.value.buildStatus === 'paste';
+      buildStopped.value = false;
+      stage.value = sessionStage.value || '';
+      return plan.value;
+    }
+
     loading.value = true;
     error.value = '';
+    pasteRequired.value = false;
+    buildStopped.value = false;
+    stage.value = '';
     try {
-      plan.value = await fetchActionPlan(id);
-      return plan.value;
+      const loaded = await fetchActionPlan(id);
+      plan.value = loaded;
+      if (loaded?.buildStatus === 'paste') {
+        pasteRequired.value = true;
+      } else if (loaded?.buildStatus === 'building' && !sessionActive.value) {
+        buildStopped.value = true;
+      }
+      return loaded;
     } catch (err) {
       error.value = err.message || 'Plan not found.';
       throw err;
@@ -86,7 +154,7 @@ export function useActionPlan() {
   }
 
   async function openStep(stepKey) {
-    if (!plan.value?.planId || !stepKey) return;
+    if (!plan.value?.planId || !stepKey || !isReady.value) return;
     openStepKey.value = stepKey;
     stepDetail.value = null;
     stepDetailError.value = '';
@@ -109,6 +177,7 @@ export function useActionPlan() {
   }
 
   async function toggleStep(stepKey, done, options = {}) {
+    if (!isReady.value) return;
     if (!plan.value?.planId) {
       if (plan.value?.steps) {
         plan.value = {
@@ -165,7 +234,7 @@ export function useActionPlan() {
   function setPath(value) {
     const next = String(value || 'open_source');
     path.value = ['open_source', 'paid', 'mix'].includes(next) ? next : 'open_source';
-    if (openStepKey.value && plan.value?.planId) {
+    if (openStepKey.value && plan.value?.planId && isReady.value) {
       openStep(openStepKey.value);
     }
   }
@@ -176,6 +245,12 @@ export function useActionPlan() {
     error,
     pasteRequired,
     limitReached,
+    buildStopped,
+    stage,
+    stageText,
+    isBuilding,
+    isReady,
+    buildStatus,
     path,
     setPath,
     openStepKey,
@@ -197,6 +272,7 @@ export function useActionPlan() {
     submitTiming,
     dismissTiming,
     setPlan,
+    clearSession,
   };
 }
 

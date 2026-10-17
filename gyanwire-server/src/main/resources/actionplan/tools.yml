@@ -106,6 +106,16 @@
   freeLimit: Free multi-track titles when needed
   lastVerified: 2026-10-16
 
+- id: whisper_cpp
+  name: Whisper.cpp
+  tier: open_source
+  license: MIT
+  covers: [captions]
+  platforms: [desktop]
+  url: https://github.com/ggml-org/whisper.cpp
+  freeLimit: Local transcription of one voice-over. You install and run it; Gyanwire does not host it.
+  lastVerified: 2026-10-17
+
 - id: phone_gallery
   name: Phone gallery / player
   tier: free

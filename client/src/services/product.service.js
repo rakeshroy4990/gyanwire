@@ -114,6 +114,10 @@ export async function requestIdeas(body, onEvent) {
       error.code = event.errorCode;
       throw error;
     }
+    if (event?.type === 'status') {
+      if (onEvent) await onEvent({ type: 'status', stage: event.stage || '' });
+      return;
+    }
     if (event?.type === 'meta') {
       const ideas = frame.ideas;
       Object.assign(frame, event);

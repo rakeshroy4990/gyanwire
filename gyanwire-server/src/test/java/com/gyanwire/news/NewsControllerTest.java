@@ -1,10 +1,13 @@
 package com.gyanwire.news;
 
 import com.gyanwire.actionplan.NewsIdeasService;
+import com.gyanwire.actionplan.research.VideoResearchPack;
+import com.gyanwire.actionplan.research.VideoResearchService;
 import com.gyanwire.auth.security.AuthUserPrincipal;
 import com.gyanwire.auth.security.JwtAuthenticationFilter;
 import com.gyanwire.config.ApiExceptionHandler;
 import com.gyanwire.controller.dto.response.ResearchIndustryResponse;
+import com.gyanwire.ideas.IdeaSink;
 import com.gyanwire.service.ResearchIndustryService;
 import com.gyanwire.usage.UsageService;
 import org.junit.jupiter.api.AfterEach;
@@ -29,6 +32,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -62,6 +66,9 @@ class NewsControllerTest {
 
     @MockBean
     NewsIdeasService newsIdeas;
+
+    @MockBean
+    VideoResearchService videoResearch;
 
     @MockBean
     JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -158,6 +165,31 @@ class NewsControllerTest {
     }
 
     @Test
+    void industryNewsStreamsNdjsonWhenRequested() throws Exception {
+        when(industries.listCatalog()).thenReturn(List.of(catalog()));
+        when(news.industry(eq("Medical"), isNull(), eq(10), eq("products"), eq(1), isNull(), any(NewsViewer.class), eq(1)))
+                .thenReturn(Map.of(
+                        "results", List.of(Map.of("title", "Today launch", "url", "https://a.example/1", "opportunityScore", 80)),
+                        "freshness", "fresh",
+                        "windowDays", 1,
+                        "requested", 10,
+                        "returned", 1,
+                        "page", 1,
+                        "total", 1,
+                        "label", "Medical products"
+                ));
+        String body = mvc.perform(get("/api/news/Medical")
+                        .param("window", "1d")
+                        .accept(MediaType.parseMediaType("application/x-ndjson")))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", org.hamcrest.Matchers.containsString("application/x-ndjson")))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(body).contains("\"type\":\"open\"").contains("Today launch").contains("\"type\":\"done\"");
+    }
+
+    @Test
     void thirtyDayWindowIsDefault() throws Exception {
         when(industries.listCatalog()).thenReturn(List.of(catalog()));
         when(news.industry(eq("Medical"), eq("Paediatrics"), eq(10), eq("products"), eq(30), isNull(), any(NewsViewer.class), eq(1)))
@@ -225,6 +257,81 @@ class NewsControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.country").value("US"))
                 .andExpect(jsonPath("$.data.regionPreference").value("Worldwide, India prioritized"));
+    }
+
+    @Test
+    void ideasFromNewsStreamsNdjson() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UUID newsId = UUID.randomUUID();
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(new AuthUserPrincipal(userId, "a@gyanwire.com", "user"), null)
+        );
+        doAnswer(invocation -> {
+            IdeaSink sink = invocation.getArgument(3);
+            sink.status("brief");
+            sink.meta(Map.of(
+                    "headline", "A launch",
+                    "url", "https://news.example/a",
+                    "industry", "AI",
+                    "brief", Map.of("headline", "A launch")
+            ));
+            sink.status("angles");
+            sink.item(Map.of("id", "ni-1", "title", "First idea", "score", 80));
+            sink.item(Map.of("id", "ni-2", "title", "Second idea", "score", 70));
+            return null;
+        }).when(newsIdeas).ideasFromNewsId(eq(userId), any(), eq(newsId), any(IdeaSink.class));
+
+        String body = mvc.perform(post("/api/news/" + newsId + "/ideas")
+                        .accept(MediaType.parseMediaType("application/x-ndjson")))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Accel-Buffering", "no"))
+                .andExpect(header().string("Content-Type", org.hamcrest.Matchers.containsString("application/x-ndjson")))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String[] lines = body.split("\n");
+        assertThat(lines).hasSize(7);
+        assertThat(lines[0]).contains("\"type\":\"open\"");
+        assertThat(lines[1]).contains("\"type\":\"status\"").contains("brief");
+        assertThat(lines[2]).contains("\"type\":\"meta\"").contains("A launch").doesNotContain("\"ideas\"");
+        assertThat(lines[3]).contains("\"type\":\"status\"").contains("angles");
+        assertThat(lines[4]).contains("\"type\":\"item\"").contains("First idea");
+        assertThat(lines[5]).contains("\"type\":\"item\"").contains("Second idea");
+        assertThat(lines[6]).contains("\"type\":\"done\"").contains("\"returned\":2");
+    }
+
+    @Test
+    void videoResearchReturnsPackForNewsId() throws Exception {
+        UUID newsId = UUID.randomUUID();
+        NewsRow row = new NewsRow()
+                .id(newsId)
+                .url("https://news.example/anthropic-law")
+                .title("Anthropic proposes AI law");
+        when(store.findById(newsId)).thenReturn(row);
+        when(videoResearch.find("https://news.example/anthropic-law")).thenReturn(new VideoResearchPack(
+                "abc",
+                VideoResearchPack.STATUS_READY,
+                Map.of(
+                        "whatHappened", "Anthropic asked lawmakers for AI rules.",
+                        "whyItMatters", "Rules would shape how models ship.",
+                        "facts", List.of(Map.of("id", "vr1", "text", "Anthropic proposed a law."))
+                ),
+                null,
+                java.time.Instant.now()
+        ));
+
+        mvc.perform(get("/api/news/" + newsId + "/video-research"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("ready"))
+                .andExpect(jsonPath("$.data.summary.whatHappened").value("Anthropic asked lawmakers for AI rules."));
+    }
+
+    @Test
+    void videoResearchRequiresValidNewsId() throws Exception {
+        mvc.perform(get("/api/news/not-a-uuid/video-research"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
     }
 
     @Test

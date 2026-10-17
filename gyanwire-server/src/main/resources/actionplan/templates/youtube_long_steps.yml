@@ -7,7 +7,7 @@ steps:
     paidDurationMin: 15
     paidToolId: chatgpt_plus
     action: "Outline hook, problem, live demo, three takeaways, CTA. Save outline.md."
-    input: "NewsBrief + product"
+    input: "NewsBrief + video research sources + product"
     output: "outline.md"
     doneWhen: "5 chapter titles"
     toolId: notes_app
@@ -63,6 +63,7 @@ steps:
     doneWhen: "≤10 min; captions on; chapters set"
     toolId: shotcut
     altToolId: kdenlive
+    captionToolId: whisper_cpp
     ifStuck: "Export without fancy transitions."
     platforms: [youtube]
     scalable: true

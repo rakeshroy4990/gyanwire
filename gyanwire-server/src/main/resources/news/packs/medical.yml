@@ -16,6 +16,11 @@ deny:
     - horoscope today
     - gossip
     - miracle cure
+    - doctor recalls
+    - recalls his
+    - recalls her
+    - suddenly fainting
+    - kickboxing
 signals:
   launch: [launches, introduces, rolls out, announces, unveils]
   money: [pricing, funding, raises, acquires, subsidy, shortage]

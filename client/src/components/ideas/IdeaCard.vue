@@ -5,9 +5,10 @@ import EvidenceChip from './EvidenceChip.vue';
 const props = defineProps({
   idea: { type: Object, required: true },
   rating: { type: Boolean, default: false },
+  openFactKey: { type: String, default: '' },
 });
 
-defineEmits(['make-plan', 'not-useful']);
+const emit = defineEmits(['make-plan', 'not-useful', 'toggle-fact']);
 
 const typeLabel = computed(() => {
   const t = String(props.idea?.type || '').toLowerCase();
@@ -32,6 +33,12 @@ const meters = computed(() => {
 });
 
 const facts = computed(() => (Array.isArray(props.idea?.facts) ? props.idea.facts : []));
+
+function factKey(fact) {
+  const ideaId = props.idea?.id || props.idea?.title || '';
+  const factId = fact?.id || fact?.text || '';
+  return `${ideaId}::${factId}`;
+}
 </script>
 
 <template>
@@ -71,7 +78,13 @@ const facts = computed(() => (Array.isArray(props.idea?.facts) ? props.idea.fact
     </div>
 
     <div v-if="facts.length" class="panel-idea-card__facts" aria-label="Evidence">
-      <EvidenceChip v-for="fact in facts" :key="fact.id || fact.text" :fact="fact" />
+      <EvidenceChip
+        v-for="fact in facts"
+        :key="fact.id || fact.text"
+        :fact="fact"
+        :open="openFactKey === factKey(fact)"
+        @toggle="emit('toggle-fact', factKey(fact))"
+      />
     </div>
 
     <div class="idea-card__actions">

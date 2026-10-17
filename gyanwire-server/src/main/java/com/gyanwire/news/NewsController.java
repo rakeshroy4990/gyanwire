@@ -2,8 +2,12 @@ package com.gyanwire.news;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gyanwire.actionplan.NewsIdeasService;
+import com.gyanwire.actionplan.news.NewsBriefService;
+import com.gyanwire.actionplan.research.VideoResearchPack;
+import com.gyanwire.actionplan.research.VideoResearchService;
 import com.gyanwire.auth.security.AuthUserPrincipal;
 import com.gyanwire.controller.dto.StandardApiResponse;
+import com.gyanwire.ideas.IdeaNdjson;
 import com.gyanwire.research.ResearchException;
 import com.gyanwire.service.ResearchIndustryService;
 import com.gyanwire.usage.UsageService;
@@ -36,19 +40,22 @@ public class NewsController {
     private final ResearchIndustryService industries;
     private final ObjectMapper mapper;
     private final NewsIdeasService newsIdeas;
+    private final VideoResearchService videoResearch;
 
     public NewsController(
             NewsQueryService news,
             NewsStore store,
             ResearchIndustryService industries,
             ObjectMapper mapper,
-            NewsIdeasService newsIdeas
+            NewsIdeasService newsIdeas,
+            VideoResearchService videoResearch
     ) {
         this.news = news;
         this.store = store;
         this.industries = industries;
         this.mapper = mapper;
         this.newsIdeas = newsIdeas;
+        this.videoResearch = videoResearch;
     }
 
     @GetMapping(value = "/api/news/default", produces = {"application/json", "application/x-ndjson"})
@@ -91,8 +98,8 @@ public class NewsController {
         });
     }
 
-    @GetMapping("/api/news/{industry}")
-    public ResponseEntity<StandardApiResponse<Map<String, Object>>> industry(
+    @GetMapping(value = "/api/news/{industry}", produces = {"application/json", "application/x-ndjson"})
+    public void industry(
             @PathVariable String industry,
             @RequestParam(value = "sub", required = false) String sub,
             @RequestParam(value = "limit", defaultValue = "10") int limit,
@@ -100,8 +107,9 @@ public class NewsController {
             @RequestParam(value = "intent", defaultValue = "products") String intent,
             @RequestParam(value = "window", required = false) String window,
             @RequestParam(value = "country", required = false) String country,
-            HttpServletRequest request
-    ) {
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) throws IOException {
         String decoded = URLDecoder.decode(industry, StandardCharsets.UTF_8);
         List<String> names = industries.listCatalog().stream().map(item -> item.getName()).toList();
         if (!names.contains(decoded)) {
@@ -120,20 +128,63 @@ public class NewsController {
             throw new ResearchException("Page must be 1 or greater.", "VALIDATION_ERROR", 400);
         }
         int days = NewsTexts.windowToken(window, NewsQueryService.BROWSE_LOOKBACK_DAYS);
+        String code = countryCode(country);
+        NewsViewer who = viewer(request);
+        String accept = request.getHeader("Accept");
+        boolean wantStream = page == 1 && accept != null && accept.contains("application/x-ndjson");
+        if (!wantStream) {
+            Map<String, Object> data = industryBody(decoded, subTrim, limit, page, intent, days, code, who, subs);
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.setContentType("application/json");
+            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+            mapper.writeValue(response.getOutputStream(), StandardApiResponse.success(
+                    "Latest " + data.get("label") + ".", data));
+            return;
+        }
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentType("application/x-ndjson");
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.setBufferSize(64);
+        response.setHeader("X-Accel-Buffering", "no");
+        response.setHeader("Cache-Control", "no-cache, no-transform");
+        response.setHeader("X-Content-Type-Options", "nosniff");
+        List<String> subList = subs;
+        NewsNdjson.writeDefault(response.getOutputStream(), mapper, () -> industryBody(
+                decoded, subTrim, limit, page, intent, days, code, who, subList), () -> {
+            try {
+                response.flushBuffer();
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
+            }
+        });
+    }
+
+    private Map<String, Object> industryBody(
+            String industry,
+            String sub,
+            int limit,
+            int page,
+            String intent,
+            int days,
+            String country,
+            NewsViewer who,
+            List<String> subs
+    ) {
         Map<String, Object> data = new LinkedHashMap<>(
-                news.industry(decoded, subTrim, limit, intent, days, countryCode(country), viewer(request), page));
+                news.industry(industry, sub, limit, intent, days, country, who, page));
         data.put("intent", intent);
         data.put("engine", "gyanwire");
         data.put("usedLlm", false);
         data.put("subs", subs);
-        return ResponseEntity.ok(StandardApiResponse.success("Latest " + data.get("label") + ".", data));
+        return data;
     }
 
-    @PostMapping("/api/news/{id}/ideas")
-    public ResponseEntity<StandardApiResponse<Map<String, Object>>> ideasFromNews(
+    @PostMapping(value = "/api/news/{id}/ideas", produces = "application/x-ndjson")
+    public void ideasFromNews(
             @PathVariable String id,
-            HttpServletRequest request
-    ) {
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) throws IOException {
         UUID newsId = parseItemId(id);
         if (newsId == null) {
             throw new ResearchException("Send a news item id.", "VALIDATION_ERROR", 400);
@@ -143,8 +194,50 @@ public class NewsController {
             throw new ResearchException("Sign in to get ideas.", "AUTH_REQUIRED", 401);
         }
         String ipHash = UsageService.hashIp(request.getRemoteAddr());
-        Map<String, Object> data = newsIdeas.ideasFromNewsId(userId, ipHash, newsId);
-        return ResponseEntity.ok(StandardApiResponse.success("Ideas ready.", data));
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentType("application/x-ndjson");
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.setBufferSize(64);
+        response.setHeader("X-Accel-Buffering", "no");
+        response.setHeader("Cache-Control", "no-cache, no-transform");
+        response.setHeader("X-Content-Type-Options", "nosniff");
+        IdeaNdjson.write(
+                response.getOutputStream(),
+                mapper,
+                sink -> newsIdeas.ideasFromNewsId(userId, ipHash, newsId, sink),
+                () -> {
+                    try {
+                        response.flushBuffer();
+                    } catch (IOException ex) {
+                        throw new UncheckedIOException(ex);
+                    }
+                });
+    }
+
+    @GetMapping("/api/news/{id}/video-research")
+    public ResponseEntity<StandardApiResponse<Map<String, Object>>> videoResearch(@PathVariable String id) {
+        UUID newsId = parseItemId(id);
+        if (newsId == null) {
+            throw new ResearchException("Send a news item id.", "VALIDATION_ERROR", 400);
+        }
+        NewsRow row = store.findById(newsId);
+        if (row == null) {
+            throw new ResearchException("News item not found.", "NOT_FOUND", 404);
+        }
+        VideoResearchPack pack = videoResearch.find(row.url());
+        if (pack == null) {
+            pack = videoResearch.findByNewsId(newsId);
+        }
+        if (pack == null) {
+            Map<String, Object> empty = new LinkedHashMap<>();
+            empty.put("status", VideoResearchPack.STATUS_RUNNING);
+            empty.put("summary", null);
+            empty.put("urlHash", NewsBriefService.urlHash(row.url()));
+            return ResponseEntity.ok(StandardApiResponse.success("Research not started yet.", empty));
+        }
+        Map<String, Object> data = new LinkedHashMap<>(pack.toApiMap());
+        data.put("urlHash", pack.urlHash());
+        return ResponseEntity.ok(StandardApiResponse.success("OK", data));
     }
 
     @PostMapping("/api/news/feedback")

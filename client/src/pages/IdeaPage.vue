@@ -25,6 +25,7 @@ const {
   gate,
   pipeline,
   emptyReason,
+  stageLabel,
   launchPlan,
   planError,
   planLoadingId,
@@ -34,6 +35,8 @@ const {
   closePlan,
   save: saveIdeaCard,
 } = useIdeas();
+
+const scoringLabel = computed(() => stageLabel.value || 'Scoring ideas');
 const { load, save: saveProfile, saving } = useProfile();
 const refineOpen = ref(false);
 const refineError = ref('');
@@ -236,7 +239,7 @@ watch(
         v-if="loading && !ideas.length"
         variant="ideas"
         :rows="expectedCount"
-        label="Scoring ideas"
+        :label="scoringLabel"
       />
 
       <p v-else-if="error && !ideas.length" class="form-error" role="alert">{{ error }}</p>
@@ -290,7 +293,8 @@ watch(
             </article>
           </li>
         </ul>
-        <PageSkeleton v-if="loading" variant="ideas" :rows="1" label="Scoring ideas" />
+        <PageSkeleton v-if="loading" variant="ideas" :rows="1" :label="scoringLabel" />
+        <p v-if="error && ideas.length" class="form-error" role="alert">{{ error }}</p>
       </template>
 
       <section v-if="newsUrl && !limitReached" class="account-card">

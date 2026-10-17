@@ -59,6 +59,14 @@ public final class FreshnessGate {
             return "fresh";
         }
         int days = windows[Math.min(step, windows.length - 1)];
+        return labelForDays(days);
+    }
+
+    /** Browse subtitle for an explicit lookback chunk (1 → 7 → 30). */
+    public static String labelForDays(int days) {
+        if (days <= 1) {
+            return "fresh";
+        }
         if (days <= 7) {
             return "last 7 days";
         }

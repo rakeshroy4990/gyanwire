@@ -6,8 +6,9 @@ import { useProfileStore } from '../stores/profile.store.js';
 import { apiUrl } from '../services/apiBase.js';
 import { loadResearchIndustries } from '../services/industries.service.js';
 import { withoutFyiNews } from '../services/newsFyi.js';
-import { fetchDefaultNews, fetchIndustryNews, PAGE_SIZE } from '../services/news.service.js';
+import { fetchDefaultNews, fetchIndustryNewsChunks, PAGE_SIZE } from '../services/news.service.js';
 import { dismissNews, hideNewsSource } from '../services/product.service.js';
+import { fetchProfile } from '../services/profile.service.js';
 import {
   clearResearchReturn,
   consumeResearchHome,
@@ -15,6 +16,10 @@ import {
   saveResearchWorkspace,
 } from '../services/researchWorkspace.js';
 import { useAuth } from './useAuth.js';
+import {
+  homeFeedIndustry,
+  needsProfileForHomeFeed,
+} from './profileIndustry.js';
 import { useUsage } from './useUsage.js';
 
 const ALL_INDUSTRY = 'All';
@@ -107,7 +112,19 @@ function mapResults(payload) {
     .sort((a, b) => findingScore(b) - findingScore(a));
 }
 
-/** Browse feed: keep server order (newest first across 30 days). */
+function windowScopeLabel(data) {
+  const freshness = data?.freshness;
+  if (freshness === 'fresh') return 'today';
+  if (freshness === 'last 7 days') return 'last 7 days';
+  if (freshness === 'last 30 days') return 'last 30 days';
+  if (freshness === 'warming_up') return 'fetching';
+  const days = Number(data?.windowDays);
+  if (days === 1) return 'today';
+  if (days > 0) return `last ${days} days`;
+  return 'last 30 days';
+}
+
+/** Browse feed: keep server order (newest first within the active window chunk). */
 function mapBrowseResults(payload) {
   const list = Array.isArray(payload?.results)
     ? payload.results
@@ -189,7 +206,7 @@ export function useResearch() {
   const profileStore = useProfileStore();
   const usage = useUsage();
   const savedWorkspace = consumeResearchHome() ? null : loadResearchWorkspace();
-  /** False after the user picks an industry chip. Home opens AI while this stays true. */
+  /** False after the user picks an industry chip. Home follows the profile industry (AI fallback) while this stays true. */
   const followProfile = ref(savedWorkspace ? savedWorkspace.followProfile : true);
   const catalog = ref(FALLBACK_CATALOG);
   const industry = ref(
@@ -275,11 +292,27 @@ export function useResearch() {
     });
   }
 
-  function applyHomeFeed() {
+  async function resolveHomeIndustry() {
+    let profile = profileStore.profile;
+    if (needsProfileForHomeFeed(isAuthenticated.value, profile)) {
+      try {
+        profile = await fetchProfile();
+        profileStore.setProfile(profile);
+      } catch {
+        profile = null;
+      }
+    }
+    const catalogNames = catalog.value.map((item) => item.name);
+    return homeFeedIndustry(profile?.industries, catalogNames, HOME_INDUSTRY);
+  }
+
+  async function applyHomeFeed() {
     if (!followProfile.value || hasThread.value) return;
-    industry.value = HOME_INDUSTRY;
+    const homeIndustry = await resolveHomeIndustry();
+    if (!followProfile.value || hasThread.value) return;
+    industry.value = homeIndustry;
     subcategory.value = null;
-    loadNewsFeed({ industryName: HOME_INDUSTRY, page: 1 });
+    await loadNewsFeed({ industryName: homeIndustry, page: 1 });
   }
 
   function applyBrowsePaging(data) {
@@ -305,9 +338,10 @@ export function useResearch() {
     const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
     const to = Math.min(page * pageSize, total);
     const range = total ? `${from}–${to} of ${total}` : '0';
+    const windowLabel = windowScopeLabel(data);
     const scopeLine = scoped
-      ? `${range} · last 30 days · ${label}${sub ? ` · ${scope}` : ''}`
-      : `${range} · last 30 days · Top searched product news`;
+      ? `${range} · ${windowLabel} · ${label}${sub ? ` · ${scope}` : ''}`
+      : `${range} · ${windowLabel} · Top searched product news`;
     browseSub.value = place
       ? `${place} · ${scopeLine}`
       : `Worldwide, India first · ${scopeLine}`;
@@ -315,17 +349,16 @@ export function useResearch() {
   }
 
   function settleBrowse(data, scoped, place) {
-    showEmpty.value = browseResults.value.length === 0;
     const warming = data?.freshness === 'warming_up' && browseResults.value.length === 0;
-    emptyMessage.value = warming
-      ? 'Fetching the latest news...'
-      : browseResults.value.length
-        ? 'Pick an industry for product news, or start a research chat.'
-        : place
-          ? `No findings for ${place} yet.`
-          : scoped
-            ? `No product news for ${scoped} yet.`
-            : 'No product news yet.';
+    // warming_up: banner + skeleton cover status — do not flash the empty state.
+    showEmpty.value = browseResults.value.length === 0 && !warming;
+    emptyMessage.value = browseResults.value.length
+      ? 'Pick an industry for product news, or start a research chat.'
+      : place
+        ? `No findings for ${place} yet.`
+        : scoped
+          ? `No product news for ${scoped} yet.`
+          : 'No product news yet.';
   }
 
   async function loadNewsFeed({ industryName = null, sub = null, page = 1 } = {}) {
@@ -348,16 +381,45 @@ export function useResearch() {
     try {
       let data;
       if (scoped) {
-        data = await fetchIndustryNews({
+        data = await fetchIndustryNewsChunks({
           industry: scoped,
           sub,
           country: country.value,
           page: browsePage.value,
           limit: PAGE_SIZE,
           signal: controller.signal,
+          onItem: async (item) => {
+            if (requestId !== newsRequestId) return;
+            const row = mapStreamItem(item);
+            if (!row) return;
+            const key = row.url || row.id;
+            if (key && browseResults.value.some((entry) => (entry.url || entry.id) === key)) return;
+            browseResults.value = [...browseResults.value, row];
+            isLoading.value = false;
+            await nextTick();
+          },
+          onChunk: async (chunk) => {
+            if (requestId !== newsRequestId) return;
+            const rows = mapBrowseResults(chunk);
+            if (rows.length) {
+              browseResults.value = rows;
+            }
+            applyBrowseMeta(chunk, scoped, sub);
+            const warming = chunk?.freshness === 'warming_up' && browseResults.value.length === 0;
+            if (warming) {
+              // Keep the loading skeleton while news.service retries once.
+              showEmpty.value = false;
+              return;
+            }
+            settleBrowse(chunk, scoped, countryName(country.value, browseCountries.value));
+            isLoading.value = false;
+            await nextTick();
+          },
         });
         if (requestId !== newsRequestId) return;
-        browseResults.value = mapBrowseResults(data);
+        if (!browseResults.value.length) {
+          browseResults.value = mapBrowseResults(data);
+        }
       } else {
         browseResults.value = [];
         data = await fetchDefaultNews({
@@ -675,17 +737,17 @@ export function useResearch() {
       }
       return;
     }
-    applyHomeFeed();
+    await applyHomeFeed();
   });
 
-  watch(isAuthenticated, (signedIn, wasSignedIn) => {
+  watch(isAuthenticated, async (signedIn, wasSignedIn) => {
     if (!signedIn) {
       followProfile.value = true;
       profileStore.setProfile(null);
     } else if (!wasSignedIn) {
       followProfile.value = true;
     }
-    if (followProfile.value && !hasThread.value) applyHomeFeed();
+    if (followProfile.value && !hasThread.value) await applyHomeFeed();
   });
 
   return {

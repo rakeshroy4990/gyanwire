@@ -6,7 +6,7 @@ import { useResearch } from '../../composables/useResearch.js';
 import { useProduct } from '../../composables/useProduct.js';
 import { useNewsIdeas } from '../../composables/useNewsIdeas.js';
 import { rememberIdeaSource } from '../../services/ideaSource.js';
-import { createActionPlan } from '../../services/actionPlan.service.js';
+import { startCreate } from '../../composables/actionPlanSession.js';
 import {
   clearResearchReturn,
   findingElement,
@@ -36,6 +36,9 @@ const {
   headline: ideasHeadline,
   selected: selectedIdea,
   ratingId: ideasRatingId,
+  stageLabel: ideasStageLabel,
+  researchStatus: ideasResearchStatus,
+  researchSummary: ideasResearchSummary,
   openForItem,
   close: closeIdeas,
   rate: rateIdea,
@@ -170,13 +173,15 @@ async function onPlanConfirm({ format, budgetMinutes, demo }) {
   planSubmitting.value = true;
   planError.value = '';
   try {
-    const plan = await createActionPlan({
+    const plan = await startCreate({
       newsUrl: newsItem.url,
       title: newsItem.title || ideasHeadline.value || '',
       budgetMinutes,
       demo: !!demo,
       format,
       save: true,
+      ideaTitle: selectedIdea.value?.title || '',
+      whyNow: selectedIdea.value?.whyNow || '',
     });
     planSheetOpen.value = false;
     closeIdeas();
@@ -277,6 +282,9 @@ async function onClaim(sentence) {
       :headline="ideasHeadline"
       :ideas="ideaRows"
       :rating-id="ideasRatingId"
+      :stage-label="ideasStageLabel"
+      :research-status="ideasResearchStatus"
+      :research-summary="ideasResearchSummary"
       @close="closeIdeas"
       @make-plan="onMakePlan"
       @not-useful="onNotUseful"

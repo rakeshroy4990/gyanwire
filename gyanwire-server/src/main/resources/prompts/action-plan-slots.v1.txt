@@ -14,7 +14,9 @@ Schema:
 }
 
 Rules:
-- Use only NewsBrief facts and entities. Never invent numbers or names.
+- Use NewsBrief facts and entities. When videoResearchFacts, whatHappened, or whyItMatters are present, you may also use those grounded lines.
+- If ideaTitle or whyNow is present, aim the hook at that angle while staying factual.
+- Never invent numbers or names that are not in the provided facts.
 - Never use a plan label or the words "Post today:" as the topic.
 - Combined hook + points + cta should be about 90 to 130 words.
 - Hook must contain at least one entity name and one fact keyword.

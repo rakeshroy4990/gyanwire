@@ -172,8 +172,8 @@ public class DiscoverService {
                         Map.of("title", "NSE India", "url", "https://www.nseindia.com/", "description", "National Stock Exchange of India", "source", "category-seed")
                 ),
                 "Real Estate", List.of(
-                        Map.of("title", "Magicbricks News", "url", "https://www.magicbricks.com/blog/", "description", "Indian real estate and housing updates", "source", "category-seed"),
-                        Map.of("title", "Housing.com News", "url", "https://housing.com/news/", "description", "Residential and PropTech product news", "source", "category-seed")
+                        Map.of("title", "Magicbricks News", "url", "https://www.magicbricks.com/blog/", "description", "City project launches and buy offers", "source", "category-seed"),
+                        Map.of("title", "Housing.com News", "url", "https://housing.com/news/", "description", "Residential launches, festive offers, and PropTech deals", "source", "category-seed")
                 )
         );
         List<Map<String, String>> pages = new ArrayList<>();

@@ -1,5 +1,7 @@
 package com.gyanwire.actionplan.api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gyanwire.actionplan.ActionPlanNdjson;
 import com.gyanwire.actionplan.ActionPlanPipeline;
 import com.gyanwire.actionplan.ActionPlanStore;
 import com.gyanwire.actionplan.StepDetailService;
@@ -9,6 +11,7 @@ import com.gyanwire.research.ResearchException;
 import com.gyanwire.usage.UsageService;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 
@@ -23,6 +26,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
 
@@ -32,35 +38,64 @@ public class ActionPlanController {
     private final ActionPlanPipeline pipeline;
     private final ActionPlanStore store;
     private final StepDetailService stepDetails;
+    private final ObjectMapper mapper;
 
-    public ActionPlanController(ActionPlanPipeline pipeline, ActionPlanStore store, StepDetailService stepDetails) {
+    public ActionPlanController(
+            ActionPlanPipeline pipeline,
+            ActionPlanStore store,
+            StepDetailService stepDetails,
+            ObjectMapper mapper
+    ) {
         this.pipeline = pipeline;
         this.store = store;
         this.stepDetails = stepDetails;
+        this.mapper = mapper;
     }
 
-    @PostMapping("/api/action-plans")
-    public ResponseEntity<StandardApiResponse<Map<String, Object>>> create(
+    @PostMapping(value = "/api/action-plans", produces = "application/x-ndjson")
+    public void create(
             @Valid @RequestBody CreateRequest body,
-            HttpServletRequest request
-    ) {
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) throws IOException {
         UUID userId = optionalUserId();
         String ipHash = UsageService.hashIp(request.getRemoteAddr());
         Integer budget = body.budgetMinutes();
         boolean demo = Boolean.TRUE.equals(body.demo());
         boolean save = Boolean.TRUE.equals(body.save()) && userId != null;
-        Map<String, Object> plan = pipeline.generate(
-                userId,
-                ipHash,
-                body.newsUrl(),
-                body.title() == null ? "" : body.title(),
-                body.source() == null ? "" : body.source(),
-                budget,
-                body.pastedText(),
-                demo,
-                save,
-                body.format());
-        return ResponseEntity.ok(StandardApiResponse.success("Action plan ready.", plan));
+
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentType("application/x-ndjson");
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.setBufferSize(64);
+        response.setHeader("X-Accel-Buffering", "no");
+        response.setHeader("Cache-Control", "no-cache, no-transform");
+        response.setHeader("X-Content-Type-Options", "nosniff");
+
+        ActionPlanNdjson.write(
+                response.getOutputStream(),
+                mapper,
+                sink -> pipeline.generateStream(
+                        userId,
+                        ipHash,
+                        body.newsUrl(),
+                        body.title() == null ? "" : body.title(),
+                        body.source() == null ? "" : body.source(),
+                        budget,
+                        body.pastedText(),
+                        demo,
+                        save,
+                        body.format(),
+                        body.ideaTitle(),
+                        body.whyNow(),
+                        sink),
+                () -> {
+                    try {
+                        response.flushBuffer();
+                    } catch (IOException ex) {
+                        throw new UncheckedIOException(ex);
+                    }
+                });
     }
 
     @GetMapping("/api/action-plans/{id}")
@@ -171,7 +206,9 @@ public class ActionPlanController {
             String pastedText,
             Boolean demo,
             Boolean save,
-            String format
+            String format,
+            String ideaTitle,
+            String whyNow
     ) {
     }
 }

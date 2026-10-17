@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useActionPlan } from '../composables/useActionPlan.js';
 import PlanStepList from '../components/actionplan/PlanStepList.vue';
 import PlanProgress from '../components/actionplan/PlanProgress.vue';
@@ -10,11 +10,16 @@ import StepDrawer from '../components/actionplan/StepDrawer.vue';
 import PageSkeleton from '../components/ui/PageSkeleton.vue';
 
 const route = useRoute();
+const router = useRouter();
 const {
   plan,
   loading,
   error,
   pasteRequired,
+  buildStopped,
+  stageText,
+  isBuilding,
+  isReady,
   progress,
   path,
   setPath,
@@ -50,22 +55,47 @@ watch(
 );
 
 async function submitPaste() {
-  await generate({
+  const first = await generate({
     newsUrl: plan.value?.newsBrief?.publisherUrl || route.query.url || 'https://example.com/news',
     title: plan.value?.newsBrief?.headline || route.query.title || 'News',
     pastedText: pasted.value,
-    budgetMinutes: 240,
+    budgetMinutes: plan.value?.budgetMinutes || 240,
+    format: plan.value?.format,
+    demo: false,
     save: true,
   });
+  if (first?.planId && String(first.planId) !== String(route.params.id)) {
+    await router.replace({ name: 'action-plan', params: { id: first.planId } });
+  }
 }
 
 function onPath(value) {
   setPath(value);
 }
+
+function onToggle(stepKey, done) {
+  if (!isReady.value) return;
+  toggleStep(stepKey, done);
+}
+
+function onOpen(stepKey) {
+  if (!isReady.value) return;
+  openStep(stepKey);
+}
+
+function goBack() {
+  if (window.history.length > 1) {
+    router.back();
+    return;
+  }
+  router.push({ name: 'research' });
+}
 </script>
 
 <template>
   <main class="account-page action-plan-page">
+    <button type="button" class="page-back" @click="goBack">← Back</button>
+
     <PageSkeleton v-if="loading && !plan" variant="list" label="Loading plan" />
     <p v-else-if="error && !pasteRequired" class="error">{{ error }}</p>
 
@@ -78,14 +108,19 @@ function onPath(value) {
 
     <template v-else-if="plan">
       <PlanCard :plan="plan" />
-      <p v-if="plan.lint && plan.lint.passed === false" class="action-plan-card__warn">Check this plan</p>
+      <p v-if="isBuilding && stageText" class="action-plan-page__stage" aria-live="polite">
+        {{ stageText }}…
+      </p>
+      <p v-else-if="buildStopped" class="action-plan-page__stage">
+        This build stopped. Refresh the ideas list and build again, or paste the article below if the source was blocked.
+      </p>
       <PathSwitch :model-value="path" @update:model-value="onPath" />
       <PlanProgress :progress="progress" :path-totals="pathTotals" />
       <PlanStepList
         :steps="plan.steps || []"
         :path="path"
-        @toggle="toggleStep"
-        @open="openStep"
+        @toggle="onToggle"
+        @open="onOpen"
       />
 
       <div v-if="timingPrompt" class="timing-prompt" role="dialog" aria-modal="true" aria-label="How long did this take">

@@ -239,7 +239,7 @@ public class NewsBriefService {
         }
     }
 
-    static String normalize(String text) {
+    public static String normalize(String text) {
         return text == null ? "" : text.replaceAll("\\s+", " ").trim().toLowerCase(Locale.ROOT);
     }
 

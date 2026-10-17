@@ -30,4 +30,15 @@ public class NewsFetchCoordinator {
         }
         return gate.share(industry, timeout, () -> ingest.run(industry, sub), workers);
     }
+
+    /**
+     * Kick a shared ingest when the industry is stale, then return without waiting
+     * on RSS. Browse serves whatever is already stored.
+     */
+    public void refreshInBackground(String industry, String sub) {
+        if (ingest.fresh(industry, Instant.now())) {
+            return;
+        }
+        fetch(industry, sub, Mode.ON_DEMAND, Duration.ofMillis(1));
+    }
 }

@@ -68,6 +68,11 @@ public class IdeaService {
     }
 
     public Map<String, Object> fromNews(UUID userId, Map<String, Object> body) {
+        return fromNews(userId, body, IdeaSink.noop());
+    }
+
+    public Map<String, Object> fromNews(UUID userId, Map<String, Object> body, IdeaSink sink) {
+        IdeaSink out = sink == null ? IdeaSink.noop() : sink;
         Map<String, Object> plan = usage.resolveUserPlan(userId);
         int limit = ((Number) plan.getOrDefault("dailyIdeaLimit", 3)).intValue();
         long used = usage.countToday(userId, null, "idea");
@@ -93,12 +98,14 @@ public class IdeaService {
         Map<String, Object> profile = profiles.ensureStarter(userId, industry);
         if (isFyiNews(signalType, title, description)) {
             log.info("ideas.fromNews path=fyi title={}", shortTitle(title));
-            return fyiResponse();
+            Map<String, Object> fyi = fyiResponse();
+            IdeaNdjson.emitMap(out, fyi);
+            return fyi;
         }
         String urlHash = DigestDeduper.urlHash(url);
         if (pipelineProperties.isPipelineEnabled()) {
             log.info("ideas.fromNews path=pipeline force={} title={}", force, shortTitle(title));
-            return opportunityPipeline.fromNews(userId, body, profile);
+            return opportunityPipeline.fromNews(userId, body, profile, out);
         }
         String persona = String.valueOf(profile.getOrDefault("persona", "working"));
         String key = userId + ":" + urlHash + ":" + PROMPT_VERSION + ":" + persona
@@ -109,16 +116,24 @@ public class IdeaService {
         if (existing != null) {
             List<Map<String, Object>> cached = withSocialIdea(
                     userId, existing, title, description, industry,
-                    dedupeByPatternId(new ArrayList<>(store.listIdeasForRun(userId, existing))));
+                    dedupeByPatternId(new ArrayList<>(store.listIdeasForRun(userId, existing))),
+                    IdeaSink.noop());
             cached.sort((a, b) -> Integer.compare(ideaScore(b), ideaScore(a)));
             log.info(
                     "ideas.fromNews path=classic cached=true runId={} ideas={} title={}",
                     existing, cached.size(), shortTitle(title));
-            return response(existing, cached, true, null, null);
+            Map<String, Object> hit = response(existing, cached, true, null, null);
+            IdeaNdjson.emitMap(out, hit);
+            return hit;
         }
         log.info(
                 "ideas.fromNews path=classic cached=false force={} title={}",
                 force, shortTitle(title));
+        UUID runId = UUID.randomUUID();
+        store.insertIdeaRun(runId, userId, url, urlHash, title, industry, "{}", PROMPT_VERSION, key);
+        List<Map<String, Object>> saved = new ArrayList<>(withSocialIdea(
+                userId, runId, title, description, industry, new ArrayList<>(), out));
+        out.status("signals");
         Map<String, Object> signal = signalFor(userId, urlHash, title + "\n" + description, industry);
         if (!signalType.isBlank()) {
             signal.put("event_type", eventForNews(signalType));
@@ -128,16 +143,19 @@ public class IdeaService {
             signal.put("why_idea", whyIdea);
             signal.put("new_capability", whyIdea);
         }
+        try {
+            store.updateIdeaRunSignals(userId, runId, mapper.writeValueAsString(signal));
+        } catch (Exception ignored) {
+            // Run already exists with an empty payload.
+        }
+        out.meta(Map.of(
+                "runId", runId.toString(),
+                "cached", false
+        ));
+        out.status("idea-build");
         List<PatternMatcher.Pattern> matched = patterns.match(String.valueOf(signal.getOrDefault("event_type", "other")));
         DraftResult drafted = draftIdeas(userId, title, description, industry, profile, signal, matched, formats);
         List<Map<String, Object>> drafts = dedupeByPatternId(drafted.ideas());
-        UUID runId = UUID.randomUUID();
-        try {
-            store.insertIdeaRun(runId, userId, url, urlHash, title, industry, mapper.writeValueAsString(signal), PROMPT_VERSION, key);
-        } catch (Exception e) {
-            store.insertIdeaRun(runId, userId, url, urlHash, title, industry, "{}", PROMPT_VERSION, key);
-        }
-        List<Map<String, Object>> saved = new ArrayList<>();
         int capitalAvailable = FitFilter.capitalCeiling(String.valueOf(profile.getOrDefault("capitalBand", "0")));
         boolean raised = FitFilter.capitalRaised(persona, String.valueOf(profile.get("capitalBand")));
         int hoursAvailable = profile.get("hoursPerWeek") instanceof Number n ? n.intValue() : 10;
@@ -181,14 +199,19 @@ public class IdeaService {
             row.put("score", scored.score());
             row.put("drivers", scored.drivers());
             saved.add(row);
+            out.item(row);
         }
         usage.recordUsage(userId, null, "idea", java.math.BigDecimal.ZERO);
-        List<Map<String, Object>> withSocial = withSocialIdea(userId, runId, title, description, industry, saved);
-        withSocial.sort((a, b) -> Integer.compare(ideaScore(b), ideaScore(a)));
+        saved.sort((a, b) -> Integer.compare(ideaScore(b), ideaScore(a)));
         log.info(
                 "ideas.fromNews path=classic cached=false runId={} ideas={} formats={} title={}",
-                runId, withSocial.size(), formats.size(), shortTitle(title));
-        return response(runId, withSocial, false, null, drafted.raw());
+                runId, saved.size(), formats.size(), shortTitle(title));
+        Map<String, Object> result = response(runId, saved, false, null, drafted.raw());
+        out.meta(Map.of(
+                "runId", runId.toString(),
+                "cached", false
+        ));
+        return result;
     }
 
     /**
@@ -201,12 +224,14 @@ public class IdeaService {
             String title,
             String description,
             String industry,
-            List<Map<String, Object>> ideas
+            List<Map<String, Object>> ideas,
+            IdeaSink sink
     ) {
         List<Map<String, Object>> out = ideas == null ? new ArrayList<>() : new ArrayList<>(ideas);
         if (SocialMediaIdea.presentRows(out)) {
             return out;
         }
+        IdeaSink emit = sink == null ? IdeaSink.noop() : sink;
         Map<String, Object> social = SocialMediaIdea.asRow(title, description, industry);
         UUID ideaId = UUID.randomUUID();
         try {
@@ -222,12 +247,14 @@ public class IdeaService {
                     new String[]{AngleType.comparison_content.name()});
             social.put("id", ideaId.toString());
             out.add(0, social);
+            emit.item(social);
         } catch (Exception ex) {
             log.warn(
                     "ideas.fromNews social insert failed title={} error={}",
                     shortTitle(title), shortText(ex.getMessage(), 160));
             social.put("id", ideaId.toString());
             out.add(0, social);
+            emit.item(social);
         }
         return out;
     }

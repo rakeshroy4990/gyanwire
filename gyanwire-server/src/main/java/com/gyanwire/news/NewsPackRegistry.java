@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Component
 public class NewsPackRegistry {
@@ -51,6 +52,8 @@ public class NewsPackRegistry {
                         continue;
                     }
                     List<String> domains = stringList(row.get("allow_domains"));
+                    List<String> requireKeywords = stringList(row.get("require_keywords"));
+                    boolean requireSignalMatch = bool(row.get("require_signal_match"));
                     Map<String, Object> deny = row.get("deny") instanceof Map<?, ?> d
                             ? (Map<String, Object>) d
                             : Map.of();
@@ -62,12 +65,29 @@ public class NewsPackRegistry {
                             signals.put(String.valueOf(e.getKey()), stringList(e.getValue()));
                         }
                     }
-                    byIndustry.put(industry, new Pack(industry, domains, denyDomains, denyKeywords, signals));
+                    byIndustry.put(industry, new Pack(
+                            industry,
+                            domains,
+                            requireKeywords,
+                            requireSignalMatch,
+                            denyDomains,
+                            denyKeywords,
+                            signals));
                 }
             }
         } catch (Exception ex) {
             throw new IllegalStateException("Failed to load news packs", ex);
         }
+    }
+
+    private static boolean bool(Object value) {
+        if (value instanceof Boolean b) {
+            return b;
+        }
+        if (value == null) {
+            return false;
+        }
+        return "true".equalsIgnoreCase(String.valueOf(value).trim());
     }
 
     private static List<String> stringList(Object value) {
@@ -90,6 +110,8 @@ public class NewsPackRegistry {
     public record Pack(
             String industry,
             List<String> allowDomains,
+            List<String> requireKeywords,
+            boolean requireSignalMatch,
             List<String> denyDomains,
             List<String> denyKeywords,
             Map<String, List<String>> signals
@@ -123,17 +145,70 @@ public class NewsPackRegistry {
             return false;
         }
 
+        /** When set, title/summary must mention at least one industry term. */
+        public boolean requireMatched(String text) {
+            if (requireKeywords == null || requireKeywords.isEmpty()) {
+                return true;
+            }
+            if (text == null || text.isBlank()) {
+                return false;
+            }
+            String blob = text.toLowerCase(Locale.ROOT);
+            for (String kw : requireKeywords) {
+                if (!kw.isBlank() && termMatches(blob, kw)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public boolean keywordDenied(String text) {
             if (text == null || denyKeywords == null || denyKeywords.isEmpty()) {
                 return false;
             }
             String blob = text.toLowerCase(Locale.ROOT);
             for (String kw : denyKeywords) {
-                if (!kw.isBlank() && blob.contains(kw)) {
+                if (!kw.isBlank() && termMatches(blob, kw)) {
                     return true;
                 }
             }
             return false;
+        }
+
+        /** Pack signal keywords present in text (ignores stored classifier signalType). */
+        public List<String> matchedSignals(String text) {
+            List<String> hit = new ArrayList<>();
+            if (signals == null || signals.isEmpty() || text == null || text.isBlank()) {
+                return hit;
+            }
+            String blob = text.toLowerCase(Locale.ROOT);
+            for (Map.Entry<String, List<String>> e : signals.entrySet()) {
+                if (e.getValue() == null) {
+                    continue;
+                }
+                for (String term : e.getValue()) {
+                    if (term != null && !term.isBlank() && termMatches(blob, term.toLowerCase(Locale.ROOT))) {
+                        hit.add(e.getKey());
+                        break;
+                    }
+                }
+            }
+            return hit;
+        }
+
+        /**
+         * Multi-word phrases use substring match; single tokens use word boundaries
+         * so "ai" does not hit "email" / "paid" / "train".
+         */
+        static boolean termMatches(String blob, String term) {
+            String t = term.toLowerCase(Locale.ROOT).trim();
+            if (t.isEmpty() || blob == null || blob.isEmpty()) {
+                return false;
+            }
+            if (t.indexOf(' ') >= 0) {
+                return blob.contains(t);
+            }
+            return Pattern.compile("\\b" + Pattern.quote(t) + "\\b").matcher(blob).find();
         }
     }
 }

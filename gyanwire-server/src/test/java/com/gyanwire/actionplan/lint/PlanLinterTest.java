@@ -135,6 +135,23 @@ class PlanLinterTest {
     }
 
     @Test
+    void l8AcceptsNumberGroundedInVideoResearchPack() {
+        Map<String, Object> plan = validPlan();
+        plan.put("script", "Lawmakers heard a 99999 dollar compliance estimate this week from analysts.");
+        plan.put("factIds", List.of());
+        plan.put("videoResearch", Map.of(
+                "facts", List.of(Map.of(
+                        "id", "vr1",
+                        "text", "Analysts put compliance near 99999 dollars.",
+                        "sourceSpan", "Analysts put compliance near 99999 dollars.",
+                        "sourceUrl", "https://example.com/a"
+                ))
+        ));
+        PlanLinter.LintResult result = linter.lint(plan, brief, format);
+        assertTrue(result.errors().stream().noneMatch(e -> e.startsWith("L8")));
+    }
+
+    @Test
     void l9FailsOnWordCount() {
         Map<String, Object> plan = validPlan();
         plan.put("script", "Too short.");

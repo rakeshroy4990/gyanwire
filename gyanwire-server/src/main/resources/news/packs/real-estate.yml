@@ -1,10 +1,50 @@
 industry: Real Estate
-allow_domains:
-  - economictimes.indiatimes.com
-  - livemint.com
-  - thehindu.com
-  - inc42.com
-  - yourstory.com
+# Empty allow list: Google News resolves to many publishers; require_* keep scope.
+allow_domains: []
+# Must name a property asset / price topic — not bare "housing" or "home loan".
+require_keywords:
+  - real estate
+  - apartment
+  - apartments
+  - villa
+  - villas
+  - flat
+  - flats
+  - plot
+  - plots
+  - housing project
+  - residential project
+  - commercial property
+  - property price
+  - property prices
+  - flat price
+  - flat prices
+  - villa price
+  - villa prices
+  - apartment price
+  - apartment prices
+  - per sq ft
+  - per sq.ft
+  - per square foot
+  - psf
+  - circle rate
+  - capital values
+  - opens booking
+  - new project
+  - under construction
+  - ready to move
+  - proptech
+  - rera
+  - reit
+  - stamp duty
+  - office park
+  - warehouse
+  - magicbricks
+  - 99acres
+  - housing.com
+  - nobroker
+# Title/summary must also hit a price, launch, or offer signal (blocks salary/loan noise).
+require_signal_match: true
 deny:
   domains: []
   keywords:
@@ -13,9 +53,37 @@ deny:
     - match score
     - horoscope today
     - gossip
+    - nifty
+    - sensex
+    - share market
+    - stock market
+    - mutual fund
+    - ipo subscription
+    - cricket score
+    - pay commission
+    - 8th pay
+    - seventh pay
+    - 7th pay
+    - fitment factor
+    - dearness allowance
+    - da merger
+    - da hike
+    - salary hike
+    - inflation adjustment
+    - house rent allowance
+    - hra hike
+    - repo rate
+    - mclr
+    - home loan rate
+    - home loan interest
+    - home loan emi
+    - loan interest rate
+    - interest rate cut
+    - interest rate hike
+    - rbi repo
 signals:
-  launch: [launches, introduces, rolls out, announces, unveils, booking]
-  money: [pricing, funding, raises, acquires, subsidy, stamp duty, EMI]
-  rule: [regulation, ban, guidelines, mandate, policy, RERA]
-  pain: [shortage, complaint, backlash, cost, delay]
-  tool: [API, open-source, SDK, PropTech, app]
+  price: [flat price, villa price, apartment price, property price, property prices, prices rise, prices fall, price surge, price drop, price hike, psf, per sq ft, per sq.ft, per square, capital values, circle rate, ₹/sq, rs/sq, priced at]
+  launch: [opens booking, new project, soft launch, launches, unveils, rolls out, possession, groundbreaking]
+  offer: [price cut, festive offer, buy offer, discount, best deal, limited offer, buyer incentive, subsidy, stamp duty]
+  rule: [rera, regulation, guidelines, mandate, clearance, registration]
+  tool: [proptech, property app, listing, brokerage]

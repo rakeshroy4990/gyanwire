@@ -12,12 +12,23 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public final class NewsTexts {
 
     public static final Set<String> SIGNALS = Set.of(
             "launch", "funding", "approval", "regulation", "pricing", "shortage", "research", "opinion", "fyi", "other"
     );
+
+    private static final Pattern MONTH_DAY = Pattern.compile(
+            "\\b(january|february|march|april|may|june|july|august|september|october|november|december"
+                    + "|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\\s+\\d{1,2}(?:st|nd|rd|th)?(?:\\s+\\d{4})?\\b");
+    private static final Pattern DAY_MONTH = Pattern.compile(
+            "\\b\\d{1,2}(?:st|nd|rd|th)?\\s+(january|february|march|april|may|june|july|august|september|october|november|december"
+                    + "|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)(?:\\s+\\d{4})?\\b");
+    private static final Pattern YEAR = Pattern.compile("\\b20\\d{2}\\b");
+    /** Trailing "in City City City…" roundups (3+ place tokens after the last "in"). */
+    private static final Pattern PLACE_LIST_TAIL = Pattern.compile("\\bin(?:\\s+[\\p{L}\\p{N}]{2,}){3,}\\s*$");
 
     private NewsTexts() {
     }
@@ -32,6 +43,22 @@ public final class NewsTexts {
 
     public static String titleKey(String title) {
         return cleanTitle(title).toLowerCase(Locale.ROOT).replaceAll("[^\\p{L}\\p{N}]+", " ").trim();
+    }
+
+    /**
+     * Collapse city-list / date template variants so near-duplicate detection
+     * treats "Gold prices steady in Delhi, Mumbai…" and "…in Jaipur, Surat…" as one story.
+     */
+    public static String templateKey(String title) {
+        String key = titleKey(title);
+        if (key.isBlank()) {
+            return "";
+        }
+        key = MONTH_DAY.matcher(key).replaceAll(" ");
+        key = DAY_MONTH.matcher(key).replaceAll(" ");
+        key = YEAR.matcher(key).replaceAll(" ");
+        key = PLACE_LIST_TAIL.matcher(key).replaceAll(" ");
+        return key.replaceAll("\\s+", " ").trim();
     }
 
     public static String titleHash(String title) {
@@ -77,8 +104,8 @@ public final class NewsTexts {
     }
 
     public static boolean nearDuplicate(String left, String right) {
-        String a = titleKey(left);
-        String b = titleKey(right);
+        String a = templateKey(left);
+        String b = templateKey(right);
         if (a.isBlank() || b.isBlank()) {
             return false;
         }

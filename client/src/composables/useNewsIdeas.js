@@ -1,5 +1,13 @@
 import { ref } from 'vue';
-import { fetchNewsIdeas, rateIdea } from '../services/newsIdeas.service.js';
+import { fetchNewsIdeas, fetchVideoResearch, rateIdea } from '../services/newsIdeas.service.js';
+
+const STAGE_LABELS = {
+  brief: 'Reading the article',
+  angles: 'Picking ideas',
+};
+
+const POLL_MS = 2000;
+const POLL_MAX = 45;
 
 export function useNewsIdeas() {
   const open = ref(false);
@@ -11,12 +19,72 @@ export function useNewsIdeas() {
   const headline = ref('');
   const selected = ref(null);
   const ratingId = ref('');
+  const stageLabel = ref('Loading ideas');
+  const researchStatus = ref('');
+  const researchSummary = ref(null);
+  let pollTimer = null;
+  let pollCount = 0;
+  let pollNewsId = '';
+
+  function stopPoll() {
+    if (pollTimer) {
+      clearTimeout(pollTimer);
+      pollTimer = null;
+    }
+    pollCount = 0;
+    pollNewsId = '';
+  }
+
+  async function pollResearch(newsId) {
+    if (!newsId || newsId !== pollNewsId) return;
+    try {
+      const data = await fetchVideoResearch(newsId);
+      if (newsId !== pollNewsId) return;
+      const status = data?.status || '';
+      researchStatus.value = status;
+      if (status === 'ready' && data?.summary) {
+        researchSummary.value = data.summary;
+        stopPoll();
+        return;
+      }
+      if (status === 'failed') {
+        researchSummary.value = null;
+        stopPoll();
+        return;
+      }
+    } catch {
+      // Keep ideas usable if the poll fails.
+      if (pollCount >= 3) {
+        researchStatus.value = researchStatus.value || 'failed';
+        stopPoll();
+        return;
+      }
+    }
+    pollCount += 1;
+    if (pollCount >= POLL_MAX) {
+      if (researchStatus.value === 'running') {
+        researchStatus.value = 'failed';
+      }
+      stopPoll();
+      return;
+    }
+    pollTimer = setTimeout(() => pollResearch(newsId), POLL_MS);
+  }
+
+  function startPoll(newsId) {
+    stopPoll();
+    if (!newsId) return;
+    pollNewsId = newsId;
+    researchStatus.value = researchStatus.value || 'running';
+    pollTimer = setTimeout(() => pollResearch(newsId), POLL_MS);
+  }
 
   async function openForItem(newsItem) {
     if (!newsItem?.id) {
       error.value = 'This news item has no id.';
       return;
     }
+    stopPoll();
     open.value = true;
     loading.value = true;
     error.value = '';
@@ -25,13 +93,45 @@ export function useNewsIdeas() {
     brief.value = null;
     headline.value = newsItem.title || '';
     selected.value = null;
+    researchStatus.value = '';
+    researchSummary.value = null;
+    stageLabel.value = 'Loading ideas';
     try {
-      const data = await fetchNewsIdeas(newsItem.id);
-      ideas.value = Array.isArray(data?.ideas) ? data.ideas : [];
-      brief.value = data?.brief || null;
-      headline.value = data?.headline || newsItem.title || '';
+      const data = await fetchNewsIdeas(newsItem.id, async (event) => {
+        if (event?.type === 'status') {
+          stageLabel.value = STAGE_LABELS[event.stage] || 'Loading ideas';
+          return;
+        }
+        if (event?.type === 'meta' && event.data) {
+          headline.value = event.data.headline || newsItem.title || '';
+          brief.value = event.data.brief || null;
+          return;
+        }
+        if (event?.type === 'item' && event.item) {
+          const next = event.item;
+          const id = next.id || next.title;
+          if (!ideas.value.some((row) => (row.id || row.title) === id)) {
+            ideas.value = [...ideas.value, next];
+          }
+          return;
+        }
+        if (event?.type === 'research') {
+          researchStatus.value = event.status || 'running';
+          if (event.status === 'started' || event.status === 'running') {
+            startPoll(newsItem.id);
+          }
+        }
+      });
+      if (Array.isArray(data?.ideas) && data.ideas.length && !ideas.value.length) {
+        ideas.value = data.ideas;
+      }
+      if (data?.headline) headline.value = data.headline;
+      if (data?.brief) brief.value = data.brief;
       if (!ideas.value.length) {
         error.value = 'No idea fit this news.';
+      }
+      if (researchStatus.value === 'started' || researchStatus.value === 'running') {
+        startPoll(newsItem.id);
       }
     } catch (err) {
       error.value = err.message || 'Could not build ideas.';
@@ -41,6 +141,7 @@ export function useNewsIdeas() {
   }
 
   function close() {
+    stopPoll();
     open.value = false;
     loading.value = false;
     error.value = '';
@@ -50,6 +151,9 @@ export function useNewsIdeas() {
     headline.value = '';
     selected.value = null;
     ratingId.value = '';
+    researchStatus.value = '';
+    researchSummary.value = null;
+    stageLabel.value = 'Loading ideas';
   }
 
   async function rate(ideaId, rating) {
@@ -82,6 +186,9 @@ export function useNewsIdeas() {
     headline,
     selected,
     ratingId,
+    stageLabel,
+    researchStatus,
+    researchSummary,
     openForItem,
     close,
     rate,

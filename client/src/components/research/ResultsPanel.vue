@@ -64,8 +64,9 @@ function potential(item) {
 
 function freshnessText(value) {
   if (value === 'warming_up') return 'Fetching the latest news...';
+  if (value === 'fresh') return "Showing today's news first, then widening the window.";
   if (value === 'last 30 days') return 'Showing news from the last 30 days, newest first.';
-  if (value === 'last 7 days') return 'Few recent items — showing the last 7 days.';
+  if (value === 'last 7 days') return 'Showing the last 7 days; older coverage loads next.';
   if (value === 'older — few recent items') return 'Few recent items — showing older coverage.';
   return '';
 }
@@ -172,7 +173,12 @@ function isReturned(item) {
       :show-head="embedded"
     />
 
-    <div v-else-if="showEmpty" class="empty" :class="{ 'empty--embedded': embedded }">
+    <!-- warming_up status is the banner only — avoid "Nothing here yet" + duplicate fetch copy -->
+    <div
+      v-else-if="showEmpty && freshness !== 'warming_up'"
+      class="empty"
+      :class="{ 'empty--embedded': embedded }"
+    >
       <p v-if="!embedded" class="empty__title">Nothing here yet</p>
       <p>{{ emptyMessage }}</p>
     </div>

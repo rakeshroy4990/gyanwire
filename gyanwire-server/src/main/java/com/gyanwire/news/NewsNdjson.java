@@ -1,6 +1,7 @@
 package com.gyanwire.news;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gyanwire.config.ClientDisconnect;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -39,15 +40,31 @@ public final class NewsNdjson {
             data.put("usedLlm", false);
             writeFeed(output, mapper, data, flush);
         } catch (Exception ex) {
+            if (ClientDisconnect.isGone(ex)) {
+                return;
+            }
             Map<String, Object> error = new LinkedHashMap<>();
             error.put("type", "error");
             error.put("success", false);
             error.put("message", ex.getMessage() == null || ex.getMessage().isBlank()
                     ? "Could not load product news."
                     : ex.getMessage());
-            writeLine(output, mapper, error);
-            if (flush != null) {
-                flush.run();
+            try {
+                writeLine(output, mapper, error);
+                if (flush != null) {
+                    flush.run();
+                }
+            } catch (Exception writeEx) {
+                if (ClientDisconnect.isGone(writeEx)) {
+                    return;
+                }
+                if (writeEx instanceof IOException io) {
+                    throw io;
+                }
+                if (writeEx instanceof RuntimeException runtime) {
+                    throw runtime;
+                }
+                throw new IOException(writeEx);
             }
         }
     }
@@ -69,6 +86,7 @@ public final class NewsNdjson {
         meta.put("type", "meta");
         meta.put("success", true);
         writeRecord(output, mapper, meta, flush);
+        // Items are ordered with the narrowest non-empty window first (paintFirst).
         for (Map<String, Object> item : items) {
             Map<String, Object> line = new LinkedHashMap<>();
             line.put("type", "item");

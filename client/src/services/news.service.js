@@ -2,6 +2,9 @@ import { apiUrl } from './apiBase.js';
 import { readNdjson } from './newsStream.js';
 
 const PAGE_SIZE = 10;
+/** Server widens 1d → 7d → 30d in memory; client asks once for the month. */
+const INDUSTRY_WINDOWS = [1, 7, 30];
+const WARMING_RETRY_MS = 1500;
 
 function buildQuery({ limit = PAGE_SIZE, page = 1, sub = null, country = null, windowDays = 30 } = {}) {
   const params = new URLSearchParams();
@@ -12,6 +15,28 @@ function buildQuery({ limit = PAGE_SIZE, page = 1, sub = null, country = null, w
   if (sub) params.set('sub', sub);
   if (country) params.set('country', country);
   return params.toString();
+}
+
+function sleep(ms, signal) {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(Object.assign(new Error('Aborted'), { name: 'AbortError' }));
+      return;
+    }
+    const timer = setTimeout(resolve, ms);
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(Object.assign(new Error('Aborted'), { name: 'AbortError' }));
+    };
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
+function resultCount(data) {
+  if (Array.isArray(data?.results)) return data.results.length;
+  if (Array.isArray(data?.items)) return data.items.length;
+  const returned = Number(data?.returned);
+  return Number.isFinite(returned) ? returned : 0;
 }
 
 async function parseJson(res) {
@@ -25,23 +50,103 @@ async function parseJson(res) {
   return payload.data || {};
 }
 
-/** Industry browse: last 30 days, newest first, paginated. */
+async function readNewsResponse(res, { wantStream, onItem } = {}) {
+  if (!res.ok) {
+    return parseJson(res);
+  }
+  const contentType = res.headers.get('content-type') || '';
+  if (wantStream && contentType.includes('ndjson')) {
+    let frame = {};
+    await readNdjson(res, async (event) => {
+      if (event?.type === 'meta') {
+        frame = event;
+      } else if (event?.type === 'item') {
+        if (typeof onItem === 'function') {
+          await onItem(event.item);
+        }
+      } else if (event?.type === 'error') {
+        throw new Error(event.message || 'Could not load product news.');
+      } else if (event?.type === 'done') {
+        frame = { ...frame, returned: event.returned };
+      }
+    });
+    return frame;
+  }
+  return parseJson(res);
+}
+
+/** Industry browse for one page (newest first). Page 1 streams NDJSON when onItem is set. */
 export async function fetchIndustryNews({
   industry,
   sub = null,
   country = null,
   page = 1,
   limit = PAGE_SIZE,
+  windowDays = 30,
   signal,
+  onItem,
 } = {}) {
-  const qs = buildQuery({ limit, page, sub, country });
+  const qs = buildQuery({ limit, page, sub, country, windowDays });
+  const wantStream = page === 1 && typeof onItem === 'function';
   const res = await fetch(apiUrl(`/api/news/${encodeURIComponent(industry)}?${qs}`), {
     credentials: 'include',
     cache: 'no-store',
     signal,
-    headers: { Accept: 'application/json' },
+    headers: { Accept: wantStream ? 'application/x-ndjson, application/json' : 'application/json' },
   });
-  return parseJson(res);
+  return readNewsResponse(res, { wantStream, onItem });
+}
+
+/**
+ * Page 1: one 30d request (server widens 1d → 7d → 30d in memory).
+ * Retries once when the feed is still warming up with no rows.
+ */
+export async function fetchIndustryNewsChunks({
+  industry,
+  sub = null,
+  country = null,
+  page = 1,
+  limit = PAGE_SIZE,
+  signal,
+  onItem,
+  onChunk,
+} = {}) {
+  if (page > 1) {
+    return fetchIndustryNews({
+      industry,
+      sub,
+      country,
+      page,
+      limit,
+      windowDays: 30,
+      signal,
+    });
+  }
+
+  const load = () => fetchIndustryNews({
+    industry,
+    sub,
+    country,
+    page: 1,
+    limit,
+    windowDays: 30,
+    signal,
+    onItem,
+  });
+
+  let data = await load();
+  if (typeof onChunk === 'function') {
+    await onChunk(data, Number(data.windowDays) || 30);
+  }
+
+  if (data?.freshness === 'warming_up' && resultCount(data) === 0 && !signal?.aborted) {
+    await sleep(WARMING_RETRY_MS, signal);
+    data = await load();
+    if (typeof onChunk === 'function') {
+      await onChunk(data, Number(data.windowDays) || 30);
+    }
+  }
+  return data;
 }
 
 /** Default pool browse (JSON). Falls back to NDJSON stream for page 1 when preferred. */
@@ -65,26 +170,7 @@ export async function fetchDefaultNews({
     signal,
     headers: { Accept: wantStream ? 'application/x-ndjson, application/json' : 'application/json' },
   });
-  if (!res.ok) {
-    return parseJson(res);
-  }
-  const contentType = res.headers.get('content-type') || '';
-  if (wantStream && contentType.includes('ndjson')) {
-    let frame = {};
-    await readNdjson(res, async (event) => {
-      if (event?.type === 'meta') {
-        frame = event;
-      } else if (event?.type === 'item') {
-        await onItem(event.item);
-      } else if (event?.type === 'error') {
-        throw new Error(event.message || 'Could not load product news.');
-      } else if (event?.type === 'done') {
-        frame = { ...frame, returned: event.returned };
-      }
-    });
-    return frame;
-  }
-  return parseJson(res);
+  return readNewsResponse(res, { wantStream, onItem });
 }
 
-export { PAGE_SIZE };
+export { PAGE_SIZE, INDUSTRY_WINDOWS, WARMING_RETRY_MS };

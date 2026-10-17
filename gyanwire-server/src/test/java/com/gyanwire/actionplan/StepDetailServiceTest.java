@@ -16,23 +16,91 @@ class StepDetailServiceTest {
         StepDetailService service = new StepDetailService(new KnowledgeCatalog());
         Map<String, Object> plan = Map.of(
                 "format", "short_vertical",
+                "slots", Map.of("publisherUrl", "https://news.example/a"),
+                "newsBrief", Map.of(
+                        "publisherUrl", "https://news.example/a",
+                        "headline", "Example headline"),
                 "steps", List.of(Map.of(
-                        "id", "s4",
-                        "order", 4,
-                        "title", "Record voice-over",
-                        "durationMin", 30,
-                        "paidDurationMin", 15,
-                        "input", "script_final.md",
-                        "output", "voiceover.wav",
-                        "doneWhen", "Clean take",
-                        "ifStuck", "Use phone recorder")));
-        Map<String, Object> detail = service.build(plan, "s4", "open_source");
-        assertEquals("s4", detail.get("stepKey"));
+                        "id", "s1",
+                        "order", 1,
+                        "title", "Pick 3 facts",
+                        "durationMin", 15,
+                        "paidDurationMin", 10,
+                        "input", "NewsBrief",
+                        "output", "facts.md",
+                        "doneWhen", "3 facts",
+                        "ifStuck", "Copy three sentences")));
+        Map<String, Object> detail = service.build(plan, "s1", "open_source");
+        assertEquals("s1", detail.get("stepKey"));
         assertTrue(detail.get("openSource") instanceof Map<?, ?>);
         assertTrue(detail.get("paid") instanceof Map<?, ?>);
         @SuppressWarnings("unchecked")
         Map<String, Object> gain = (Map<String, Object>) detail.get("gain");
         assertEquals("estimate", gain.get("basis"));
-        assertFalse(((List<?>) ((Map<?, ?>) detail.get("openSource")).get("microSteps")).isEmpty());
+        @SuppressWarnings("unchecked")
+        List<String> micro = (List<String>) ((Map<?, ?>) detail.get("openSource")).get("microSteps");
+        assertFalse(micro.isEmpty());
+        assertTrue(micro.get(0).contains("https://news.example/a"));
+        assertTrue(micro.get(1).contains("name, number or date"));
+    }
+
+    @Test
+    void youtubeLongOutlineStepHasMicroStepsAndTools() {
+        StepDetailService service = new StepDetailService(new KnowledgeCatalog());
+        Map<String, Object> plan = Map.of(
+                "format", "youtube_long",
+                "slots", Map.of(
+                        "publisherUrl", "https://news.example/a",
+                        "headline", "Example headline"),
+                "steps", List.of(Map.of(
+                        "id", "s1",
+                        "order", 1,
+                        "title", "Outline the demo chapters",
+                        "durationMin", 30,
+                        "paidDurationMin", 15,
+                        "input", "NewsBrief + product",
+                        "output", "outline.md",
+                        "doneWhen", "5 chapter titles",
+                        "ifStuck", "Use: hook / why / demo / tips / CTA.")));
+        Map<String, Object> detail = service.build(plan, "s1", "open_source");
+        @SuppressWarnings("unchecked")
+        List<String> micro = (List<String>) ((Map<?, ?>) detail.get("openSource")).get("microSteps");
+        assertFalse(micro.isEmpty());
+        assertTrue(micro.get(0).contains("https://news.example/a"));
+        assertTrue(micro.stream().anyMatch(line -> line.contains("outline.md")));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> tools = (List<Map<String, Object>>) ((Map<?, ?>) detail.get("openSource")).get("tools");
+        assertFalse(tools.isEmpty());
+        assertTrue(tools.stream().anyMatch(t -> "notes_app".equals(t.get("id"))));
+        @SuppressWarnings("unchecked")
+        List<String> paidMicro = (List<String>) ((Map<?, ?>) detail.get("paid")).get("microSteps");
+        assertFalse(paidMicro.isEmpty());
+    }
+
+    @Test
+    void shortVerticalCaptionStepLinksWhisperCpp() {
+        StepDetailService service = new StepDetailService(new KnowledgeCatalog());
+        Map<String, Object> plan = Map.of(
+                "format", "short_vertical",
+                "steps", List.of(Map.of(
+                        "id", "s6",
+                        "order", 6,
+                        "title", "Assemble and cut",
+                        "durationMin", 40,
+                        "paidDurationMin", 25)));
+        Map<String, Object> detail = service.build(plan, "s6", "open_source");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> openSource = (Map<String, Object>) detail.get("openSource");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> tools = (List<Map<String, Object>>) openSource.get("tools");
+        Map<String, Object> whisper = tools.stream()
+                .filter(tool -> "whisper_cpp".equals(tool.get("id")))
+                .findFirst()
+                .orElseThrow();
+        assertEquals("Whisper.cpp", whisper.get("name"));
+        assertEquals("open_source", whisper.get("tier"));
+        assertEquals("MIT", whisper.get("license"));
+        assertEquals(true, whisper.get("openSource"));
+        assertTrue(String.valueOf(whisper.get("url")).contains("whisper.cpp"));
     }
 }

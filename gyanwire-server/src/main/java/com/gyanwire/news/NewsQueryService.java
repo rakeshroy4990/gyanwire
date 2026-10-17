@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -61,7 +60,9 @@ public class NewsQueryService {
     ) {
         int pageSize = clampPageSize(limit);
         int pageNo = Math.max(1, page);
-        int lookback = Math.max(1, Math.min(windowDays <= 0 ? BROWSE_LOOKBACK_DAYS : windowDays, BROWSE_LOOKBACK_DAYS));
+        // windowDays stays on the API; browse always reads the month and picks
+        // 1d → 7d → 30d in memory so the first card is not blocked on ingest.
+        int lookback = BROWSE_LOOKBACK_DAYS;
         String code = country == null || country.isBlank() ? null : country;
         NewsViewer who = viewer == null ? NewsViewer.of(null, null) : viewer;
         String key = who.cacheKey() + "|" + industry + "|" + (sub == null ? "" : sub) + "|" + pageSize + "|" + pageNo
@@ -77,37 +78,36 @@ public class NewsQueryService {
         List<NewsRow> rows = withoutDismissed(
                 labRows(industry, sub, store.eligible(industry, sub, since, false)),
                 dismissals);
-        String forced = null;
         if (pageNo == 1 && properties.getIngest().isEnabled()) {
-            IndustryFetchGate.Outcome outcome = coordinator.fetch(
-                    industry,
-                    sub,
-                    NewsFetchCoordinator.Mode.ON_DEMAND,
-                    Duration.ofSeconds(Math.max(properties.getIngest().getOnDemandTimeoutSeconds(), 1)));
-            rows = withoutDismissed(
-                    labRows(industry, sub, store.eligible(industry, sub, since, false)),
-                    dismissals);
-            if (outcome.timedOut() && rows.isEmpty()) {
-                forced = "warming_up";
-            }
+            coordinator.refreshInBackground(industry, sub);
             if (rows.isEmpty()) {
                 boolean prod = environment.acceptsProfiles(Profiles.of("prod"));
-                seed.load(industry, prod, outcome.failed() || outcome.timedOut());
+                seed.load(industry, prod, true);
                 rows = withoutDismissed(
                         labRows(industry, sub, store.eligible(industry, sub, since, true)),
                         dismissals);
-                if (forced == null && rows.stream().anyMatch(NewsRow::sample)) {
-                    forced = rows.isEmpty() ? "warming_up" : null;
-                }
             }
         }
         refreshRulesScores(rows, now);
         rows = relevance.gate(industry, rows, now, hidden, Math.max(NewsRelevanceService.DEFAULT_TOP_N, pageSize * 3));
-        Prepared prepared = prepareChronological(rows, pageNo, pageSize, now, code);
-        String freshness = forced != null ? forced : "last 30 days";
+        Prepared prepared = prepareBrowse(rows, pageNo, pageSize, now, code);
+        String freshness = prepared.freshness();
         Map<String, Object> body = payload(
-                industry, sub, pageSize, pageNo, prepared.total(), freshness, prepared.ranked(), now, code, prepared.countries());
-        if (forced == null && !prepared.ranked().items().isEmpty()) {
+                industry,
+                sub,
+                pageSize,
+                pageNo,
+                prepared.total(),
+                prepared.windowDays(),
+                freshness,
+                prepared.ranked(),
+                now,
+                code,
+                prepared.countries());
+        if (prepared.paintFirst() > 0) {
+            body.put("paintFirst", prepared.paintFirst());
+        }
+        if (!"warming_up".equals(freshness) && !prepared.ranked().items().isEmpty()) {
             cache.put(key, new Cached(body, now.plusSeconds(Math.max(properties.getRank().getCacheSeconds(), 1))));
         }
         return body;
@@ -132,6 +132,9 @@ public class NewsQueryService {
         pooled.addAll(gateIndustry("Share Market", "EV", since, dismissals, hidden, now));
         pooled.addAll(gateIndustry("Medical", "Cardiology", since, dismissals, hidden, now));
         pooled.addAll(gateIndustry("Medical", "Gynecology", since, dismissals, hidden, now));
+        if (pageNo == 1 && properties.getIngest().isEnabled()) {
+            coordinator.refreshInBackground("AI", null);
+        }
         if (pooled.isEmpty()) {
             Map<String, Object> filled = industry("AI", null, pageSize, "products", BROWSE_LOOKBACK_DAYS, code, who, pageNo);
             filled.put("category", "Default");
@@ -139,19 +142,22 @@ public class NewsQueryService {
             filled.put("isDefaultNews", true);
             return filled;
         }
-        if (pageNo == 1 && properties.getIngest().isEnabled()) {
-            coordinator.fetch("AI", null, NewsFetchCoordinator.Mode.ON_DEMAND,
-                    Duration.ofSeconds(Math.max(properties.getIngest().getOnDemandTimeoutSeconds(), 1)));
-            pooled = new ArrayList<>();
-            pooled.addAll(gateIndustry("AI", null, since, dismissals, hidden, now));
-            pooled.addAll(gateIndustry("Share Market", "IT", since, dismissals, hidden, now));
-            pooled.addAll(gateIndustry("Share Market", "EV", since, dismissals, hidden, now));
-            pooled.addAll(gateIndustry("Medical", "Cardiology", since, dismissals, hidden, now));
-            pooled.addAll(gateIndustry("Medical", "Gynecology", since, dismissals, hidden, now));
-        }
-        Prepared prepared = prepareChronological(pooled, pageNo, pageSize, now, code);
+        Prepared prepared = prepareBrowse(pooled, pageNo, pageSize, now, code);
         Map<String, Object> body = payload(
-                "Default", null, pageSize, pageNo, prepared.total(), "last 30 days", prepared.ranked(), now, code, prepared.countries());
+                "Default",
+                null,
+                pageSize,
+                pageNo,
+                prepared.total(),
+                prepared.windowDays(),
+                prepared.freshness(),
+                prepared.ranked(),
+                now,
+                code,
+                prepared.countries());
+        if (prepared.paintFirst() > 0) {
+            body.put("paintFirst", prepared.paintFirst());
+        }
         body.put("label", "Top searched product news");
         body.put("isDefaultNews", true);
         return body;
@@ -198,34 +204,14 @@ public class NewsQueryService {
     }
 
     /**
-     * A lab chip should show that lab's feature launches. Parent AI rows are stored
-     * without a sub, so they would otherwise fill Anthropic, OpenAI, and Grok alike.
+     * A sub chip should show that specialty's news. Parent industry rows are often
+     * stored without a sub, so they would otherwise fill every chip with generic news.
      */
     static List<NewsRow> labRows(String industry, String sub, List<NewsRow> rows) {
-        if (!"AI".equals(industry) || sub == null || sub.isBlank() || rows == null || rows.isEmpty()) {
+        if (sub == null || sub.isBlank() || rows == null || rows.isEmpty()) {
             return rows == null ? List.of() : rows;
         }
-        return rows.stream().filter(row -> matchesAiLab(sub, row)).toList();
-    }
-
-    static boolean matchesAiLab(String sub, NewsRow row) {
-        if (row == null) {
-            return false;
-        }
-        if (sub.equals(row.sub())) {
-            return true;
-        }
-        String blob = ((row.title() == null ? "" : row.title()) + " " + (row.summary() == null ? "" : row.summary()))
-                .toLowerCase(Locale.ROOT);
-        return switch (sub) {
-            case "Anthropic" -> blob.contains("anthropic") || blob.contains("claude");
-            case "OpenAI" -> blob.contains("openai") || blob.contains("chatgpt") || blob.contains("gpt-6") || blob.contains("gpt 6");
-            case "Grok" -> blob.contains("grok") || blob.contains("xai");
-            case "Google" -> blob.contains("gemini") || blob.contains("gemma") || blob.contains("deepmind");
-            case "Meta" -> blob.contains("meta ai") || blob.contains("llama") || blob.contains("muse");
-            case "Microsoft" -> blob.contains("copilot") || blob.contains("windows ml");
-            default -> blob.contains(sub.toLowerCase(Locale.ROOT));
-        };
+        return rows.stream().filter(row -> NewsSubMatcher.matches(industry, sub, row)).toList();
     }
 
     static List<NewsRow> withoutDismissed(List<NewsRow> rows, NewsStore.Dismissals dismissals) {
@@ -298,13 +284,79 @@ public class NewsQueryService {
         return Math.min(Math.max(limit, 1), MAX_PAGE_SIZE);
     }
 
-    /** @deprecated Prefer chronological browse; kept for tests that assert widen steps. */
+    /**
+     * Progressive browse windows: 1 day → 7 days → 30 days, capped by the request.
+     */
     static int[] windowsFor(int requested) {
-        int[] steps = new int[]{1, 7, 30};
-        if (requested > 0) {
-            steps[0] = requested;
+        int cap = requested <= 0 ? BROWSE_LOOKBACK_DAYS : Math.min(requested, BROWSE_LOOKBACK_DAYS);
+        int[] all = {1, 7, 30};
+        List<Integer> steps = new ArrayList<>();
+        for (int day : all) {
+            if (day < cap) {
+                steps.add(day);
+            }
         }
-        return steps;
+        steps.add(cap);
+        return steps.stream().mapToInt(Integer::intValue).toArray();
+    }
+
+    /**
+     * Page 1 paints the narrowest non-empty window first, then fills from the month.
+     * Returns empty with warming_up when nothing is stored yet.
+     */
+    static FirstPage firstPage(List<NewsRow> ordered, int pageSize, Instant now) {
+        int size = Math.max(1, pageSize);
+        Instant when = now == null ? Instant.now() : now;
+        int usedDays = BROWSE_LOOKBACK_DAYS;
+        List<NewsRow> firstSlice = List.of();
+        for (int days : new int[]{1, 7, 30}) {
+            List<NewsRow> slice = withinDays(ordered, days, when);
+            if (!slice.isEmpty()) {
+                firstSlice = slice;
+                usedDays = days;
+                break;
+            }
+        }
+        List<NewsRow> page = new ArrayList<>();
+        for (NewsRow row : firstSlice) {
+            if (page.size() >= size) {
+                break;
+            }
+            page.add(row);
+        }
+        int paintFirst = page.size();
+        if (page.size() < size && ordered != null) {
+            for (NewsRow row : ordered) {
+                if (page.size() >= size) {
+                    break;
+                }
+                if (page.contains(row)) {
+                    continue;
+                }
+                page.add(row);
+            }
+        }
+        if (page.isEmpty()) {
+            return new FirstPage(List.of(), 0, BROWSE_LOOKBACK_DAYS, "warming_up");
+        }
+        return new FirstPage(page, paintFirst, usedDays, FreshnessGate.labelForDays(usedDays));
+    }
+
+    static List<NewsRow> withinDays(List<NewsRow> rows, int days, Instant now) {
+        if (rows == null || rows.isEmpty()) {
+            return List.of();
+        }
+        Instant cutoff = now.minus(Duration.ofDays(Math.max(days, 1)));
+        List<NewsRow> out = new ArrayList<>();
+        for (NewsRow row : rows) {
+            if (row == null || row.publishedAt() == null) {
+                continue;
+            }
+            if (!row.publishedAt().isBefore(cutoff)) {
+                out.add(row);
+            }
+        }
+        return out;
     }
 
     private List<NewsRow> gateIndustry(
@@ -324,27 +376,50 @@ public class NewsQueryService {
         refreshRulesScores(rows, properties.getRank(), now);
     }
 
-    private Prepared prepareChronological(List<NewsRow> rows, int page, int pageSize, Instant now, String country) {
+    private Prepared prepareBrowse(List<NewsRow> rows, int page, int pageSize, Instant now, String country) {
         CountrySignals.assignMissing(rows);
         List<Map<String, Object>> countries = new ArrayList<>(CountrySignals.options(rows));
         CountrySignals.ensureOption(countries, country);
         List<NewsRow> scoped = CountrySignals.matching(rows, country);
         List<NewsRow> ordered = chronological(scoped);
-        PageSlice pageSlice = slice(ordered, page, pageSize);
-        String message = "";
-        if (pageSlice.total() == 0) {
-            message = "No business-relevant news from pack sources yet.";
-        } else if (pageSlice.total() < 3) {
-            message = "Fewer than 3 relevant items right now — we do not pad with junk.";
+        int pageNo = Math.max(1, page);
+        if (pageNo == 1) {
+            FirstPage first = firstPage(ordered, pageSize, now);
+            String message = browseMessage(ordered.size());
+            return new Prepared(
+                    new NewsRanker.Ranked(first.items(), message),
+                    countries,
+                    ordered.size(),
+                    1,
+                    pageSize,
+                    ordered.isEmpty() ? 0 : (ordered.size() + pageSize - 1) / pageSize,
+                    ordered.size() > first.items().size(),
+                    first.windowDays(),
+                    first.freshness(),
+                    first.paintFirst());
         }
+        PageSlice pageSlice = slice(ordered, pageNo, pageSize);
         return new Prepared(
-                new NewsRanker.Ranked(pageSlice.items(), message),
+                new NewsRanker.Ranked(pageSlice.items(), browseMessage(pageSlice.total())),
                 countries,
                 pageSlice.total(),
                 pageSlice.page(),
                 pageSlice.pageSize(),
                 pageSlice.totalPages(),
-                pageSlice.hasMore());
+                pageSlice.hasMore(),
+                BROWSE_LOOKBACK_DAYS,
+                FreshnessGate.labelForDays(BROWSE_LOOKBACK_DAYS),
+                0);
+    }
+
+    private static String browseMessage(int total) {
+        if (total == 0) {
+            return "No business-relevant news from pack sources yet.";
+        }
+        if (total < 3) {
+            return "Fewer than 3 relevant items right now — we do not pad with junk.";
+        }
+        return "";
     }
 
     private Map<String, Object> payload(
@@ -353,6 +428,7 @@ public class NewsQueryService {
             int pageSize,
             int page,
             int total,
+            int windowDays,
             String freshness,
             NewsRanker.Ranked ranked,
             Instant now,
@@ -420,7 +496,7 @@ public class NewsQueryService {
         body.put("countries", countries == null ? List.of() : countries);
         body.put("isDefaultNews", false);
         body.put("sort", "publishedAtDesc");
-        body.put("windowDays", BROWSE_LOOKBACK_DAYS);
+        body.put("windowDays", Math.max(1, windowDays));
         if (country != null && items.isEmpty()) {
             body.put("message", "No findings for " + CountrySignals.name(country) + " right now.");
         }
@@ -434,8 +510,14 @@ public class NewsQueryService {
             int page,
             int pageSize,
             int totalPages,
-            boolean hasMore
+            boolean hasMore,
+            int windowDays,
+            String freshness,
+            int paintFirst
     ) {
+    }
+
+    record FirstPage(List<NewsRow> items, int paintFirst, int windowDays, String freshness) {
     }
 
     record PageSlice(List<NewsRow> items, int total, int page, int pageSize, int totalPages, boolean hasMore) {
