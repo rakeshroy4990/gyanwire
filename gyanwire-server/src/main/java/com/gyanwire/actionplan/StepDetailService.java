@@ -213,6 +213,19 @@ public class StepDetailService {
             if (!why.isBlank()) {
                 slots.put("whyItMatters", why);
             }
+            String context = str(pack.get("context"));
+            if (!context.isBlank()) {
+                slots.put("context", context);
+                slots.putIfAbsent("studies", context);
+            }
+            Object unconfirmed = pack.get("unconfirmed");
+            if (unconfirmed instanceof List<?> list && !list.isEmpty() && list.get(0) != null) {
+                String myth = String.valueOf(list.get(0)).trim();
+                if (!myth.isBlank()) {
+                    slots.putIfAbsent("unconfirmed_1", myth);
+                    slots.putIfAbsent("myth", "Unconfirmed / treat carefully: " + myth);
+                }
+            }
             Object packFacts = pack.get("facts");
             if (packFacts instanceof List<?> list) {
                 int i = 1;
@@ -236,6 +249,7 @@ public class StepDetailService {
         slots.putIfAbsent("fact_1", slots.getOrDefault("whatHappened", ""));
         slots.putIfAbsent("fact_2", "Who it affects is in the article.");
         slots.putIfAbsent("fact_3", slots.getOrDefault("whyItMatters", ""));
+        com.gyanwire.actionplan.compose.StepComposer.ensureYoutubePackageSlots(slots);
         return slots;
     }
 

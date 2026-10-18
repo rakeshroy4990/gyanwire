@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -112,7 +113,22 @@ class StepContractTest {
         assertTrue(s1.stream().anyMatch(line -> line.toLowerCase().contains("story summary")));
         assertTrue(s1.stream().anyMatch(line -> line.contains("Anthropic launched") || line.contains("Claude Haiku")));
         assertTrue(s1.stream().anyMatch(line -> line.contains("outline.md")));
+        assertTrue(s1.stream().anyMatch(line -> line.toLowerCase().contains("thumbnail")));
+        assertTrue(s1.stream().anyMatch(line -> line.contains("Title") && line.contains("#")));
+        assertTrue(s1.stream().anyMatch(line -> line.contains("WHAT NOT TO DO") || line.contains("What not to do")));
         assertTrue(s1.stream().noneMatch(line -> line.startsWith("{") && line.contains("=")));
+        assertTrue(s1.stream().noneMatch(line -> line.contains("{{")));
+        assertEquals(6, steps.size());
+        assertTrue(steps.stream().noneMatch(step -> "Thumbnail and title".equals(step.get("title"))));
+        assertTrue(steps.stream().anyMatch(step -> String.valueOf(step.get("title")).toLowerCase().contains("thumbnail")));
+        @SuppressWarnings("unchecked")
+        List<String> s2 = (List<String>) steps.stream()
+                .filter(step -> "s2".equals(step.get("id")))
+                .findFirst()
+                .orElseThrow()
+                .get("microSteps");
+        assertTrue(s2.stream().anyMatch(line -> line.contains("[0:00–1:00]")));
+        assertTrue(s2.stream().anyMatch(line -> line.contains("[8:00–10:00]")));
     }
 
     private static boolean blank(Object value) {

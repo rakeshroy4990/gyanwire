@@ -421,7 +421,12 @@ public class ActionPlanPipeline {
         if (!isActionPlan(plan)) {
             return false;
         }
-        if (!(plan.get("steps") instanceof List<?> steps) || steps.size() < 8) {
+        if (!(plan.get("steps") instanceof List<?> steps)) {
+            return false;
+        }
+        String format = String.valueOf(plan.get("format"));
+        int minSteps = "youtube_long".equals(format) ? 5 : 8;
+        if (steps.size() < minSteps) {
             return false;
         }
         Object lint = plan.get("lint");
@@ -490,7 +495,11 @@ public class ActionPlanPipeline {
             Map<String, String> slots = new LinkedHashMap<>(fallback);
             for (String key : List.of(
                     "hook", "point_1", "point_2", "point_3", "cta",
-                    "caption_youtube", "caption_instagram", "caption_linkedin", "title")) {
+                    "caption_youtube", "caption_instagram", "caption_linkedin", "title",
+                    "ytTitle", "thumbText", "thumbMood", "ytDescription", "ytHashtags",
+                    "studies", "myth", "whatNotToDo",
+                    "speak_0_1", "speak_1_2", "speak_2_3", "speak_3_4", "speak_4_5",
+                    "speak_5_6", "speak_6_7", "speak_7_8", "speak_8_10")) {
                 String value = node.path(key).asText("").trim();
                 if (!value.isBlank()) {
                     slots.put(key, value);
@@ -498,6 +507,7 @@ public class ActionPlanPipeline {
             }
             StepComposer.ensureSlots(slots, brief);
             StepComposer.applyVideoResearch(slots, videoResearchSummary);
+            StepComposer.ensureYoutubePackageSlots(slots);
             return slots;
         } catch (Exception ex) {
             return fallback;

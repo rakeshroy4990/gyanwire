@@ -74,14 +74,16 @@ export function useNewsIdeas() {
     } catch {
       // Keep ideas usable if the poll fails.
       if (pollCount >= 3) {
-        researchStatus.value = researchStatus.value || 'failed';
+        if (researchStatus.value === 'running' || researchStatus.value === 'started') {
+          researchStatus.value = 'failed';
+        }
         stopPoll();
         return;
       }
     }
     pollCount += 1;
     if (pollCount >= POLL_MAX) {
-      if (researchStatus.value === 'running') {
+      if (researchStatus.value === 'running' || researchStatus.value === 'started') {
         researchStatus.value = 'failed';
       }
       stopPoll();
@@ -95,8 +97,20 @@ export function useNewsIdeas() {
     if (!newsId) return;
     pollNewsId = newsId;
     researchStatus.value = researchStatus.value || 'running';
-    // First fetch immediately — cache hits never stream a research event.
+    // First fetch immediately — stream may omit summary when research is still running.
     pollTimer = setTimeout(() => pollResearch(newsId), 0);
+  }
+
+  function applyResearchEvent(event, newsId) {
+    const status = event?.status || 'running';
+    researchStatus.value = status;
+    const summary = event?.summary || event?.data?.summary;
+    if (summary && typeof summary === 'object' && !Array.isArray(summary)) {
+      researchSummary.value = summary;
+    }
+    if (!researchSummary.value && (status === 'started' || status === 'running' || status === 'ready')) {
+      startPoll(newsId || item.value?.id || '');
+    }
   }
 
   async function openForItem(newsItem) {
@@ -142,11 +156,8 @@ export function useNewsIdeas() {
           return;
         }
         if (event?.type === 'research') {
-          researchStatus.value = event.status || 'running';
+          applyResearchEvent(event, newsItem.id);
           timing.debug(`research:${event.status || ''}`);
-          if (event.status === 'started' || event.status === 'running') {
-            startPoll(newsItem.id);
-          }
         }
       });
       if (Array.isArray(data?.ideas) && data.ideas.length && !ideas.value.length) {
@@ -162,9 +173,8 @@ export function useNewsIdeas() {
       } else {
         timing.done(`${ideas.value.length} ideas`);
       }
-      // Always hydrate video research. Cached idea streams omit the research event,
-      // but the pack may already be ready from a prior visit.
-      if (!researchSummary.value) {
+      // Poll until ready when the stream did not already include a summary.
+      if (!researchSummary.value && researchStatus.value !== 'failed') {
         startPoll(newsItem.id);
       }
     } catch (err) {

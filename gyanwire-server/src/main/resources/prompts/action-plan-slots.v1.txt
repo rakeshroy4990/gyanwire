@@ -10,7 +10,24 @@ Schema:
   "caption_youtube": "short caption",
   "caption_instagram": "short caption",
   "caption_linkedin": "short caption",
-  "title": "upload title with entity first"
+  "title": "upload title with entity first",
+  "ytTitle": "YouTube title ≤100 characters including one hashtag; curiosity-first; entity named",
+  "thumbText": "short bold question for the thumbnail; eager and curious",
+  "thumbMood": "one line on 1280×720 layout that draws attention",
+  "ytDescription": "≤5000 characters with sections WHAT, WHY, STUDIES/CONTEXT, MYTH/UNCONFIRMED, WHAT NOT TO DO, Source, hashtags",
+  "ytHashtags": "2-4 hashtags including one from the entity",
+  "studies": "context or prior reporting in 1-3 sentences; no invented studies",
+  "myth": "one myth or unconfirmed claim to push back on",
+  "whatNotToDo": "one concrete wrong move viewers should avoid",
+  "speak_0_1": "exact words for minute 0-1: intro + curiosity",
+  "speak_1_2": "exact words for minute 1-2: what happened",
+  "speak_2_3": "exact words for minute 2-3: why it matters",
+  "speak_3_4": "exact words for minute 3-4: fact deep-dive",
+  "speak_4_5": "exact words for minute 4-5: studies/context",
+  "speak_5_6": "exact words for minute 5-6: myth + what not to do",
+  "speak_6_7": "exact words for minute 6-7: live demo beat",
+  "speak_7_8": "exact words for minute 7-8: tips",
+  "speak_8_10": "exact words for minute 8-10: recap + CTA"
 }
 
 Rules:
@@ -20,3 +37,7 @@ Rules:
 - Never use a plan label or the words "Post today:" as the topic.
 - Combined hook + points + cta should be about 90 to 130 words.
 - Hook must contain at least one entity name and one fact keyword.
+- ytTitle must be ≤100 characters including the hashtag and must raise curiosity.
+- ytDescription must include WHAT, WHY, STUDIES/CONTEXT, MYTH/UNCONFIRMED, WHAT NOT TO DO; stay ≤5000 characters.
+- speak_* fields must be ready-to-say sentences from the facts — do not tell the creator to "research" or "look up" anything.
+- If you lack a study, put grounded context in studies; do not invent a paper.

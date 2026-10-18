@@ -79,6 +79,10 @@ class StepDetailServiceTest {
         assertTrue(micro.stream().anyMatch(line -> line.contains("Parents need a clear path")));
         assertTrue(micro.stream().anyMatch(line -> line.contains("Karnataka Medical Council")));
         assertTrue(micro.stream().anyMatch(line -> line.contains("outline.md")));
+        assertTrue(micro.stream().anyMatch(line -> line.toLowerCase().contains("thumbnail")));
+        assertTrue(micro.stream().anyMatch(line -> line.contains("Title") && line.contains("#")));
+        assertTrue(micro.stream().anyMatch(line -> line.contains("Description WHAT") || line.contains("WHAT:")));
+        assertTrue(micro.stream().anyMatch(line -> line.contains("WHAT NOT TO DO") || line.contains("What not to do")));
         assertTrue(micro.stream().noneMatch(line -> line.startsWith("{") && line.contains("=")));
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> tools = (List<Map<String, Object>>) ((Map<?, ?>) detail.get("openSource")).get("tools");
@@ -88,6 +92,44 @@ class StepDetailServiceTest {
         List<String> paidMicro = (List<String>) ((Map<?, ?>) detail.get("paid")).get("microSteps");
         assertFalse(paidMicro.isEmpty());
         assertTrue(paidMicro.stream().anyMatch(line -> line.contains("medical negligence case")));
+    }
+
+    @Test
+    void youtubeLongScriptStepHasMinuteByMinuteSpokenLines() {
+        StepDetailService service = new StepDetailService(new KnowledgeCatalog());
+        Map<String, Object> plan = Map.of(
+                "format", "youtube_long",
+                "slots", Map.of(
+                        "publisherUrl", "https://news.example/a",
+                        "headline", "Example headline",
+                        "entity", "Karnataka Medical Council"),
+                "videoResearch", Map.of(
+                        "whatHappened", "Health Department referred a medical negligence case to the council.",
+                        "whyItMatters", "Parents need a clear path when a toddler is harmed in care.",
+                        "facts", List.of(
+                                Map.of("id", "r1", "text", "Toddler suffered brain damage after treatment."),
+                                Map.of("id", "r2", "text", "Case sent to Karnataka Medical Council."),
+                                Map.of("id", "r3", "text", "Hospital faces a negligence referral."))),
+                "steps", List.of(Map.of(
+                        "id", "s2",
+                        "order", 2,
+                        "title", "Script the spoken parts",
+                        "durationMin", 60,
+                        "paidDurationMin", 30,
+                        "input", "outline.md",
+                        "output", "script.md",
+                        "doneWhen", "Word count in range",
+                        "ifStuck", "Narrate the outline aloud.")));
+        Map<String, Object> detail = service.build(plan, "s2", "open_source");
+        @SuppressWarnings("unchecked")
+        List<String> micro = (List<String>) ((Map<?, ?>) detail.get("openSource")).get("microSteps");
+        assertFalse(micro.isEmpty());
+        assertTrue(micro.stream().anyMatch(line -> line.contains("[0:00–1:00]")));
+        assertTrue(micro.stream().anyMatch(line -> line.toLowerCase().contains("curiosity")
+                || line.contains("Stop scrolling")));
+        assertTrue(micro.stream().anyMatch(line -> line.contains("medical negligence case")));
+        assertTrue(micro.stream().anyMatch(line -> line.contains("script.md")));
+        assertTrue(micro.stream().noneMatch(line -> line.contains("{{")));
     }
 
     @Test

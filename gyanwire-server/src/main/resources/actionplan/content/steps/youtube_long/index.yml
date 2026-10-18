@@ -1,28 +1,40 @@
 format: youtube_long
 steps:
   s1:
-    goal: 5 chapter titles
-    commonMistakes: Vague chapter names without a demo beat or CTA.
+    goal: 5 chapter titles; readable thumb; title ≤100 chars; description ready to paste
+    commonMistakes: Vague chapter names; tiny thumb text; title over 100 chars; empty What/Why sections.
     open_source:
       microSteps:
         - "Story summary: {{whatHappened}}"
         - "Why it matters: {{whyItMatters}}"
-        - "Key facts to cover: {{fact_1}}; {{fact_2}}; {{fact_3}}."
-        - "Draft five chapter titles: hook / why / demo / tips / CTA."
-        - "Keep each title ≤8 words; put {{entity}} first in the hook."
-        - "Save as outline.md with one title per line. Cite {{publisherUrl}}."
-      tools: [notes_app, text_editor]
-      minutes: 30
+        - "Key facts: {{fact_1}}; {{fact_2}}; {{fact_3}}."
+        - "Chapter outline (save outline.md): 1) Hook 2) What happened 3) Why / stakes 4) Live demo 5) Tips + CTA. Put {{entity}} in the hook title. Cite {{publisherUrl}}."
+        - "Thumbnail 1280×720 — do not invent a new angle: {{thumbMood}}"
+        - "Thumbnail on-image text (exact): \"{{thumbText}}\""
+        - "Export thumb.png; check readability on a phone."
+        - "Title (≤100 characters including hashtag — paste as-is): {{ytTitle}}"
+        - "Description WHAT (paste): {{whatHappened}}"
+        - "Description WHY (paste): {{whyItMatters}}"
+        - "Description STUDIES / CONTEXT (paste): {{studies}}"
+        - "Description MYTH / UNCONFIRMED (paste): {{myth}}"
+        - "Description WHAT NOT TO DO (paste): {{whatNotToDo}}"
+        - "Hashtags (append): {{ytHashtags}}"
+        - "Full description block ≤5000 chars (paste into YouTube): {{ytDescription}}"
+        - "Save description.md next to outline.md and thumb.png."
+      tools: [notes_app, gimp, text_editor]
+      minutes: 70
     paid:
       microSteps:
-        - "Paste the story summary into a paid AI chat: {{whatHappened}}"
-        - "Add why it matters ({{whyItMatters}}) and ask for 5 chapter titles."
-        - "Edit to hook / why / demo / tips / CTA; keep {{entity}} in the hook."
-        - "Save the five titles to outline.md."
-      tools: [chatgpt_plus]
-      minutes: 15
-      giveUp: Monthly cost; you still own the outline structure.
-    free_not_os: []
+        - "Paste this brief into a paid AI only to polish wording — keep every fact: {{whatHappened}}"
+        - "Keep Why: {{whyItMatters}}; Studies/context: {{studies}}; Myth: {{myth}}; Avoid: {{whatNotToDo}}."
+        - "Use this title unless the AI shortens under 100 chars: {{ytTitle}}"
+        - "Thumbnail: {{thumbMood}} Text on image: \"{{thumbText}}\" — export thumb.png in Canva."
+        - "Paste full description as-is: {{ytDescription}}"
+        - "Save outline.md (hook / why / demo / tips / CTA) + description.md."
+      tools: [chatgpt_plus, canva_pro]
+      minutes: 35
+      giveUp: Monthly cost; you still own the outline and wording.
+    free_not_os: [canva_free]
   s1b:
     goal: One screenshot showing a real product result
     commonMistakes: Stock UI or a fake prompt result.
@@ -42,22 +54,29 @@ steps:
       giveUp: Subscription for a single crop.
     free_not_os: []
   s2:
-    goal: Word count in range (900–1500)
-    commonMistakes: Script without timestamps or a live-demo beat.
+    goal: Word count in range (900–1500); every minute has spoken lines
+    commonMistakes: Script without timestamps; asking the viewer to “look it up”; no curiosity open.
     open_source:
       microSteps:
-        - "Open outline.md; write spoken lines from the story: {{whatHappened}}"
-        - "Open with why it matters: {{whyItMatters}}"
-        - "Weave in {{fact_1}}; {{fact_2}}; {{fact_3}}."
-        - Target 900–1500 words; mark [mm:ss] before each chapter.
-        - "Keep the hook grounded in {{hook}} and cite {{publisherUrl}} once."
-        - Save as script.md.
+        - "Write script.md from these spoken blocks. Do not invent extra numbers. Cite {{publisherUrl}} once near the end of minute 2."
+        - "[0:00–1:00] Intro + raise curiosity — say exactly: {{speak_0_1}}"
+        - "[1:00–2:00] What happened — say exactly: {{speak_1_2}}"
+        - "[2:00–3:00] Why it matters + stakes — say exactly: {{speak_2_3}}"
+        - "[3:00–4:00] Fact deep-dive — say exactly: {{speak_3_4}}"
+        - "[4:00–5:00] Context / studies angle — say exactly: {{speak_4_5}}"
+        - "[5:00–6:00] Myth check + what not to do — say exactly: {{speak_5_6}}"
+        - "[6:00–7:00] Live demo beat — say exactly: {{speak_6_7}}"
+        - "[7:00–8:00] Tips from the demo — say exactly: {{speak_7_8}}"
+        - "[8:00–10:00] Recap + CTA — say exactly: {{speak_8_10}}"
+        - "Target 900–1500 words total; keep [mm:ss] markers before each block."
+        - "Ground the open in {{hook}}; keep {{entity}} named in the first 20 seconds."
       tools: [text_editor, notes_app]
       minutes: 60
     paid:
       microSteps:
-        - "Ask a paid AI for a 900–1500 word demo script from outline.md about: {{whatHappened}}"
-        - "Require these facts in the draft: {{fact_1}}; {{fact_2}}; {{fact_3}}."
+        - "Ask a paid AI to expand these minute blocks into 900–1500 words without new facts: {{speak_0_1}} | {{speak_1_2}} | {{speak_2_3}}"
+        - "Require these facts stay verbatim: {{fact_1}}; {{fact_2}}; {{fact_3}}."
+        - "Keep myth/avoid lines: {{myth}} / {{whatNotToDo}}."
         - Add [mm:ss] chapter markers; cut fluff; verify product claims.
         - Save as script.md.
       tools: [chatgpt_plus]
@@ -71,6 +90,7 @@ steps:
       microSteps:
         - Set OBS to 1080p; mic check in a quiet room.
         - "Before record, say the story in one line: {{whatHappened}}"
+        - "Open with the curiosity line from script.md minute 0–1."
         - Record screen + voice in takes under 12 minutes.
         - Prefer demo first, then voice-over if you stumble.
         - Save the best take as raw_demo.mkv.
@@ -106,37 +126,20 @@ steps:
       giveUp: Subscription; verify auto-captions on technical terms.
     free_not_os: [davinci_resolve]
   s5:
-    goal: Readable thumb at phone size
-    commonMistakes: Tiny text; cluttered collage; title over 70 characters.
-    open_source:
-      microSteps:
-        - Make a 1280×720 canvas in GIMP; big text + product UI crop.
-        - "Draft a title ≤70 chars with {{entity}} first (story: {{whatHappened}})."
-        - Export thumb.png; check readability on a phone.
-      tools: [gimp]
-      minutes: 40
-    paid:
-      microSteps:
-        - Pick a YouTube thumbnail template → paste text → export 1280×720.
-        - "Keep title ≤70 chars with {{entity}} first."
-      tools: [canva_pro]
-      minutes: 20
-      giveUp: Subscription; template look-alike risk.
-    free_not_os: [canva_free]
-  s6:
     goal: Video public or scheduled; reminder set
-    commonMistakes: Wrong visibility; no chapters in description; no +48 h check.
+    commonMistakes: Wrong visibility; rewriting title/description instead of pasting step-1 text; no +48 h check.
     open_source:
       microSteps:
-        - Upload final.mp4 + thumb.png to YouTube; paste description with chapter timestamps.
-        - "First description line: {{whyItMatters}} Source: {{publisherUrl}}"
-        - "Title from the thumb step; set not made for kids; schedule or publish."
+        - Upload final.mp4 + thumb.png to YouTube.
+        - "Paste title exactly: {{ytTitle}}"
+        - "Paste description exactly from description.md: {{ytDescription}}"
+        - "Set not made for kids; schedule or publish. Source already cited: {{publisherUrl}}"
         - "Calendar reminder +48 h titled with the test metric for {{entity}}."
       tools: [youtube_app, calendar_app]
       minutes: 30
     paid:
       microSteps:
-        - Schedule the upload from a social scheduler; paste description + chapters.
+        - Schedule the upload from a social scheduler; paste title + description from step 1.
         - Confirm the +48 h analytics reminder fires.
       tools: [buffer]
       minutes: 15

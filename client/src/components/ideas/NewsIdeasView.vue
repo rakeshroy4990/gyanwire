@@ -55,14 +55,11 @@ onBeforeUnmount(() => {
 <template>
   <div class="news-ideas-view">
     <section
-      v-if="researchStatus === 'running' || researchStatus === 'started' || researchSummary"
+      v-if="researchSummary || researchStatus === 'running' || researchStatus === 'started' || researchStatus === 'ready'"
       class="news-ideas-view__research"
       aria-live="polite"
     >
-      <p v-if="researchStatus === 'running' || researchStatus === 'started'" class="news-ideas-view__research-status">
-        Gathering sources for the video…
-      </p>
-      <details v-else-if="researchSummary" class="news-ideas-view__research-details" open>
+      <details v-if="researchSummary" class="news-ideas-view__research-details" open>
         <summary class="news-ideas-view__research-kicker">Ready for the video</summary>
         <p v-if="researchSummary.whatHappened" class="news-ideas-view__research-body">
           {{ researchSummary.whatHappened }}
@@ -82,6 +79,12 @@ onBeforeUnmount(() => {
           </li>
         </ul>
       </details>
+      <p v-else-if="researchStatus === 'ready'" class="news-ideas-view__research-status">
+        Ready for the video
+      </p>
+      <p v-else class="news-ideas-view__research-status">
+        Gathering sources for the video…
+      </p>
     </section>
 
     <PageSkeleton

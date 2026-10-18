@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useNewsIdeas } from '../composables/useNewsIdeas.js';
 import { startCreate } from '../composables/actionPlanSession.js';
@@ -98,8 +98,13 @@ function closePlanSheet() {
   selectIdea(null);
 }
 
-onMounted(loadFromRoute);
-watch(() => String(route.params.id || ''), loadFromRoute);
+watch(
+  () => String(route.params.id || ''),
+  (id) => {
+    if (id) loadFromRoute();
+  },
+  { immediate: true },
+);
 onBeforeUnmount(close);
 </script>
 

@@ -1,42 +1,42 @@
 steps:
   - id: s1
     order: 1
-    title: Outline the demo chapters
+    title: Outline, thumbnail, title, and description
     startMin: 0
-    durationMin: 30
-    paidDurationMin: 15
+    durationMin: 70
+    paidDurationMin: 35
     paidToolId: chatgpt_plus
-    action: "Outline hook, problem, live demo, three takeaways, CTA. Save outline.md."
+    action: "Write chapter outline, a curiosity thumbnail, a ≤100-char title with hashtag, and a ≤5000-char description (What/Why/Studies/Myth/What not to do)."
     input: "NewsBrief + video research sources + product"
-    output: "outline.md"
-    doneWhen: "5 chapter titles"
+    output: "outline.md + thumb.png + title + description.md"
+    doneWhen: "5 chapter titles; readable thumb; title ≤100 chars; description pasted"
     toolId: notes_app
-    altToolId: text_editor
-    ifStuck: "Use: hook / why / demo / tips / CTA."
+    altToolId: gimp
+    ifStuck: "Use filled micro-steps as-is; only crop the thumbnail."
     platforms: [youtube]
     scalable: false
 
   - id: s2
     order: 2
     title: Script the spoken parts
-    startMin: 30
+    startMin: 70
     durationMin: 60
     paidDurationMin: 30
     paidToolId: chatgpt_plus
-    action: "Write a 900–1500 word script with timestamps for the demo."
-    input: "outline.md"
+    action: "Write the spoken script minute-by-minute (intro, curiosity, facts, demo, CTA). Target 900–1500 words."
+    input: "outline.md + description.md"
     output: "script.md"
-    doneWhen: "Word count in range"
+    doneWhen: "Word count in range; every minute has spoken lines"
     toolId: text_editor
     altToolId: notes_app
-    ifStuck: "Narrate the outline aloud and type what you said."
+    ifStuck: "Read the filled minute blocks aloud and type what you said."
     platforms: [youtube]
     scalable: true
 
   - id: s3
     order: 3
     title: Record screen + voice
-    startMin: 90
+    startMin: 130
     durationMin: 90
     paidDurationMin: 50
     paidToolId: descript
@@ -53,7 +53,7 @@ steps:
   - id: s4
     order: 4
     title: Edit and captions
-    startMin: 180
+    startMin: 220
     durationMin: 120
     paidDurationMin: 60
     paidToolId: descript
@@ -70,30 +70,13 @@ steps:
 
   - id: s5
     order: 5
-    title: Thumbnail and title
-    startMin: 300
-    durationMin: 40
-    paidDurationMin: 20
-    paidToolId: canva_pro
-    action: "Make a 1280×720 thumbnail and a title ≤70 chars with the entity first."
-    input: "final.mp4"
-    output: "thumb.png + title"
-    doneWhen: "Readable thumb at phone size"
-    toolId: gimp
-    altToolId: canva_free
-    ifStuck: "Big text + product UI screenshot."
-    platforms: [youtube]
-    scalable: false
-
-  - id: s6
-    order: 6
     title: Upload and measure
     startMin: 340
     durationMin: 30
     paidDurationMin: 15
     paidToolId: buffer
-    action: "Upload to YouTube, paste description, schedule. Reminder +48 h for AVD."
-    input: "final.mp4 + thumb"
+    action: "Upload to YouTube with title, description, and thumb from step 1. Reminder +48 h for AVD."
+    input: "final.mp4 + thumb.png + title + description.md"
     output: "live link + reminder"
     doneWhen: "Video public or scheduled; reminder set"
     toolId: youtube_app

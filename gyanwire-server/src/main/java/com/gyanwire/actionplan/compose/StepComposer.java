@@ -287,6 +287,102 @@ public class StepComposer {
         slots.putIfAbsent("title", trimWords(entity + " — " + f1, 12));
         // Keep combined script inside a short-vertical word band (~90–130).
         fitScriptWords(slots, 90, 130);
+        ensureYoutubePackageSlots(slots);
+    }
+
+    /**
+     * Fills YouTube long-form package slots (title, thumb, description sections, spoken minutes)
+     * from grounded story lines so micro-steps show exact copy, not homework for the user.
+     */
+    public static void ensureYoutubePackageSlots(Map<String, String> slots) {
+        if (slots == null) {
+            return;
+        }
+        String entity = slots.getOrDefault("entity", "this news");
+        String what = firstNonBlank(slots.get("whatHappened"), slots.get("headline"), slots.get("fact_1"));
+        String why = firstNonBlank(slots.get("whyItMatters"), slots.get("fact_3"), "Here is why it matters today.");
+        String f1 = firstNonBlank(slots.get("fact_1"), what);
+        String f2 = firstNonBlank(slots.get("fact_2"), "Who it affects is in the article.");
+        String f3 = firstNonBlank(slots.get("fact_3"), why);
+        String studies = firstNonBlank(slots.get("studies"), slots.get("context"), f2);
+        String myth = firstNonBlank(
+                slots.get("myth"),
+                slots.get("unconfirmed_1"),
+                "Do not treat early reports or social reactions as a final ruling.");
+        String avoid = firstNonBlank(
+                slots.get("whatNotToDo"),
+                "Do not invent numbers, blame parties the article does not name, or skip the source link.");
+        String publisherUrl = slots.getOrDefault("publisherUrl", "");
+        String tag = hashtagFor(entity);
+
+        if (isBlank(slots.get("ytTitle"))) {
+            slots.put("ytTitle", clampChars(
+                    "Why " + entity + " just changed — " + trimWords(f1, 8) + " " + tag, 100));
+        } else {
+            slots.put("ytTitle", clampChars(slots.get("ytTitle"), 100));
+        }
+        slots.putIfAbsent("thumbText", clampChars("Wait — " + trimWords(entity + " " + f1, 6) + "?", 48));
+        slots.putIfAbsent(
+                "thumbMood",
+                "1280×720, high contrast: face or product UI on the left; bold question on the right; "
+                        + "eager + curious tone; no tiny text. On-image line matches thumbText.");
+        slots.putIfAbsent("studies", studies);
+        slots.putIfAbsent("myth", myth);
+        slots.putIfAbsent("whatNotToDo", avoid);
+        slots.putIfAbsent("ytHashtags", tag + " #NewsExplained #WhatWhy");
+
+        String description = String.join("\n\n",
+                "WHAT: " + what,
+                "WHY: " + why,
+                "STUDIES / CONTEXT: " + studies,
+                "MYTH / UNCONFIRMED: " + myth,
+                "WHAT NOT TO DO: " + avoid,
+                publisherUrl.isBlank() ? "" : ("Source: " + publisherUrl),
+                slots.getOrDefault("ytHashtags", tag)).trim();
+        if (isBlank(slots.get("ytDescription"))) {
+            slots.put("ytDescription", clampChars(description, 5000));
+        } else {
+            slots.put("ytDescription", clampChars(slots.get("ytDescription"), 5000));
+        }
+
+        String hook = firstNonBlank(slots.get("hook"), entity + ": " + trimWords(f1, 10));
+        slots.putIfAbsent("hook", hook);
+        slots.putIfAbsent(
+                "speak_0_1",
+                "Stop scrolling — most takes on " + entity + " skip the part that actually matters. "
+                        + "Here is the question: " + slots.get("thumbText") + " "
+                        + "In the next minute I will show what happened, why you should care, and what not to do. "
+                        + "Hook line: " + hook);
+        slots.putIfAbsent(
+                "speak_1_2",
+                "What happened: " + what + " Fact one: " + f1 + " Fact two: " + f2 + ".");
+        slots.putIfAbsent(
+                "speak_2_3",
+                "Why it matters right now: " + why + " If you follow " + entity + ", this changes your next move.");
+        slots.putIfAbsent(
+                "speak_3_4",
+                "Stay with this detail: " + f3 + " Compare that with: " + f1
+                        + " — that gap is where confusion starts.");
+        slots.putIfAbsent(
+                "speak_4_5",
+                "Context and prior reporting: " + studies
+                        + " I am not inventing a study — this is the grounded background for the story.");
+        slots.putIfAbsent(
+                "speak_5_6",
+                "Myth check: " + myth + " What not to do: " + avoid);
+        slots.putIfAbsent(
+                "speak_6_7",
+                "Live demo beat: open the product and show one real result tied to: " + what
+                        + " Narrate what is on screen; do not fake a UI.");
+        slots.putIfAbsent(
+                "speak_7_8",
+                "Three takeaways: (1) " + trimWords(f1, 12) + " (2) " + trimWords(why, 12)
+                        + " (3) " + trimWords(avoid, 12) + ".");
+        slots.putIfAbsent(
+                "speak_8_10",
+                "Recap: " + trimWords(what, 20) + " Why it mattered: " + trimWords(why, 12)
+                        + " Next step for you: follow for the next brief"
+                        + (publisherUrl.isBlank() ? "." : (", and read the source: " + publisherUrl + ".")));
     }
 
     /** Prefer grounded video-research summary lines when the pack is ready. */
@@ -301,6 +397,19 @@ public class StepComposer {
         }
         if (!why.isBlank()) {
             slots.put("whyItMatters", why);
+        }
+        String context = str(videoResearch.get("context"));
+        if (!context.isBlank()) {
+            slots.put("context", trimWords(context, 40));
+            slots.put("studies", trimWords(context, 40));
+        }
+        Object unconfirmed = videoResearch.get("unconfirmed");
+        if (unconfirmed instanceof List<?> list && !list.isEmpty() && list.get(0) != null) {
+            String myth = String.valueOf(list.get(0)).trim();
+            if (!myth.isBlank()) {
+                slots.put("unconfirmed_1", myth);
+                slots.put("myth", "Unconfirmed / treat carefully: " + myth);
+            }
         }
         Object packFacts = videoResearch.get("facts");
         if (packFacts instanceof List<?> list) {
@@ -318,6 +427,7 @@ public class StepComposer {
                 }
             }
         }
+        ensureYoutubePackageSlots(slots);
     }
 
     static void fitScriptWords(Map<String, String> slots, int min, int max) {
@@ -395,6 +505,44 @@ public class StepComposer {
 
     private static String str(Object value) {
         return value == null ? "" : String.valueOf(value).trim();
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    private static String firstNonBlank(String... values) {
+        if (values == null) {
+            return "";
+        }
+        for (String value : values) {
+            if (!isBlank(value)) {
+                return value.trim();
+            }
+        }
+        return "";
+    }
+
+    private static String clampChars(String text, int max) {
+        if (text == null) {
+            return "";
+        }
+        String trimmed = text.trim().replaceAll("\\s+", " ");
+        if (trimmed.length() <= max) {
+            return trimmed;
+        }
+        return trimmed.substring(0, Math.max(0, max - 1)).trim() + "…";
+    }
+
+    private static String hashtagFor(String entity) {
+        if (entity == null || entity.isBlank()) {
+            return "#News";
+        }
+        String cleaned = entity.replaceAll("[^A-Za-z0-9]+", "");
+        if (cleaned.isBlank()) {
+            return "#News";
+        }
+        return "#" + cleaned;
     }
 
     private static int intVal(Object value, int fallback) {

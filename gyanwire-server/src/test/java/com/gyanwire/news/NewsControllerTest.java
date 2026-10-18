@@ -33,6 +33,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -325,6 +326,10 @@ class NewsControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("ready"))
                 .andExpect(jsonPath("$.data.summary.whatHappened").value("Anthropic asked lawmakers for AI rules."));
+
+        // Already ready — do not restart or wait.
+        verify(videoResearch, never()).startIfNeeded(any(), any(), any(), any());
+        verify(videoResearch, never()).awaitReady(any(), any());
     }
 
     @Test

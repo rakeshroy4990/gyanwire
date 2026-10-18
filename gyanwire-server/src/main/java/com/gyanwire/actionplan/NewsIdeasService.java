@@ -7,6 +7,7 @@ import com.gyanwire.actionplan.news.ArticleText;
 import com.gyanwire.actionplan.news.NewsBrief;
 import com.gyanwire.actionplan.news.NewsBriefService;
 import com.gyanwire.actionplan.news.NewsResolveService;
+import com.gyanwire.actionplan.research.VideoResearchPack;
 import com.gyanwire.actionplan.research.VideoResearchService;
 import com.gyanwire.config.PlanLimitException;
 import com.gyanwire.ideas.CollectingIdeaSink;
@@ -145,10 +146,8 @@ public class NewsIdeasService {
         Map<String, Object> cached = store.findIdeaCache(urlHash);
         if (cached != null) {
             emitCached(out, cached, newsId, industry);
-            // Keep video-research warm on cache hits so the ideas page can show "Ready for the video".
-            if (videoResearch.startIfNeeded(newsId, url, null, userId)) {
-                out.research(Map.of("status", "started"));
-            }
+            // Keep video-research warm on cache hits; emit ready+summary when already available.
+            emitResearchStatus(out, newsId, url, briefFromCache(cached, title, url), userId);
             usage.recordUsage(userId, ipHash, "idea", java.math.BigDecimal.ZERO);
             int ideaCount = ideaCount(cached.get("ideas"));
             log.info(
@@ -194,7 +193,8 @@ public class NewsIdeasService {
         meta.put("brief", brief.toMap());
         out.meta(meta);
 
-        boolean researchStarted = videoResearch.startIfNeeded(newsId, url, brief, userId);
+        // Start research early so it can finish while angles run.
+        videoResearch.startIfNeeded(newsId, url, brief, userId);
 
         Map<String, Object> preview = fallbackIdea(brief);
         preview.put("preview", true);
@@ -221,9 +221,7 @@ public class NewsIdeasService {
         payload.put("ideas", ideas);
         store.saveIdeaCache(urlHash, payload);
 
-        if (researchStarted) {
-            out.research(Map.of("status", "started"));
-        }
+        emitResearchStatus(out, newsId, url, brief, userId);
         usage.recordUsage(userId, ipHash, "idea", java.math.BigDecimal.ZERO);
         log.info(
                 "news.ideas path=fresh totalMs={} firstItemMs={} resolveMs={} briefMs={} anglesMs={} ideas={} newsId={}",
@@ -262,6 +260,45 @@ public class NewsIdeasService {
             return ArticleText.snippet(url, source, combined, NewsBriefService.IDEAS_SNIPPET_MIN);
         }
         return fetched == null ? ArticleText.empty("fetch_error") : fetched;
+    }
+
+    /**
+     * Tell the client about video-research state. When the pack is already ready,
+     * include the summary so the ideas page can show "Ready for the video" without polling.
+     */
+    private void emitResearchStatus(IdeaSink out, UUID newsId, String url, NewsBrief brief, UUID userId) {
+        videoResearch.startIfNeeded(newsId, url, brief, userId);
+        VideoResearchPack pack = videoResearch.find(url);
+        if (pack == null && newsId != null) {
+            pack = videoResearch.findByNewsId(newsId);
+        }
+        if (pack != null && pack.ready() && pack.summary() != null && !pack.summary().isEmpty()) {
+            Map<String, Object> frame = new LinkedHashMap<>();
+            frame.put("status", VideoResearchPack.STATUS_READY);
+            frame.put("summary", pack.summary());
+            out.research(frame);
+            return;
+        }
+        if (pack != null && pack.failed()) {
+            out.research(Map.of("status", VideoResearchPack.STATUS_FAILED));
+            return;
+        }
+        out.research(Map.of("status", "started"));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static NewsBrief briefFromCache(Map<String, Object> cached, String title, String url) {
+        Object raw = cached == null ? null : cached.get("brief");
+        if (raw instanceof Map<?, ?> map) {
+            return NewsBrief.fromMap((Map<String, Object>) map);
+        }
+        String headline = cached != null && cached.get("headline") != null
+                ? String.valueOf(cached.get("headline"))
+                : (title == null ? "" : title);
+        String publisherUrl = cached != null && cached.get("url") != null
+                ? String.valueOf(cached.get("url"))
+                : (url == null ? "" : url);
+        return NewsBrief.insufficient(headline, publisherUrl);
     }
 
     private void emitCached(IdeaSink out, Map<String, Object> cached, UUID newsId, String industry) {

@@ -2,6 +2,7 @@ package com.gyanwire.news;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gyanwire.actionplan.NewsIdeasService;
+import com.gyanwire.actionplan.news.NewsBrief;
 import com.gyanwire.actionplan.news.NewsBriefService;
 import com.gyanwire.actionplan.research.VideoResearchPack;
 import com.gyanwire.actionplan.research.VideoResearchService;
@@ -27,6 +28,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -227,6 +229,20 @@ public class NewsController {
         VideoResearchPack pack = videoResearch.find(row.url());
         if (pack == null) {
             pack = videoResearch.findByNewsId(newsId);
+        }
+        // Keep the request open briefly so Cloud Run CPU stays available while the job finishes.
+        if (pack == null || pack.running()) {
+            NewsBrief seed = NewsBrief.insufficient(row.title(), row.url());
+            videoResearch.startIfNeeded(newsId, row.url(), seed, null);
+            VideoResearchPack waited = videoResearch.awaitReady(row.url(), Duration.ofSeconds(12));
+            if (waited != null) {
+                pack = waited;
+            } else {
+                pack = videoResearch.find(row.url());
+                if (pack == null) {
+                    pack = videoResearch.findByNewsId(newsId);
+                }
+            }
         }
         if (pack == null) {
             Map<String, Object> empty = new LinkedHashMap<>();

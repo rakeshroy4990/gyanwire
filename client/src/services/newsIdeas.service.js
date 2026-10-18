@@ -70,7 +70,14 @@ export async function fetchNewsIdeas(newsId, onEvent) {
       frame.ideas = [...frame.ideas, event.item];
       if (onEvent) await onEvent({ type: 'item', item: event.item, ideas: frame.ideas });
     } else if (event?.type === 'research') {
-      if (onEvent) await onEvent({ type: 'research', status: event.status || '', data: event });
+      if (onEvent) {
+        await onEvent({
+          type: 'research',
+          status: event.status || '',
+          summary: event.summary || null,
+          data: event,
+        });
+      }
     }
   });
   return frame;

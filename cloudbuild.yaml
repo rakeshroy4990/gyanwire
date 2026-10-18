@@ -79,13 +79,13 @@ steps:
       - |
         set -eo pipefail
 
-        # --env-vars-file cannot combine with --update-env-vars; bake UI_ORIGIN into the file when set.
+        # gcloud allows only one of --env-vars-file / --set-env-vars / --update-env-vars.
+        # Bake optional _UI_ORIGIN into a single file ($$ escapes bash vars from Cloud Build).
         ENV_FILE=cloudrun-env.yaml
         if [ -n "${_UI_ORIGIN}" ]; then
-          ENV_FILE="$(mktemp)"
-          # Drop any existing UI_ORIGIN line, then append the substitution value.
-          grep -v '^UI_ORIGIN:' cloudrun-env.yaml > "${ENV_FILE}" || true
-          printf 'UI_ORIGIN: %s\n' "${_UI_ORIGIN}" >> "${ENV_FILE}"
+          ENV_FILE=cloudrun-env.deploy.yaml
+          grep -v '^UI_ORIGIN:' cloudrun-env.yaml > "$${ENV_FILE}" || true
+          printf 'UI_ORIGIN: %s\n' "${_UI_ORIGIN}" >> "$${ENV_FILE}"
         fi
 
         gcloud run deploy "${_SERVICE}" \
@@ -103,7 +103,7 @@ steps:
           --cpu-boost \
           --no-cpu-throttling \
           --startup-probe=httpGet.path=/api/health,httpGet.port=8080,periodSeconds=5,timeoutSeconds=3,failureThreshold=36 \
-          --env-vars-file="${ENV_FILE}" \
+          --env-vars-file="$${ENV_FILE}" \
           --set-secrets=SPRING_DATASOURCE_URL=gyanwire-spring-datasource-url:latest,SPRING_DATASOURCE_USERNAME=gyanwire-spring-datasource-username:latest,SPRING_DATASOURCE_PASSWORD=gyanwire-spring-datasource-password:latest,JWT_SECRET=gyanwire-jwt-secret:latest,LLM_API_KEY=gyanwire-llm-api-key:latest,MCP_API_KEY=gyanwire-mcp-api-key:latest,GITHUB_TOKEN=gyanwire-github-token:latest \
           --quiet
 

@@ -7,6 +7,7 @@ import com.gyanwire.actionplan.news.ArticleText;
 import com.gyanwire.actionplan.news.NewsBrief;
 import com.gyanwire.actionplan.news.NewsBriefService;
 import com.gyanwire.actionplan.news.NewsResolveService;
+import com.gyanwire.actionplan.research.VideoResearchPack;
 import com.gyanwire.actionplan.research.VideoResearchService;
 import com.gyanwire.ideas.IdeaSink;
 import com.gyanwire.news.NewsStore;
@@ -169,6 +170,7 @@ class NewsIdeasServiceTest {
         when(store.findIdeaCache(anyString())).thenReturn(cached);
         when(videoResearch.startIfNeeded(nullable(UUID.class), any(), nullable(NewsBrief.class), any()))
                 .thenReturn(true);
+        when(videoResearch.find(anyString())).thenReturn(null);
 
         List<String> events = new ArrayList<>();
         service.ideasFromUrl(
@@ -188,6 +190,41 @@ class NewsIdeasServiceTest {
         verify(briefs, never()).localBrief(any(), any(), any(), any(), any());
         verify(resolve, never()).resolve(anyString(), anyString(), anyString(), anyInt());
         verify(usage).recordUsage(eq(userId), eq("ip"), eq("idea"), any());
+    }
+
+    @Test
+    void cacheHitEmitsReadyResearchSummaryWhenPackReady() {
+        UUID userId = UUID.randomUUID();
+        Map<String, Object> cached = new LinkedHashMap<>();
+        cached.put("headline", "Cached launch");
+        cached.put("url", "https://example.com/cached");
+        cached.put("ideas", List.of(Map.of("id", "ni-1", "title", "Cached idea")));
+        Map<String, Object> summary = Map.of(
+                "whatHappened", "A product launched.",
+                "whyItMatters", "Builders can use it now.");
+        when(store.findIdeaCache(anyString())).thenReturn(cached);
+        when(videoResearch.startIfNeeded(nullable(UUID.class), any(), nullable(NewsBrief.class), any()))
+                .thenReturn(true);
+        when(videoResearch.find(anyString())).thenReturn(new VideoResearchPack(
+                "hash",
+                VideoResearchPack.STATUS_READY,
+                summary,
+                null,
+                java.time.Instant.now()));
+
+        List<String> events = new ArrayList<>();
+        service.ideasFromUrl(
+                userId,
+                "ip",
+                null,
+                "https://example.com/cached",
+                "Cached launch",
+                "Example",
+                longSummary(),
+                "AI",
+                recordingSink(events));
+
+        assertThat(events).contains("item:Cached idea", "research:ready");
     }
 
     private static IdeaSink recordingSink(List<String> events) {
