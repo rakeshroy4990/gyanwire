@@ -10,6 +10,44 @@ allow_domains:
   - blog.instagram.com
   - blog.linkedin.com
   - blog.x.com
+# Must name a platform or social product — blocks cars, lawsuits, and general tech on shared domains.
+require_keywords:
+  - social media
+  - social network
+  - social app
+  - social platform
+  - social commerce
+  - social shopping
+  - creator economy
+  - creator fund
+  - creator tools
+  - creator platform
+  - content creator
+  - influencer
+  - short video
+  - youtube shorts
+  - community guidelines
+  - content moderation
+  - intermediary
+  - it rules
+  - meity
+  - instagram
+  - facebook
+  - whatsapp
+  - youtube
+  - tiktok
+  - linkedin
+  - twitter
+  - snapchat
+  - threads
+  - reddit
+  - discord
+  - telegram
+  - reels
+  - shorts
+  - meta
+  - x corp
+require_signal_match: true
 deny:
   domains: []
   keywords:

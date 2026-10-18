@@ -2,7 +2,8 @@ import { ref } from 'vue';
 import { createActionPlan } from '../services/actionPlan.service.js';
 
 const STAGE_LABELS = {
-  brief: 'Reading the article',
+  brief: 'Reading the story',
+  research: 'Searching related articles',
   angles: 'Choosing the angle',
   slots: 'Writing the steps',
 };
@@ -90,10 +91,10 @@ export function startCreate(body) {
       sessionError.value = err.message || 'Could not build the plan.';
       sessionStage.value = '';
       sessionActive.value = false;
-      if (err.code === 'ARTICLE_UNREADABLE' && sessionPlan.value) {
+      if ((err.code === 'ARTICLE_UNREADABLE' || err.code === 'BRIEF_UNUSABLE') && sessionPlan.value) {
         sessionPlan.value = {
           ...sessionPlan.value,
-          buildStatus: 'paste',
+          buildStatus: 'failed',
         };
       }
       if (!firstPlanSettled) {

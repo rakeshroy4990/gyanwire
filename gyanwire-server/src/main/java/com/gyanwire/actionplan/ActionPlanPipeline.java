@@ -96,15 +96,23 @@ public class ActionPlanPipeline {
         FormatSpec format = formats.select(budget, demo, formatId);
 
         NewsBrief brief = briefs.extract(newsUrl, title, source, pastedText, userId);
+        Map<String, Object> research = null;
+        if (!brief.usable()) {
+            BriefResolution resolved = resolveWithoutPublisher(
+                    newsUrl, title, source, null, null, userId);
+            brief = resolved.brief();
+            research = resolved.research();
+        }
         if (!brief.usable()) {
             throw new ActionPlanException(
-                    "Could not read enough of this article",
-                    "ARTICLE_UNREADABLE",
+                    "Could not gather enough context for this plan",
+                    "BRIEF_UNUSABLE",
                     422,
-                    Map.of("reason", "insufficient_facts", "pasteRequired", true));
+                    Map.of("reason", "insufficient_facts"));
         }
-
-        Map<String, Object> research = resolveVideoResearch(newsUrl);
+        if (research == null) {
+            research = resolveVideoResearch(newsUrl);
+        }
         Map<String, Object> plan = buildUsablePlan(brief, format, budget, demo, userId, research, null, null);
         usage.recordUsage(userId, ipHash, "action_plan", BigDecimal.ZERO);
         return persistPlan(plan, userId, newsUrl, persist, null);
@@ -169,25 +177,106 @@ public class ActionPlanPipeline {
 
         out.status("brief");
         NewsBrief brief = briefs.extract(newsUrl, title, source, pastedText, userId);
+        Map<String, Object> research = null;
         if (!brief.usable()) {
-            skeleton.put("buildStatus", "paste");
+            out.status("research");
+            BriefResolution resolved = resolveWithoutPublisher(
+                    newsUrl, title, source, ideaTitle, whyNow, userId);
+            brief = resolved.brief();
+            research = resolved.research();
+        }
+        if (!brief.usable()) {
+            skeleton.put("buildStatus", "failed");
             skeleton.put("newsBrief", brief.toMap());
             persistPlan(skeleton, userId, newsUrl, persist, planId);
             out.plan(skeleton);
             throw new ActionPlanException(
-                    "Could not read enough of this article",
-                    "ARTICLE_UNREADABLE",
+                    "Could not gather enough context for this plan",
+                    "BRIEF_UNUSABLE",
                     422,
-                    Map.of("reason", "insufficient_facts", "pasteRequired", true, "planId", planId));
+                    Map.of("reason", "insufficient_facts", "planId", planId));
         }
 
-        Map<String, Object> research = resolveVideoResearch(newsUrl);
+        if (research == null) {
+            research = resolveVideoResearch(newsUrl);
+        }
         Map<String, Object> plan = buildUsablePlan(
                 brief, format, budget, demo, userId, research, ideaTitle, whyNow, out);
         plan.put("buildStatus", "ready");
         usage.recordUsage(userId, ipHash, "action_plan", BigDecimal.ZERO);
         persistPlan(plan, userId, newsUrl, persist, planId);
         out.plan(plan);
+    }
+
+    /**
+     * When the publisher page is blocked or thin, ground the plan from the
+     * ideas-path brief, multi-source research across related articles, or the
+     * selected idea text. Never asks the user to paste the article.
+     */
+    private BriefResolution resolveWithoutPublisher(
+            String newsUrl,
+            String title,
+            String source,
+            String ideaTitle,
+            String whyNow,
+            UUID userId
+    ) {
+        String urlHash = NewsBriefService.urlHash(newsUrl);
+        Map<String, Object> ideaCache = store.findIdeaCache(urlHash);
+        if (ideaCache != null && ideaCache.get("brief") instanceof Map<?, ?> raw) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> briefMap = (Map<String, Object>) raw;
+            NewsBrief cached = NewsBrief.fromMap(briefMap);
+            if (cached.usable()) {
+                Map<String, Object> research = resolveVideoResearch(newsUrl);
+                return new BriefResolution(cached, research);
+            }
+        }
+
+        NewsBrief seed = briefs.localBrief(
+                title,
+                newsUrl,
+                source,
+                ideaContextText(title, ideaTitle, whyNow),
+                null);
+        // Seed may be thin; VideoResearch only needs headline/entities for the query.
+        videoResearch.startIfNeeded(null, newsUrl, seed, userId);
+        Map<String, Object> research = resolveVideoResearch(newsUrl);
+        if (research != null) {
+            NewsBrief fromResearch = briefs.fromVideoResearch(title, newsUrl, source, research);
+            if (fromResearch.usable()) {
+                return new BriefResolution(fromResearch, research);
+            }
+        }
+        if (seed.usable()) {
+            return new BriefResolution(seed, research);
+        }
+        return new BriefResolution(
+                NewsBrief.insufficient(title, newsUrl),
+                research);
+    }
+
+    private static String ideaContextText(String title, String ideaTitle, String whyNow) {
+        StringBuilder out = new StringBuilder();
+        if (title != null && !title.isBlank()) {
+            out.append(title.trim());
+        }
+        if (ideaTitle != null && !ideaTitle.isBlank()) {
+            if (!out.isEmpty()) {
+                out.append(". ");
+            }
+            out.append(ideaTitle.trim());
+        }
+        if (whyNow != null && !whyNow.isBlank()) {
+            if (!out.isEmpty()) {
+                out.append(". ");
+            }
+            out.append(whyNow.trim());
+        }
+        return out.toString();
+    }
+
+    private record BriefResolution(NewsBrief brief, Map<String, Object> research) {
     }
 
     private Map<String, Object> resolveVideoResearch(String newsUrl) {
@@ -350,6 +439,7 @@ public class ActionPlanPipeline {
             List<String> lintErrors
     ) {
         Map<String, String> fallback = StepComposer.fallbackSlots(brief);
+        StepComposer.applyVideoResearch(fallback, videoResearchSummary);
         IdeaStageClient client = stageClient.getIfAvailable();
         if (client == null) {
             return fallback;
@@ -407,6 +497,7 @@ public class ActionPlanPipeline {
                 }
             }
             StepComposer.ensureSlots(slots, brief);
+            StepComposer.applyVideoResearch(slots, videoResearchSummary);
             return slots;
         } catch (Exception ex) {
             return fallback;

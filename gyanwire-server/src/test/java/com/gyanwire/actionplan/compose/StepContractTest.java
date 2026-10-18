@@ -60,7 +60,8 @@ class StepContractTest {
         }
         @SuppressWarnings("unchecked")
         List<String> s1 = (List<String>) steps.get(0).get("microSteps");
-        assertTrue(s1.get(0).contains("https://example.com"));
+        assertTrue(s1.stream().anyMatch(line -> line.contains("https://example.com")));
+        assertTrue(s1.stream().anyMatch(line -> line.toLowerCase().contains("story summary")));
         assertTrue(s1.stream().anyMatch(line -> line.contains("facts.md")));
         assertTrue(s1.stream().anyMatch(line -> line.toLowerCase().contains("hook fact")));
     }
@@ -108,8 +109,10 @@ class StepContractTest {
                 .findFirst()
                 .orElseThrow()
                 .get("microSteps");
-        assertTrue(s1.get(0).contains("https://example.com"));
+        assertTrue(s1.stream().anyMatch(line -> line.toLowerCase().contains("story summary")));
+        assertTrue(s1.stream().anyMatch(line -> line.contains("Anthropic launched") || line.contains("Claude Haiku")));
         assertTrue(s1.stream().anyMatch(line -> line.contains("outline.md")));
+        assertTrue(s1.stream().noneMatch(line -> line.startsWith("{") && line.contains("=")));
     }
 
     private static boolean blank(Object value) {

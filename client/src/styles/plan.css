@@ -340,7 +340,7 @@
   align-items: center;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .plan-finish-anim__stage {
     grid-template-columns: 1fr;
     justify-items: start;
@@ -409,7 +409,7 @@
   align-items: stretch;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .plan-gauges {
     grid-template-columns: 1fr;
   }
@@ -608,10 +608,13 @@
 .plan-trail {
   position: relative;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .plan-trail__scroll {
   overflow-x: auto;
+  max-width: 100%;
   padding: var(--space-3) 0 var(--space-4);
   -webkit-overflow-scrolling: touch;
 }
@@ -748,7 +751,8 @@
   border: 1px solid var(--line);
   border-bottom: 0;
   padding: var(--space-5);
-  max-height: min(78vh, 36rem);
+  padding-bottom: calc(var(--space-5) + env(safe-area-inset-bottom, 0px));
+  max-height: min(78dvh, 36rem);
   overflow: auto;
   transform: translateY(110%);
   transition: transform 280ms var(--ease);
@@ -781,10 +785,13 @@
   border: 1px solid var(--line);
   background: var(--canvas-lift);
   border-radius: 999px;
-  width: 2rem;
-  height: 2rem;
+  width: 2.75rem;
+  height: 2.75rem;
   cursor: pointer;
   font: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .plan-sheet__tool {
@@ -856,7 +863,8 @@
   border: 1px solid var(--line);
   border-bottom: 0;
   padding: var(--space-5);
-  max-height: min(82vh, 40rem);
+  padding-bottom: calc(var(--space-5) + env(safe-area-inset-bottom, 0px));
+  max-height: min(82dvh, 40rem);
   overflow: auto;
   width: min(100%, 36rem);
   margin: 0 auto;
@@ -951,7 +959,18 @@
   color: var(--ink-soft);
 }
 
-@media (max-width: 720px) {
+@media (min-width: 768px) and (max-width: 1023px) {
+  .plan-compare {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-collapse: separate;
+  }
+}
+
+@media (max-width: 767px) {
   .plan-compare,
   .plan-compare thead,
   .plan-compare tbody,
@@ -1405,8 +1424,12 @@
   font-weight: 700;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .plan-story__tree {
     width: min(100%, 22rem);
+  }
+
+  .plan-fuel__row {
+    grid-template-columns: 4.5rem 1fr;
   }
 }

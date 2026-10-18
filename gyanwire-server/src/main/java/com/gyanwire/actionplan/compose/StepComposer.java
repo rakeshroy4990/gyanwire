@@ -263,9 +263,19 @@ public class StepComposer {
         String f1 = facts.size() > 0 ? facts.get(0).text() : brief.headline();
         String f2 = facts.size() > 1 ? facts.get(1).text() : "Who it affects is in the article.";
         String f3 = facts.size() > 2 ? facts.get(2).text() : "Here is why it matters today.";
+        String story = trimWords(String.join(" ", f1, f2).trim(), 40);
+        if (story.isBlank()) {
+            story = brief.headline() == null ? "" : brief.headline();
+        }
         slots.putIfAbsent("publisherUrl", brief.publisherUrl() == null ? "" : brief.publisherUrl());
         slots.putIfAbsent("headline", brief.headline() == null ? "" : brief.headline());
         slots.putIfAbsent("publisher", brief.publisher() == null ? "" : brief.publisher());
+        slots.putIfAbsent("entity", entity);
+        slots.putIfAbsent("whatHappened", story);
+        slots.putIfAbsent("whyItMatters", trimWords(f3, 30));
+        slots.putIfAbsent("fact_1", trimWords(f1, 24));
+        slots.putIfAbsent("fact_2", trimWords(f2, 24));
+        slots.putIfAbsent("fact_3", trimWords(f3, 24));
         slots.putIfAbsent("hook", entity + ": " + trimWords(f1, 12));
         slots.putIfAbsent("point_1", trimWords(f1, 20));
         slots.putIfAbsent("point_2", trimWords(f2, 20));
@@ -277,6 +287,37 @@ public class StepComposer {
         slots.putIfAbsent("title", trimWords(entity + " — " + f1, 12));
         // Keep combined script inside a short-vertical word band (~90–130).
         fitScriptWords(slots, 90, 130);
+    }
+
+    /** Prefer grounded video-research summary lines when the pack is ready. */
+    public static void applyVideoResearch(Map<String, String> slots, Map<String, Object> videoResearch) {
+        if (slots == null || videoResearch == null || videoResearch.isEmpty()) {
+            return;
+        }
+        String what = trimWords(str(videoResearch.get("whatHappened")), 48);
+        String why = trimWords(str(videoResearch.get("whyItMatters")), 36);
+        if (!what.isBlank()) {
+            slots.put("whatHappened", what);
+        }
+        if (!why.isBlank()) {
+            slots.put("whyItMatters", why);
+        }
+        Object packFacts = videoResearch.get("facts");
+        if (packFacts instanceof List<?> list) {
+            int i = 1;
+            for (Object item : list) {
+                if (i > 3) {
+                    break;
+                }
+                if (item instanceof Map<?, ?> map) {
+                    String text = trimWords(str(map.get("text")), 24);
+                    if (!text.isBlank()) {
+                        slots.put("fact_" + i, text);
+                        i++;
+                    }
+                }
+            }
+        }
     }
 
     static void fitScriptWords(Map<String, String> slots, int min, int max) {

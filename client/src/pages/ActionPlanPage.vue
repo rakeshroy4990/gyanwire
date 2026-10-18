@@ -6,7 +6,6 @@ import PlanStepList from '../components/actionplan/PlanStepList.vue';
 import PlanProgress from '../components/actionplan/PlanProgress.vue';
 import PlanCard from '../components/actionplan/PlanCard.vue';
 import PathSwitch from '../components/actionplan/PathSwitch.vue';
-import StepDrawer from '../components/actionplan/StepDrawer.vue';
 import PageSkeleton from '../components/ui/PageSkeleton.vue';
 
 const route = useRoute();
@@ -15,7 +14,6 @@ const {
   plan,
   loading,
   error,
-  pasteRequired,
   buildStopped,
   stageText,
   isBuilding,
@@ -24,23 +22,14 @@ const {
   path,
   setPath,
   pathTotals,
-  drawerOpen,
-  stepDetail,
-  stepDetailLoading,
-  stepDetailError,
   timingPrompt,
   timingMinutes,
   timingSaving,
   load,
-  generate,
   toggleStep,
-  openStep,
-  closeStep,
   submitTiming,
   dismissTiming,
 } = useActionPlan();
-const pasted = ref('');
-
 onMounted(() => {
   if (route.params.id) {
     load(route.params.id).catch(() => {});
@@ -54,21 +43,6 @@ watch(
   },
 );
 
-async function submitPaste() {
-  const first = await generate({
-    newsUrl: plan.value?.newsBrief?.publisherUrl || route.query.url || 'https://example.com/news',
-    title: plan.value?.newsBrief?.headline || route.query.title || 'News',
-    pastedText: pasted.value,
-    budgetMinutes: plan.value?.budgetMinutes || 240,
-    format: plan.value?.format,
-    demo: false,
-    save: true,
-  });
-  if (first?.planId && String(first.planId) !== String(route.params.id)) {
-    await router.replace({ name: 'action-plan', params: { id: first.planId } });
-  }
-}
-
 function onPath(value) {
   setPath(value);
 }
@@ -79,8 +53,13 @@ function onToggle(stepKey, done) {
 }
 
 function onOpen(stepKey) {
-  if (!isReady.value) return;
-  openStep(stepKey);
+  if (!isReady.value || !plan.value?.planId || !stepKey) return;
+  const pathParam = path.value === 'mix' ? 'open_source' : path.value;
+  router.push({
+    name: 'action-plan-step',
+    params: { id: plan.value.planId, stepKey },
+    query: pathParam && pathParam !== 'open_source' ? { path: pathParam } : {},
+  });
 }
 
 function goBack() {
@@ -97,22 +76,15 @@ function goBack() {
     <button type="button" class="page-back" @click="goBack">← Back</button>
 
     <PageSkeleton v-if="loading && !plan" variant="list" label="Loading plan" />
-    <p v-else-if="error && !pasteRequired" class="error">{{ error }}</p>
-
-    <template v-else-if="pasteRequired">
-      <h1>Could not read enough of this article</h1>
-      <p>Paste the article text below (at least a few paragraphs).</p>
-      <textarea v-model="pasted" rows="12" class="action-plan-page__paste" />
-      <button type="button" class="btn btn--primary" @click="submitPaste">Build plan</button>
-    </template>
+    <p v-else-if="error" class="error">{{ error }}</p>
 
     <template v-else-if="plan">
       <PlanCard :plan="plan" />
       <p v-if="isBuilding && stageText" class="action-plan-page__stage" aria-live="polite">
         {{ stageText }}…
       </p>
-      <p v-else-if="buildStopped" class="action-plan-page__stage">
-        This build stopped. Refresh the ideas list and build again, or paste the article below if the source was blocked.
+      <p v-else-if="buildStopped || plan.buildStatus === 'failed'" class="action-plan-page__stage">
+        This build stopped. Go back to ideas and try Make plan again — we search related articles when the original page is blocked.
       </p>
       <PathSwitch :model-value="path" @update:model-value="onPath" />
       <PlanProgress :progress="progress" :path-totals="pathTotals" />
@@ -147,14 +119,5 @@ function goBack() {
         </div>
       </div>
     </template>
-
-    <StepDrawer
-      :open="drawerOpen"
-      :detail="stepDetail"
-      :loading="stepDetailLoading"
-      :error="stepDetailError"
-      :path="path"
-      @close="closeStep"
-    />
   </main>
 </template>

@@ -44,7 +44,7 @@ const HOURS = [
   { value: 20, label: '20 hours' },
   { value: 40, label: '40 hours or more' },
 ];
-const INDUSTRIES = ['AI', 'Share Market', 'IT', 'Medical', 'Space', 'Social Media', 'Gaming', 'Astrology'];
+const INDUSTRIES = ['AI', 'Share Market', 'IT', 'Medical', 'Space', 'Social Media', 'Gaming', 'Astrology', 'GitHub'];
 
 function blankForm() {
   return {

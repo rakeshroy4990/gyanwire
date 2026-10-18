@@ -107,11 +107,12 @@ class ActionPlanGoldenTest {
                 .findFirst()
                 .orElseThrow()
                 .get("microSteps");
-        assertTrue(s1Micro.get(0).contains("https://example.com/anthropic-haiku"));
-        assertTrue(s1Micro.get(0).contains("publisher article"));
-        assertTrue(s1Micro.get(1).contains("name, number or date"));
-        assertTrue(s1Micro.get(2).contains("facts.md"));
-        assertTrue(s1Micro.get(3).toLowerCase(Locale.ROOT).contains("hook fact"));
+        assertTrue(s1Micro.stream().anyMatch(line -> line.toLowerCase(Locale.ROOT).contains("story summary")));
+        assertTrue(s1Micro.stream().anyMatch(line -> line.contains("https://example.com/anthropic-haiku")));
+        assertTrue(s1Micro.stream().anyMatch(line -> line.contains("publisher article")));
+        assertTrue(s1Micro.stream().anyMatch(line -> line.contains("facts.md")));
+        assertTrue(s1Micro.stream().anyMatch(line -> line.toLowerCase(Locale.ROOT).contains("hook fact")));
+        assertTrue(s1Micro.stream().anyMatch(line -> line.contains("Claude Haiku") || line.contains("Anthropic")));
 
         @SuppressWarnings("unchecked")
         Map<String, Object> money = (Map<String, Object>) plan.get("money");

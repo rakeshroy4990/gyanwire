@@ -9,9 +9,12 @@
 #   printf %s 'db-password' | gcloud secrets create gyanwire-spring-datasource-password --data-file=- --project=gyanwire
 #   printf %s 'long-random-jwt-secret' | gcloud secrets create gyanwire-jwt-secret --data-file=- --project=gyanwire
 #   printf %s 'sk-...' | gcloud secrets create gyanwire-llm-api-key --data-file=- --project=gyanwire
+#   openssl rand -hex 32 | tr -d '\n' | gcloud secrets create gyanwire-mcp-api-key --data-file=- --project=gyanwire
+#   printf %s 'ghp_...' | gcloud secrets create gyanwire-github-token --data-file=- --project=gyanwire
 #
 # Grant the Cloud Run runtime SA secretAccessor on those secrets, and Cloud Build
 # roles/run.admin + roles/iam.serviceAccountUser.
+# APP_JOBS_ENABLED is a non-secret in cloudrun-env.yaml (defaults true so digests run).
 #
 # Deploy:
 #   gcloud builds submit --project=gyanwire --config=cloudbuild.yaml .
@@ -76,32 +79,33 @@ steps:
       - |
         set -eo pipefail
 
-        DEPLOY_ARGS=(
-          run deploy "${_SERVICE}"
-          --project="${PROJECT_ID}"
-          --region="${_REGION}"
-          --platform=managed
-          --image="${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${BUILD_ID}"
-          --allow-unauthenticated
-          --memory="${_MEMORY}"
-          --cpu="${_CPU}"
-          --min-instances="${_MIN_INSTANCES}"
-          --max-instances="${_MAX_INSTANCES}"
-          --port=8080
-          --timeout=300
-          --cpu-boost
-          --no-cpu-throttling
-          --startup-probe=httpGet.path=/api/health,httpGet.port=8080,periodSeconds=5,timeoutSeconds=3,failureThreshold=36
-          --env-vars-file=cloudrun-env.yaml
-          --set-secrets=SPRING_DATASOURCE_URL=gyanwire-spring-datasource-url:latest,SPRING_DATASOURCE_USERNAME=gyanwire-spring-datasource-username:latest,SPRING_DATASOURCE_PASSWORD=gyanwire-spring-datasource-password:latest,JWT_SECRET=gyanwire-jwt-secret:latest,LLM_API_KEY=gyanwire-llm-api-key:latest
-          --quiet
-        )
-
+        # --env-vars-file cannot combine with --update-env-vars; bake UI_ORIGIN into the file when set.
+        ENV_FILE=cloudrun-env.yaml
         if [ -n "${_UI_ORIGIN}" ]; then
-          DEPLOY_ARGS+=(--update-env-vars="UI_ORIGIN=${_UI_ORIGIN}")
+          ENV_FILE="$(mktemp)"
+          # Drop any existing UI_ORIGIN line, then append the substitution value.
+          grep -v '^UI_ORIGIN:' cloudrun-env.yaml > "${ENV_FILE}" || true
+          printf 'UI_ORIGIN: %s\n' "${_UI_ORIGIN}" >> "${ENV_FILE}"
         fi
 
-        gcloud "$${DEPLOY_ARGS[@]}"
+        gcloud run deploy "${_SERVICE}" \
+          --project="${PROJECT_ID}" \
+          --region="${_REGION}" \
+          --platform=managed \
+          --image="${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${BUILD_ID}" \
+          --allow-unauthenticated \
+          --memory="${_MEMORY}" \
+          --cpu="${_CPU}" \
+          --min-instances="${_MIN_INSTANCES}" \
+          --max-instances="${_MAX_INSTANCES}" \
+          --port=8080 \
+          --timeout=300 \
+          --cpu-boost \
+          --no-cpu-throttling \
+          --startup-probe=httpGet.path=/api/health,httpGet.port=8080,periodSeconds=5,timeoutSeconds=3,failureThreshold=36 \
+          --env-vars-file="${ENV_FILE}" \
+          --set-secrets=SPRING_DATASOURCE_URL=gyanwire-spring-datasource-url:latest,SPRING_DATASOURCE_USERNAME=gyanwire-spring-datasource-username:latest,SPRING_DATASOURCE_PASSWORD=gyanwire-spring-datasource-password:latest,JWT_SECRET=gyanwire-jwt-secret:latest,LLM_API_KEY=gyanwire-llm-api-key:latest,MCP_API_KEY=gyanwire-mcp-api-key:latest,GITHUB_TOKEN=gyanwire-github-token:latest \
+          --quiet
 
 images:
   - ${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${BUILD_ID}

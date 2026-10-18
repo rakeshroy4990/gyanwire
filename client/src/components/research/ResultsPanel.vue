@@ -52,6 +52,9 @@ function signalLabel(signal) {
     research: 'Research',
     opinion: 'Opinion',
     fyi: 'FYI',
+    stars: 'Stars',
+    tool: 'Tool',
+    tech: 'Tech',
   };
   return labels[signal] || '';
 }

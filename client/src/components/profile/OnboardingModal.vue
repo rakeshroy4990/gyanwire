@@ -117,6 +117,7 @@ async function next() {
           <option>Social Media</option>
           <option>Gaming</option>
           <option>Astrology</option>
+          <option>GitHub</option>
         </select>
       </label>
       <p class="auth-field__hint">We store a band, not an exact amount, so ideas can respect your time and money.</p>

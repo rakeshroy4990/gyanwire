@@ -51,6 +51,7 @@ public final class IndustryModes {
             case "Medical" -> "evidence";
             case "Space", "Gaming" -> "timeline";
             case "Social Media" -> "policy";
+            case "GitHub" -> "projects";
             default -> "list";
         };
     }
@@ -68,6 +69,7 @@ public final class IndustryModes {
             case "IT" -> "source";
             case "AI" -> blob.contains("launch") || blob.contains("roll") || blob.contains("unveil") || blob.contains("feature")
                     ? "feature" : "model";
+            case "GitHub" -> blob.contains("star") ? "stars" : "project";
             default -> "event";
         };
     }

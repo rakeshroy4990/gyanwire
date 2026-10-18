@@ -49,6 +49,7 @@ final class NewsSubMatcher {
             case "Gaming" -> GAMING;
             case "Real Estate" -> REAL_ESTATE;
             case "Astrology" -> ASTROLOGY;
+            case "GitHub" -> GITHUB;
             default -> null;
         };
         if (bySub == null) {
@@ -221,6 +222,26 @@ final class NewsSubMatcher {
                     "numerology", "life path", "lucky number", "name numerology"),
             "Vastu", terms(
                     "vastu", "vastu shastra", "vastu tips", "vastu remedy")
+    );
+
+    private static final Map<String, String[]> GITHUB = Map.of(
+            "Stars", terms("stars", "starred", "most starred", "famous"),
+            "Trending", terms("trending", "recently active", "last push"),
+            "AI", terms(
+                    "machine learning", "llm", "generative", "neural", "pytorch",
+                    "tensorflow", "transformers", "ai ", " ml"),
+            "DevTools", terms(
+                    "developer tool", "devtools", "cli", "ide", "linter", "formatter",
+                    "build tool", "compiler"),
+            "Web", terms(
+                    "javascript", "typescript", "react", "vue", "next.js", "frontend",
+                    "web framework", "css", "html"),
+            "Data", terms(
+                    "database", "data science", "sql", "analytics", "etl", "spark",
+                    "pandas", "warehouse"),
+            "Mobile", terms(
+                    "android", "ios", "flutter", "react native", "swift", "kotlin",
+                    "mobile app")
     );
 
     private static String[] terms(String... values) {

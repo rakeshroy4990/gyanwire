@@ -41,6 +41,8 @@ public class NewsBriefService {
         this.resolve = resolve;
     }
 
+    public static final int IDEAS_SNIPPET_MIN = 80;
+
     public NewsBrief extract(
             String newsUrl,
             String headline,
@@ -73,6 +75,164 @@ public class NewsBriefService {
             store.saveBrief(urlHash, brief);
         }
         return brief;
+    }
+
+    /**
+     * Build a usable brief from a multi-source video-research pack when the
+     * original publisher page cannot be read.
+     */
+    public NewsBrief fromVideoResearch(
+            String headline,
+            String publisherUrl,
+            String publisher,
+            Map<String, Object> research
+    ) {
+        if (research == null || research.isEmpty()) {
+            return NewsBrief.insufficient(headline, publisherUrl);
+        }
+        List<NewsBrief.Fact> facts = new ArrayList<>();
+        Object rawFacts = research.get("facts");
+        if (rawFacts instanceof List<?> list) {
+            for (Object item : list) {
+                if (!(item instanceof Map<?, ?> row)) {
+                    continue;
+                }
+                Object rawText = row.get("text");
+                String text = rawText == null ? "" : String.valueOf(rawText).trim();
+                if (text.length() < 24) {
+                    continue;
+                }
+                Object rawSpan = row.get("sourceSpan");
+                String span = rawSpan == null ? "" : String.valueOf(rawSpan).trim();
+                if (span.isBlank()) {
+                    span = text;
+                }
+                facts.add(new NewsBrief.Fact("f" + (facts.size() + 1), trim(text, 240), trim(span, 240), "medium"));
+                if (facts.size() >= 5) {
+                    break;
+                }
+            }
+        }
+        String what = research.get("whatHappened") == null ? "" : String.valueOf(research.get("whatHappened")).trim();
+        String why = research.get("whyItMatters") == null ? "" : String.valueOf(research.get("whyItMatters")).trim();
+        if (facts.size() < 3 && what.length() >= 24) {
+            facts.add(new NewsBrief.Fact("f" + (facts.size() + 1), trim(what, 240), trim(what, 240), "medium"));
+        }
+        if (facts.size() < 3 && why.length() >= 24) {
+            facts.add(new NewsBrief.Fact("f" + (facts.size() + 1), trim(why, 240), trim(why, 240), "medium"));
+        }
+        if (facts.size() < 3) {
+            String blob = ((headline == null ? "" : headline) + ". " + what + " " + why).replaceAll("\\s+", " ").trim();
+            return localBrief(headline, publisherUrl, publisher, blob, null);
+        }
+        List<String> entities = new ArrayList<>();
+        Object rawEntities = research.get("entities");
+        if (rawEntities instanceof List<?> list) {
+            for (Object item : list) {
+                if (item != null && !String.valueOf(item).isBlank()) {
+                    entities.add(String.valueOf(item).trim());
+                }
+            }
+        }
+        if (entities.isEmpty()) {
+            entities = guessEntities(headline, what + " " + why);
+        }
+        return new NewsBrief(
+                UUID.randomUUID().toString(),
+                headline == null ? "" : headline,
+                publisherUrl == null ? "" : publisherUrl,
+                publisher == null ? "" : publisher,
+                null,
+                entities,
+                facts,
+                List.of("builders", "creators"),
+                null);
+    }
+
+    /**
+     * Local NewsBrief for the ideas path. No LLM, not written to {@code news_briefs}.
+     */
+    public NewsBrief localBrief(
+            String headline,
+            String publisherUrl,
+            String publisher,
+            String text,
+            String industry
+    ) {
+        ArticleText article = ArticleText.snippet(publisherUrl, publisher, text, IDEAS_SNIPPET_MIN);
+        if (article.empty()) {
+            return NewsBrief.insufficient(headline, publisherUrl);
+        }
+        NewsBrief brief = heuristic(article, headline);
+        brief = padFacts(brief, article, headline);
+        List<String> who = new ArrayList<>();
+        if (industry != null && !industry.isBlank()) {
+            who.add(industry.trim());
+        }
+        if (brief.whoItAffects() != null) {
+            for (String row : brief.whoItAffects()) {
+                if (row != null && !row.isBlank() && !who.contains(row)) {
+                    who.add(row);
+                }
+            }
+        }
+        if (who.isEmpty()) {
+            who = List.of("builders", "creators");
+        }
+        return new NewsBrief(
+                brief.newsId(),
+                brief.headline(),
+                brief.publisherUrl(),
+                brief.publisher(),
+                brief.publishedAt(),
+                brief.entities(),
+                brief.facts(),
+                who,
+                brief.freshnessHours());
+    }
+
+    private static NewsBrief padFacts(NewsBrief brief, ArticleText article, String headline) {
+        List<NewsBrief.Fact> facts = new ArrayList<>();
+        if (brief.facts() != null) {
+            facts.addAll(brief.facts());
+        }
+        if (facts.size() >= 3) {
+            return brief;
+        }
+        String blob = ((headline == null ? "" : headline) + ". " + article.text()).replaceAll("\\s+", " ").trim();
+        for (String part : blob.split("(?<=[.!?])\\s+|\\s*[;|]\\s+|\\s{2,}")) {
+            String sentence = part.trim();
+            if (sentence.length() < 24) {
+                continue;
+            }
+            String span = trim(sentence, 240);
+            boolean dup = facts.stream().anyMatch(f -> normalize(f.text()).equals(normalize(span)));
+            if (dup) {
+                continue;
+            }
+            facts.add(new NewsBrief.Fact("f" + (facts.size() + 1), span, span, "medium"));
+            if (facts.size() >= 3) {
+                break;
+            }
+        }
+        while (facts.size() < 3 && blob.length() >= 24) {
+            int start = Math.min(facts.size() * 80, Math.max(0, blob.length() - 80));
+            String chunk = trim(blob.substring(start), 240);
+            if (chunk.length() < 24) {
+                break;
+            }
+            facts.add(new NewsBrief.Fact("f" + (facts.size() + 1), chunk, chunk, "medium"));
+        }
+        return new NewsBrief(
+                brief.newsId(),
+                brief.headline(),
+                brief.publisherUrl(),
+                brief.publisher(),
+                brief.publishedAt(),
+                brief.entities(),
+                facts,
+                brief.whoItAffects(),
+                brief.freshnessHours());
     }
 
     private NewsBrief fromLlm(ArticleText article, String headline, UUID userId) {

@@ -183,6 +183,25 @@ class NewsEngineTest {
     }
 
     @Test
+    void firstPageReportsEmptyMonthWhenIndustryIsStockedButChipIsEmpty() {
+        Instant now = Instant.parse("2026-10-16T12:00:00Z");
+        NewsQueryService.FirstPage page = NewsQueryService.firstPage(List.of(), 10, now, false);
+        assertThat(page.freshness()).isEqualTo("last 30 days");
+        assertThat(page.items()).isEmpty();
+        assertThat(page.paintFirst()).isZero();
+    }
+
+    @Test
+    void anthropicChipKeepsClaudeLaunchesOnly() {
+        NewsRow gpt = new NewsRow().title("OpenAI rolls out GPT-6 Intelligent UI");
+        NewsRow claude = new NewsRow().title("Anthropic launches Claude Haiku 5.5");
+        NewsRow gemini = new NewsRow().title("Google unveils Gemini agent tools");
+        assertThat(NewsQueryService.labRows("AI", "Anthropic", List.of(gpt, claude, gemini)))
+                .extracting(NewsRow::title)
+                .containsExactly("Anthropic launches Claude Haiku 5.5");
+    }
+
+    @Test
     void dismissedIdsAndUrlsAreDroppedBeforeRank() {
         UUID keptId = UUID.randomUUID();
         UUID goneId = UUID.randomUUID();

@@ -1,5 +1,6 @@
-import { ref } from 'vue';
+import { nextTick, ref } from 'vue';
 import { fetchNewsIdeas, fetchVideoResearch, rateIdea } from '../services/newsIdeas.service.js';
+import { startClickTiming } from '../utils/clickTiming.js';
 
 const STAGE_LABELS = {
   brief: 'Reading the article',
@@ -8,6 +9,24 @@ const STAGE_LABELS = {
 
 const POLL_MS = 2000;
 const POLL_MAX = 45;
+
+/** Merge a streamed idea item; real cards replace any preview. */
+export function applyIdeaItem(list, next) {
+  if (!next) return Array.isArray(list) ? [...list] : [];
+  const rows = Array.isArray(list) ? list : [];
+  const id = next.id || next.title;
+  let out = rows;
+  if (!next.preview) {
+    out = out.filter((row) => !row.preview);
+  }
+  const idx = out.findIndex((row) => (row.id || row.title) === id);
+  if (idx >= 0) {
+    out = [...out];
+    out[idx] = next;
+    return out;
+  }
+  return [...out, next];
+}
 
 export function useNewsIdeas() {
   const open = ref(false);
@@ -76,12 +95,15 @@ export function useNewsIdeas() {
     if (!newsId) return;
     pollNewsId = newsId;
     researchStatus.value = researchStatus.value || 'running';
-    pollTimer = setTimeout(() => pollResearch(newsId), POLL_MS);
+    // First fetch immediately — cache hits never stream a research event.
+    pollTimer = setTimeout(() => pollResearch(newsId), 0);
   }
 
   async function openForItem(newsItem) {
+    const timing = startClickTiming('ideas');
     if (!newsItem?.id) {
       error.value = 'This news item has no id.';
+      timing.fail(new Error('missing news id'));
       return;
     }
     stopPoll();
@@ -96,27 +118,32 @@ export function useNewsIdeas() {
     researchStatus.value = '';
     researchSummary.value = null;
     stageLabel.value = 'Loading ideas';
+    timing.mark('panelOpen');
+    timing.debug('panelOpen');
     try {
       const data = await fetchNewsIdeas(newsItem.id, async (event) => {
         if (event?.type === 'status') {
           stageLabel.value = STAGE_LABELS[event.stage] || 'Loading ideas';
+          timing.debug(`status:${event.stage || ''}`);
           return;
         }
         if (event?.type === 'meta' && event.data) {
           headline.value = event.data.headline || newsItem.title || '';
           brief.value = event.data.brief || null;
+          timing.debug('meta');
           return;
         }
         if (event?.type === 'item' && event.item) {
-          const next = event.item;
-          const id = next.id || next.title;
-          if (!ideas.value.some((row) => (row.id || row.title) === id)) {
-            ideas.value = [...ideas.value, next];
-          }
+          ideas.value = applyIdeaItem(ideas.value, event.item);
+          const kind = event.item.preview ? 'preview' : 'idea';
+          timing.debug(`item:${kind}`);
+          await nextTick();
+          timing.firstUi(kind);
           return;
         }
         if (event?.type === 'research') {
           researchStatus.value = event.status || 'running';
+          timing.debug(`research:${event.status || ''}`);
           if (event.status === 'started' || event.status === 'running') {
             startPoll(newsItem.id);
           }
@@ -124,17 +151,25 @@ export function useNewsIdeas() {
       });
       if (Array.isArray(data?.ideas) && data.ideas.length && !ideas.value.length) {
         ideas.value = data.ideas;
+        await nextTick();
+        timing.firstUi('json');
       }
       if (data?.headline) headline.value = data.headline;
       if (data?.brief) brief.value = data.brief;
       if (!ideas.value.length) {
         error.value = 'No idea fit this news.';
+        timing.done('empty');
+      } else {
+        timing.done(`${ideas.value.length} ideas`);
       }
-      if (researchStatus.value === 'started' || researchStatus.value === 'running') {
+      // Always hydrate video research. Cached idea streams omit the research event,
+      // but the pack may already be ready from a prior visit.
+      if (!researchSummary.value) {
         startPoll(newsItem.id);
       }
     } catch (err) {
       error.value = err.message || 'Could not build ideas.';
+      timing.fail(err);
     } finally {
       loading.value = false;
     }

@@ -25,5 +25,6 @@ ensureOptionsCached();
 app.mount('#app');
 
 bootstrapAuthSession().catch(() => {
-  // Keep hydrated profile until cookies prove the session is dead.
+  // Network/parse failure: drop hydrated profile so UI matches missing cookies.
+  authSession.clearSession();
 });

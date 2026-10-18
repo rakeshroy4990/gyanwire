@@ -156,6 +156,7 @@ function onThoughtsKeydown(event) {
       <p v-if="industry === 'Share Market'" class="disclaimer">Informational only. Not investment advice.</p>
       <p v-else-if="industry === 'Medical'" class="disclaimer">Research aid, not a diagnosis or treatment.</p>
       <p v-else-if="industry === 'Astrology'" class="disclaimer">For cultural context, not prediction.</p>
+      <p v-else-if="industry === 'GitHub'" class="disclaimer">Famous open-source projects — open one and press Idea for business angles.</p>
       <p v-if="formError" class="form-error" role="alert">{{ formError }}</p>
 
       <div v-if="hasThread" class="chat-thread" aria-live="polite">

@@ -62,6 +62,10 @@ const FALLBACK_CATALOG = [
     name: 'Astrology',
     subs: ['Horoscope', 'Vedic', 'Tarot', 'Numerology', 'Vastu'],
   },
+  {
+    name: 'GitHub',
+    subs: ['Stars', 'Trending', 'AI', 'DevTools', 'Web', 'Data', 'Mobile'],
+  },
 ];
 
 function withAiFirst(rows) {
@@ -348,16 +352,17 @@ export function useResearch() {
     return place;
   }
 
-  function settleBrowse(data, scoped, place) {
+  function settleBrowse(data, scoped, place, sub = null) {
     const warming = data?.freshness === 'warming_up' && browseResults.value.length === 0;
     // warming_up: banner + skeleton cover status — do not flash the empty state.
     showEmpty.value = browseResults.value.length === 0 && !warming;
+    const chip = sub || scoped;
     emptyMessage.value = browseResults.value.length
       ? 'Pick an industry for product news, or start a research chat.'
       : place
         ? `No findings for ${place} yet.`
-        : scoped
-          ? `No product news for ${scoped} yet.`
+        : chip
+          ? `No product news for ${chip} yet.`
           : 'No product news yet.';
   }
 
@@ -411,7 +416,7 @@ export function useResearch() {
               showEmpty.value = false;
               return;
             }
-            settleBrowse(chunk, scoped, countryName(country.value, browseCountries.value));
+            settleBrowse(chunk, scoped, countryName(country.value, browseCountries.value), sub);
             isLoading.value = false;
             await nextTick();
           },
@@ -443,7 +448,7 @@ export function useResearch() {
         }
       }
       const place = applyBrowseMeta(data, scoped, sub);
-      settleBrowse(data, scoped, place);
+      settleBrowse(data, scoped, place, sub);
     } catch (error) {
       if (error?.name === 'AbortError' || requestId !== newsRequestId) return;
       browseResults.value = [];

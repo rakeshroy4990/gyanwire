@@ -3,7 +3,7 @@ import { idbGet, idbPut, STORE_INDUSTRIES } from './indexedDb.js';
 
 const CACHE_KEY = 'catalog';
 /** Bump when the expected catalog shape changes so stale IndexedDB rows refresh. */
-const CATALOG_VERSION = 3;
+const CATALOG_VERSION = 4;
 
 const BASELINE_INDUSTRIES = [
   'Share Market',
@@ -14,6 +14,7 @@ const BASELINE_INDUSTRIES = [
   'Social Media',
   'Gaming',
   'Astrology',
+  'GitHub',
 ];
 
 function catalogHasAiLabs(catalog) {

@@ -58,8 +58,98 @@ class NewsRelevanceServiceTest {
     void packLoadsSocialMedia() {
         NewsPackRegistry packs = new NewsPackRegistry();
         assertTrue(packs.pack("Social Media").isPresent());
-        Map<String, List<String>> signals = packs.pack("Social Media").get().signals();
+        NewsPackRegistry.Pack pack = packs.pack("Social Media").get();
+        Map<String, List<String>> signals = pack.signals();
         assertTrue(signals.containsKey("launch"));
+        assertTrue(pack.requireSignalMatch());
+        assertFalse(pack.requireKeywords().isEmpty());
+    }
+
+    @Test
+    void packLoadsGitHub() {
+        NewsPackRegistry packs = new NewsPackRegistry();
+        assertTrue(packs.pack("GitHub").isPresent());
+        NewsPackRegistry.Pack pack = packs.pack("GitHub").get();
+        assertTrue(pack.requireSignalMatch());
+        assertTrue(pack.domainAllowed("github.com"));
+        assertTrue(pack.signals().containsKey("stars"));
+        assertTrue(pack.signals().containsKey("tool"));
+    }
+
+    @Test
+    void githubKeepsFamousReposAndDropsOtherDomains() {
+        NewsPackRegistry packs = new NewsPackRegistry();
+        NewsRelevanceService service = new NewsRelevanceService(packs, null);
+        Instant now = Instant.parse("2026-10-16T12:00:00Z");
+
+        NewsRow react = new NewsRow()
+                .id(UUID.randomUUID())
+                .industry("GitHub")
+                .title("facebook/react — The library for web and native user interfaces")
+                .domain("github.com")
+                .summary("Open-source GitHub project with 240.0k stars. Famous library/framework/tool.")
+                .signalType("stars")
+                .publishedAt(now.minusSeconds(3600));
+        NewsRow blog = new NewsRow()
+                .id(UUID.randomUUID())
+                .industry("GitHub")
+                .title("Why React won the frontend wars")
+                .domain("techcrunch.com")
+                .summary("Opinion piece about JavaScript frameworks")
+                .publishedAt(now.minusSeconds(1800));
+
+        List<NewsRow> gated = service.gate("GitHub", List.of(react, blog), now, Set.of());
+        assertEquals(1, gated.size());
+        assertTrue(gated.get(0).title().contains("facebook/react"));
+        assertTrue(gated.get(0).relevanceScore() >= 15);
+    }
+
+    @Test
+    void socialMediaKeepsPlatformLaunchesAndDropsCarsAndLawsuits() {
+        NewsPackRegistry packs = new NewsPackRegistry();
+        NewsRelevanceService service = new NewsRelevanceService(packs, null);
+        Instant now = Instant.parse("2026-10-16T12:00:00Z");
+        assertTrue(packs.pack("Social Media").get().requireSignalMatch());
+
+        NewsRow instagram = new NewsRow()
+                .id(UUID.randomUUID())
+                .industry("Social Media")
+                .title("Instagram launches free tier API for creators")
+                .domain("medianama.com")
+                .summary("Platform rolls out new SDK for Reels")
+                .publishedAt(now.minusSeconds(3600));
+        NewsRow youtube = new NewsRow()
+                .id(UUID.randomUUID())
+                .industry("Social Media")
+                .title("YouTube unveils Shorts monetisation guidelines in India")
+                .domain("theverge.com")
+                .summary("Creator fund policy update")
+                .publishedAt(now.minusSeconds(4000));
+        NewsRow mercedes = new NewsRow()
+                .id(UUID.randomUUID())
+                .industry("Social Media")
+                .title("Mercedes-AMG’s first ground-up SUV is a 1,150hp electric beast")
+                .domain("theverge.com")
+                .summary("The performance brand unveils its first dedicated electric SUV")
+                .publishedAt(now.minusSeconds(1800));
+        NewsRow muskLawsuit = new NewsRow()
+                .id(UUID.randomUUID())
+                .industry("Social Media")
+                .title("Elon Musk settles lawsuits over $1 million voter giveaway")
+                .domain("techcrunch.com")
+                .summary("Court filings announce a settlement in the giveaway case")
+                .publishedAt(now.minusSeconds(2000));
+
+        List<NewsRow> gated = service.gate(
+                "Social Media",
+                List.of(instagram, youtube, mercedes, muskLawsuit),
+                now,
+                Set.of());
+        assertEquals(2, gated.size());
+        assertTrue(gated.stream().anyMatch(row -> row.title().contains("Instagram")));
+        assertTrue(gated.stream().anyMatch(row -> row.title().contains("YouTube")));
+        assertFalse(gated.stream().anyMatch(row -> row.title().toLowerCase().contains("mercedes")));
+        assertFalse(gated.stream().anyMatch(row -> row.title().toLowerCase().contains("musk")));
     }
 
     @Test

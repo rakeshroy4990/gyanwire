@@ -26,4 +26,23 @@ public record ArticleText(
                 false,
                 null);
     }
+
+    /**
+     * Short title/summary snippets for the ideas path (below {@link NewsResolveService#MIN_CHARS}).
+     */
+    public static ArticleText snippet(String publisherUrl, String publisher, String text, int minChars) {
+        String body = text == null ? "" : text.replaceAll("\\s+", " ").trim();
+        if (body.length() < Math.max(1, minChars)) {
+            return empty("too_short");
+        }
+        if (body.length() > NewsResolveService.MAX_CHARS) {
+            body = body.substring(0, NewsResolveService.MAX_CHARS);
+        }
+        return new ArticleText(
+                publisherUrl == null ? "" : publisherUrl,
+                publisher == null ? "" : publisher,
+                body,
+                false,
+                null);
+    }
 }

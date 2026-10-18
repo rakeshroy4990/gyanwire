@@ -135,16 +135,27 @@ export async function fetchIndustryNewsChunks({
   });
 
   let data = await load();
-  if (typeof onChunk === 'function') {
-    await onChunk(data, Number(data.windowDays) || 30);
-  }
-
   if (data?.freshness === 'warming_up' && resultCount(data) === 0 && !signal?.aborted) {
-    await sleep(WARMING_RETRY_MS, signal);
-    data = await load();
+    // Let the UI show the fetching banner once, then retry after ingest has a moment.
     if (typeof onChunk === 'function') {
       await onChunk(data, Number(data.windowDays) || 30);
     }
+    await sleep(WARMING_RETRY_MS, signal);
+    data = await load();
+  }
+
+  // Still empty after retry: settle as a real empty month, not perpetual "fetching".
+  if (data?.freshness === 'warming_up' && resultCount(data) === 0) {
+    data = {
+      ...data,
+      freshness: 'last 30 days',
+      windowDays: Number(data.windowDays) > 0 ? Number(data.windowDays) : 30,
+      message: data.message || 'No product news yet.',
+    };
+  }
+
+  if (typeof onChunk === 'function') {
+    await onChunk(data, Number(data.windowDays) || 30);
   }
   return data;
 }

@@ -6,7 +6,6 @@ import PlanStepList from '../actionplan/PlanStepList.vue';
 import PlanProgress from '../actionplan/PlanProgress.vue';
 import PlanCard from '../actionplan/PlanCard.vue';
 import PathSwitch from '../actionplan/PathSwitch.vue';
-import StepDrawer from '../actionplan/StepDrawer.vue';
 
 const props = defineProps({
   plan: { type: Object, required: true },
@@ -20,16 +19,10 @@ const {
   setPath,
   pathTotals,
   progress,
-  drawerOpen,
-  stepDetail,
-  stepDetailLoading,
-  stepDetailError,
   timingPrompt,
   timingMinutes,
   timingSaving,
   toggleStep,
-  openStep,
-  closeStep,
   submitTiming,
   dismissTiming,
 } = useActionPlan();
@@ -50,10 +43,15 @@ function openFull() {
   }
 }
 
-async function onOpen(stepKey) {
-  if (localPlan.value?.planId) {
-    await openStep(stepKey);
-  }
+function onOpen(stepKey) {
+  const planId = localPlan.value?.planId || props.plan?.planId;
+  if (!planId || !stepKey) return;
+  const pathParam = path.value === 'mix' ? 'open_source' : path.value;
+  router.push({
+    name: 'action-plan-step',
+    params: { id: planId, stepKey },
+    query: pathParam && pathParam !== 'open_source' ? { path: pathParam } : {},
+  });
 }
 </script>
 
@@ -89,15 +87,6 @@ async function onOpen(stepKey) {
         <button type="button" class="btn" @click="dismissTiming">Skip</button>
       </div>
     </div>
-
-    <StepDrawer
-      :open="drawerOpen"
-      :detail="stepDetail"
-      :loading="stepDetailLoading"
-      :error="stepDetailError"
-      :path="path"
-      @close="closeStep"
-    />
   </article>
 
   <article v-else class="launch-plan">

@@ -30,10 +30,19 @@ public class NewsResolveService {
     }
 
     public ArticleText resolve(String url, String title, String source) {
+        return resolve(url, title, source, TIMEOUT_MS);
+    }
+
+    /**
+     * Same as {@link #resolve(String, String, String)} with a caller-chosen HTTP timeout.
+     * Used by the ideas path to avoid waiting the full publisher timeout.
+     */
+    public ArticleText resolve(String url, String title, String source, int timeoutMs) {
         String input = url == null ? "" : url.trim();
         if (input.isBlank()) {
             return ArticleText.empty("missing_url");
         }
+        int waitMs = Math.max(500, timeoutMs);
         try {
             String publisherUrl = input;
             boolean resolveFailed = false;
@@ -48,7 +57,7 @@ public class NewsResolveService {
             if (resolveFailed || stillGoogle(publisherUrl)) {
                 return ArticleText.empty("resolve_failed");
             }
-            String html = http.get(publisherUrl, USER_AGENT, TIMEOUT_MS);
+            String html = http.get(publisherUrl, USER_AGENT, waitMs);
             if (html == null || html.isBlank()) {
                 return ArticleText.empty("fetch_empty");
             }

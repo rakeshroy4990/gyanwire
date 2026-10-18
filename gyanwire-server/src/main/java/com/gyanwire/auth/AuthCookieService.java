@@ -17,6 +17,7 @@ public class AuthCookieService {
     private final String refreshPath;
     private final boolean secure;
     private final String sameSite;
+    private final boolean partitioned;
     private final String domain;
 
     public AuthCookieService(
@@ -25,6 +26,7 @@ public class AuthCookieService {
             @Value("${app.auth.cookie.refresh-path}") String refreshPath,
             @Value("${app.auth.cookie.secure}") boolean secure,
             @Value("${app.auth.cookie.same-site}") String sameSite,
+            @Value("${app.auth.cookie.partitioned:true}") boolean partitioned,
             @Value("${app.auth.cookie.domain:}") String domain
     ) {
         this.accessName = accessName;
@@ -33,6 +35,8 @@ public class AuthCookieService {
         this.sameSite = sameSite == null ? "Lax" : sameSite;
         boolean sameSiteNone = this.sameSite.equalsIgnoreCase("None");
         this.secure = sameSiteNone || secure;
+        // CHIPS: cross-site UI (Firebase web.app) → API (Cloud Run) needs Partitioned + SameSite=None.
+        this.partitioned = sameSiteNone && partitioned;
         this.domain = domain == null ? "" : domain.trim();
     }
 
@@ -55,13 +59,17 @@ public class AuthCookieService {
         return readCookie(request, refreshName);
     }
 
-    private ResponseCookie build(String name, String value, String path, long maxAgeSeconds) {
+    /** Visible for tests. */
+    ResponseCookie build(String name, String value, String path, long maxAgeSeconds) {
         ResponseCookie.ResponseCookieBuilder b = ResponseCookie.from(name, value == null ? "" : value)
                 .httpOnly(true)
                 .secure(secure)
                 .path(path)
                 .maxAge(Duration.ofSeconds(Math.max(0, maxAgeSeconds)))
                 .sameSite(sameSite);
+        if (partitioned) {
+            b.partitioned(true);
+        }
         if (!domain.isEmpty()) {
             b.domain(domain);
         }

@@ -128,11 +128,13 @@ public class StepDetailService {
             micro = listOf(map.get("microSteps"));
             toolIds = listOf(map.get("tools"));
         }
+        List<String> fromTemplate = fillAll(micro, slots);
         List<String> fromStep = listOf(stepOverride);
-        if (!fromStep.isEmpty()) {
+        // Prefer catalog templates so step detail can use fresh research summary slots.
+        if (!fromTemplate.isEmpty()) {
+            micro = fromTemplate;
+        } else if (!fromStep.isEmpty()) {
             micro = fromStep;
-        } else {
-            micro = fillAll(micro, slots);
         }
         tab.put("microSteps", micro);
         tab.put("minutes", minutes);
@@ -163,7 +165,77 @@ public class StepDetailService {
             slots.putIfAbsent("publisherUrl", str(news.get("publisherUrl")));
             slots.putIfAbsent("headline", str(news.get("headline")));
             slots.putIfAbsent("publisher", str(news.get("publisher")));
+            Object entities = news.get("entities");
+            if (entities instanceof List<?> list && !list.isEmpty() && list.get(0) != null) {
+                slots.putIfAbsent("entity", String.valueOf(list.get(0)).trim());
+            }
+            Object facts = news.get("facts");
+            if (facts instanceof List<?> list) {
+                int i = 1;
+                for (Object item : list) {
+                    if (i > 3) {
+                        break;
+                    }
+                    if (item instanceof Map<?, ?> fact) {
+                        String text = str(fact.get("text"));
+                        if (!text.isBlank()) {
+                            slots.putIfAbsent("fact_" + i, text);
+                            i++;
+                        }
+                    } else if (item != null) {
+                        String text = String.valueOf(item).trim();
+                        if (!text.isBlank()) {
+                            slots.putIfAbsent("fact_" + i, text);
+                            i++;
+                        }
+                    }
+                }
+                String f1 = slots.getOrDefault("fact_1", "");
+                String f2 = slots.getOrDefault("fact_2", "");
+                String story = (f1 + " " + f2).trim();
+                if (!story.isBlank()) {
+                    slots.putIfAbsent("whatHappened", story);
+                }
+                if (!slots.getOrDefault("fact_3", "").isBlank()) {
+                    slots.putIfAbsent("whyItMatters", slots.get("fact_3"));
+                }
+            }
+            slots.putIfAbsent("whatHappened", str(news.get("headline")));
+            slots.putIfAbsent("entity", firstWord(str(news.get("headline"))));
         }
+        Object research = plan.get("videoResearch");
+        if (research instanceof Map<?, ?> pack) {
+            String what = str(pack.get("whatHappened"));
+            String why = str(pack.get("whyItMatters"));
+            if (!what.isBlank()) {
+                slots.put("whatHappened", what);
+            }
+            if (!why.isBlank()) {
+                slots.put("whyItMatters", why);
+            }
+            Object packFacts = pack.get("facts");
+            if (packFacts instanceof List<?> list) {
+                int i = 1;
+                for (Object item : list) {
+                    if (i > 3) {
+                        break;
+                    }
+                    if (item instanceof Map<?, ?> fact) {
+                        String text = str(fact.get("text"));
+                        if (!text.isBlank()) {
+                            slots.put("fact_" + i, text);
+                            i++;
+                        }
+                    }
+                }
+            }
+        }
+        slots.putIfAbsent("entity", firstWord(slots.getOrDefault("headline", "this news")));
+        slots.putIfAbsent("whatHappened", slots.getOrDefault("headline", ""));
+        slots.putIfAbsent("whyItMatters", slots.getOrDefault("fact_3", "Here is why it matters today."));
+        slots.putIfAbsent("fact_1", slots.getOrDefault("whatHappened", ""));
+        slots.putIfAbsent("fact_2", "Who it affects is in the article.");
+        slots.putIfAbsent("fact_3", slots.getOrDefault("whyItMatters", ""));
         return slots;
     }
 
@@ -273,7 +345,13 @@ public class StepDetailService {
         }
         List<String> out = new ArrayList<>();
         for (Object item : list) {
-            if (item != null) {
+            if (item == null) {
+                continue;
+            }
+            if (item instanceof Map<?, ?> map && map.size() == 1) {
+                Map.Entry<?, ?> e = map.entrySet().iterator().next();
+                out.add(String.valueOf(e.getKey()) + ": " + String.valueOf(e.getValue()));
+            } else {
                 out.add(String.valueOf(item));
             }
         }
@@ -282,6 +360,14 @@ public class StepDetailService {
 
     private static String str(Object v) {
         return v == null ? "" : String.valueOf(v).trim();
+    }
+
+    private static String firstWord(String text) {
+        if (text == null || text.isBlank()) {
+            return "this news";
+        }
+        String[] parts = text.trim().split("\\s+");
+        return parts[0].replaceAll("[^A-Za-z0-9.].*", "");
     }
 
     private static int intVal(Object v, int fallback) {

@@ -58,6 +58,55 @@ public record NewsBrief(
                 null);
     }
 
+    public static NewsBrief fromMap(Map<String, Object> map) {
+        if (map == null || map.isEmpty()) {
+            return insufficient("", "");
+        }
+        List<Fact> facts = new ArrayList<>();
+        Object rawFacts = map.get("facts");
+        if (rawFacts instanceof List<?> list) {
+            for (Object item : list) {
+                if (!(item instanceof Map<?, ?> f)) {
+                    continue;
+                }
+                Object confidence = f.get("confidence");
+                Object id = f.get("id");
+                Object text = f.get("text");
+                Object span = f.get("sourceSpan");
+                String textStr = text == null ? "" : String.valueOf(text);
+                facts.add(new Fact(
+                        id == null || String.valueOf(id).isBlank() ? "f" + (facts.size() + 1) : String.valueOf(id),
+                        textStr,
+                        span == null || String.valueOf(span).isBlank() ? textStr : String.valueOf(span),
+                        confidence == null ? "medium" : String.valueOf(confidence)));
+            }
+        }
+        Integer freshness = map.get("freshnessHours") instanceof Number n ? n.intValue() : null;
+        return new NewsBrief(
+                String.valueOf(map.getOrDefault("newsId", UUID.randomUUID().toString())),
+                String.valueOf(map.getOrDefault("headline", "")),
+                String.valueOf(map.getOrDefault("publisherUrl", "")),
+                String.valueOf(map.getOrDefault("publisher", "")),
+                map.get("publishedAt") == null ? null : String.valueOf(map.get("publishedAt")),
+                stringList(map.get("entities")),
+                facts,
+                stringList(map.get("whoItAffects")),
+                freshness);
+    }
+
+    private static List<String> stringList(Object value) {
+        if (!(value instanceof List<?> list)) {
+            return List.of();
+        }
+        List<String> out = new ArrayList<>();
+        for (Object item : list) {
+            if (item != null && !String.valueOf(item).isBlank()) {
+                out.add(String.valueOf(item));
+            }
+        }
+        return out;
+    }
+
     public boolean usable() {
         return facts != null && facts.size() >= 3;
     }

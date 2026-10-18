@@ -75,6 +75,9 @@ public class NewsQueryService {
         Instant since = now.minus(Duration.ofDays(lookback));
         NewsStore.Dismissals dismissals = store.loadDismissals(who);
         Set<UUID> hidden = who.userId() == null ? Set.of() : store.loadHiddenSources(who.userId());
+        // warming_up only when the industry itself has nothing stored yet.
+        // An empty lab chip (e.g. AI → Anthropic) after industry stock exists is a real empty, not fetching.
+        boolean industryStocked = store.hasRealRows(industry);
         List<NewsRow> rows = withoutDismissed(
                 labRows(industry, sub, store.eligible(industry, sub, since, false)),
                 dismissals);
@@ -83,14 +86,17 @@ public class NewsQueryService {
             if (rows.isEmpty()) {
                 boolean prod = environment.acceptsProfiles(Profiles.of("prod"));
                 seed.load(industry, prod, true);
-                rows = withoutDismissed(
-                        labRows(industry, sub, store.eligible(industry, sub, since, true)),
-                        dismissals);
+                industryStocked = industryStocked || store.hasRealRows(industry);
+                List<NewsRow> samples = store.eligible(industry, sub, since, true);
+                if (!samples.isEmpty()) {
+                    industryStocked = true;
+                }
+                rows = withoutDismissed(labRows(industry, sub, samples), dismissals);
             }
         }
         refreshRulesScores(rows, now);
         rows = relevance.gate(industry, rows, now, hidden, Math.max(NewsRelevanceService.DEFAULT_TOP_N, pageSize * 3));
-        Prepared prepared = prepareBrowse(rows, pageNo, pageSize, now, code);
+        Prepared prepared = prepareBrowse(rows, pageNo, pageSize, now, code, !industryStocked, industry);
         String freshness = prepared.freshness();
         Map<String, Object> body = payload(
                 industry,
@@ -142,7 +148,7 @@ public class NewsQueryService {
             filled.put("isDefaultNews", true);
             return filled;
         }
-        Prepared prepared = prepareBrowse(pooled, pageNo, pageSize, now, code);
+        Prepared prepared = prepareBrowse(pooled, pageNo, pageSize, now, code, true, "Default");
         Map<String, Object> body = payload(
                 "Default",
                 null,
@@ -302,9 +308,13 @@ public class NewsQueryService {
 
     /**
      * Page 1 paints the narrowest non-empty window first, then fills from the month.
-     * Returns empty with warming_up when nothing is stored yet.
+     * Returns empty with warming_up only when nothing is stored for the industry yet.
      */
     static FirstPage firstPage(List<NewsRow> ordered, int pageSize, Instant now) {
+        return firstPage(ordered, pageSize, now, true);
+    }
+
+    static FirstPage firstPage(List<NewsRow> ordered, int pageSize, Instant now, boolean warmingAllowed) {
         int size = Math.max(1, pageSize);
         Instant when = now == null ? Instant.now() : now;
         int usedDays = BROWSE_LOOKBACK_DAYS;
@@ -337,7 +347,10 @@ public class NewsQueryService {
             }
         }
         if (page.isEmpty()) {
-            return new FirstPage(List.of(), 0, BROWSE_LOOKBACK_DAYS, "warming_up");
+            String freshness = warmingAllowed
+                    ? "warming_up"
+                    : FreshnessGate.labelForDays(BROWSE_LOOKBACK_DAYS);
+            return new FirstPage(List.of(), 0, BROWSE_LOOKBACK_DAYS, freshness);
         }
         return new FirstPage(page, paintFirst, usedDays, FreshnessGate.labelForDays(usedDays));
     }
@@ -377,6 +390,29 @@ public class NewsQueryService {
     }
 
     private Prepared prepareBrowse(List<NewsRow> rows, int page, int pageSize, Instant now, String country) {
+        return prepareBrowse(rows, page, pageSize, now, country, true, null);
+    }
+
+    private Prepared prepareBrowse(
+            List<NewsRow> rows,
+            int page,
+            int pageSize,
+            Instant now,
+            String country,
+            boolean warmingAllowed
+    ) {
+        return prepareBrowse(rows, page, pageSize, now, country, warmingAllowed, null);
+    }
+
+    private Prepared prepareBrowse(
+            List<NewsRow> rows,
+            int page,
+            int pageSize,
+            Instant now,
+            String country,
+            boolean warmingAllowed,
+            String industry
+    ) {
         CountrySignals.assignMissing(rows);
         List<Map<String, Object>> countries = new ArrayList<>(CountrySignals.options(rows));
         CountrySignals.ensureOption(countries, country);
@@ -384,8 +420,8 @@ public class NewsQueryService {
         List<NewsRow> ordered = chronological(scoped);
         int pageNo = Math.max(1, page);
         if (pageNo == 1) {
-            FirstPage first = firstPage(ordered, pageSize, now);
-            String message = browseMessage(ordered.size());
+            FirstPage first = firstPage(ordered, pageSize, now, warmingAllowed);
+            String message = browseMessage(ordered.size(), industry);
             return new Prepared(
                     new NewsRanker.Ranked(first.items(), message),
                     countries,
@@ -400,7 +436,7 @@ public class NewsQueryService {
         }
         PageSlice pageSlice = slice(ordered, pageNo, pageSize);
         return new Prepared(
-                new NewsRanker.Ranked(pageSlice.items(), browseMessage(pageSlice.total())),
+                new NewsRanker.Ranked(pageSlice.items(), browseMessage(pageSlice.total(), industry)),
                 countries,
                 pageSlice.total(),
                 pageSlice.page(),
@@ -413,8 +449,14 @@ public class NewsQueryService {
     }
 
     private static String browseMessage(int total) {
+        return browseMessage(total, null);
+    }
+
+    private static String browseMessage(int total, String industry) {
         if (total == 0) {
-            return "No business-relevant news from pack sources yet.";
+            return "GitHub".equals(industry)
+                    ? "No famous GitHub projects fetched yet — try again in a minute."
+                    : "No business-relevant news from pack sources yet.";
         }
         if (total < 3) {
             return "Fewer than 3 relevant items right now — we do not pad with junk.";
@@ -473,7 +515,8 @@ public class NewsQueryService {
             items.add(item);
             index++;
         }
-        String label = (sub == null || sub.isBlank() ? industry : sub) + " products";
+        String scope = sub == null || sub.isBlank() ? industry : sub;
+        String label = "GitHub".equals(industry) ? scope + " projects" : scope + " products";
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("results", items);
         body.put("items", items);

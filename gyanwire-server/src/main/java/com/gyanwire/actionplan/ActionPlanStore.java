@@ -7,7 +7,6 @@ import com.gyanwire.actionplan.news.NewsBrief;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +64,53 @@ public class ActionPlanStore {
                     mapper.writeValueAsString(brief.toMap()));
         } catch (Exception ignored) {
             // Cache miss is fine; generation still works.
+        }
+    }
+
+    public Map<String, Object> findIdeaCache(String urlHash) {
+        if (urlHash == null || urlHash.isBlank()) {
+            return null;
+        }
+        try {
+            List<Map<String, Object>> rows = jdbc.query(
+                    "SELECT ideas_json::text AS payload FROM news_idea_cache WHERE url_hash = ?",
+                    (rs, i) -> Map.of("payload", rs.getString("payload")),
+                    urlHash);
+            if (rows.isEmpty()) {
+                return null;
+            }
+            Map<String, Object> payload = mapper.readValue(
+                    String.valueOf(rows.get(0).get("payload")),
+                    new TypeReference<>() {});
+            if (!(payload.get("ideas") instanceof List<?> ideas) || ideas.isEmpty()) {
+                return null;
+            }
+            return payload;
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    public void saveIdeaCache(String urlHash, Map<String, Object> payload) {
+        if (urlHash == null || urlHash.isBlank() || payload == null) {
+            return;
+        }
+        if (!(payload.get("ideas") instanceof List<?> ideas) || ideas.isEmpty()) {
+            return;
+        }
+        try {
+            jdbc.update("""
+                    INSERT INTO news_idea_cache (id, url_hash, ideas_json, created_at)
+                    VALUES (?, ?, ?::jsonb, now())
+                    ON CONFLICT (url_hash) DO UPDATE SET
+                        ideas_json = EXCLUDED.ideas_json,
+                        created_at = now()
+                    """,
+                    UUID.randomUUID(),
+                    urlHash,
+                    mapper.writeValueAsString(payload));
+        } catch (Exception ignored) {
+            // Cache write is best-effort.
         }
     }
 
@@ -241,45 +287,8 @@ public class ActionPlanStore {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private NewsBrief fromBriefJson(String json) throws Exception {
         Map<String, Object> map = mapper.readValue(json, new TypeReference<>() {});
-        List<NewsBrief.Fact> facts = new ArrayList<>();
-        if (map.get("facts") instanceof List<?> list) {
-            for (Object item : list) {
-                if (item instanceof Map<?, ?> f) {
-                    Object confidence = f.get("confidence");
-                    facts.add(new NewsBrief.Fact(
-                            String.valueOf(f.get("id")),
-                            String.valueOf(f.get("text")),
-                            String.valueOf(f.get("sourceSpan")),
-                            confidence == null ? "medium" : String.valueOf(confidence)));
-                }
-            }
-        }
-        Integer freshness = map.get("freshnessHours") instanceof Number n ? n.intValue() : null;
-        return new NewsBrief(
-                String.valueOf(map.getOrDefault("newsId", "")),
-                String.valueOf(map.getOrDefault("headline", "")),
-                String.valueOf(map.getOrDefault("publisherUrl", "")),
-                String.valueOf(map.getOrDefault("publisher", "")),
-                map.get("publishedAt") == null ? null : String.valueOf(map.get("publishedAt")),
-                stringList(map.get("entities")),
-                facts,
-                stringList(map.get("whoItAffects")),
-                freshness);
-    }
-
-    private static List<String> stringList(Object value) {
-        if (!(value instanceof List<?> list)) {
-            return List.of();
-        }
-        List<String> out = new ArrayList<>();
-        for (Object item : list) {
-            if (item != null) {
-                out.add(String.valueOf(item));
-            }
-        }
-        return out;
+        return NewsBrief.fromMap(map);
     }
 }

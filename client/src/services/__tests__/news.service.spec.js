@@ -118,3 +118,37 @@ it('retries once when the first response is warming_up with no rows', async () =
   expect(data.results[0].title).toBe('Late launch');
   expect(data.freshness).toBe('fresh');
 });
+
+it('settles empty after warming_up retry still has no rows', async () => {
+  vi.useFakeTimers();
+  const urls = [];
+  const chunks = [];
+  vi.stubGlobal('fetch', vi.fn(async (url) => {
+    urls.push(String(url));
+    return jsonResponse({
+      results: [],
+      freshness: 'warming_up',
+      windowDays: 30,
+      returned: 0,
+      page: 1,
+      message: 'No business-relevant news from pack sources yet.',
+    });
+  }));
+
+  const pending = fetchIndustryNewsChunks({
+    industry: 'AI',
+    sub: 'Anthropic',
+    onChunk: async (chunk) => {
+      chunks.push(chunk.freshness);
+    },
+  });
+  await vi.advanceTimersByTimeAsync(WARMING_RETRY_MS);
+  const data = await pending;
+
+  expect(urls).toHaveLength(2);
+  expect(urls.every((url) => url.includes('sub=Anthropic'))).toBe(true);
+  expect(chunks).toEqual(['warming_up', 'last 30 days']);
+  expect(data.freshness).toBe('last 30 days');
+  expect(data.results).toEqual([]);
+  expect(data.message).toContain('No business-relevant news');
+});

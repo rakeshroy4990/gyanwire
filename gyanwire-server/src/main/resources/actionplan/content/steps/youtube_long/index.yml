@@ -5,17 +5,20 @@ steps:
     commonMistakes: Vague chapter names without a demo beat or CTA.
     open_source:
       microSteps:
-        - "Open notes from NewsBrief + product: {{headline}} ({{publisherUrl}})."
-        - Draft five chapter titles: hook / why / demo / tips / CTA.
-        - Keep each title ≤8 words; put the product or entity first in the hook.
-        - Save as outline.md with one title per line.
+        - "Story summary: {{whatHappened}}"
+        - "Why it matters: {{whyItMatters}}"
+        - "Key facts to cover: {{fact_1}}; {{fact_2}}; {{fact_3}}."
+        - "Draft five chapter titles: hook / why / demo / tips / CTA."
+        - "Keep each title ≤8 words; put {{entity}} first in the hook."
+        - "Save as outline.md with one title per line. Cite {{publisherUrl}}."
       tools: [notes_app, text_editor]
       minutes: 30
     paid:
       microSteps:
-        - "Paste {{headline}} + product notes into a paid AI chat; ask for 5 chapter titles."
-        - Edit to hook / why / demo / tips / CTA; keep product name in the hook.
-        - Save the five titles to outline.md.
+        - "Paste the story summary into a paid AI chat: {{whatHappened}}"
+        - "Add why it matters ({{whyItMatters}}) and ask for 5 chapter titles."
+        - "Edit to hook / why / demo / tips / CTA; keep {{entity}} in the hook."
+        - "Save the five titles to outline.md."
       tools: [chatgpt_plus]
       minutes: 15
       giveUp: Monthly cost; you still own the outline structure.
@@ -25,7 +28,7 @@ steps:
     commonMistakes: Stock UI or a fake prompt result.
     open_source:
       microSteps:
-        - Open the product and run one real prompt tied to {{headline}}.
+        - "Open the product and run one real prompt tied to: {{whatHappened}}"
         - Capture a full-window screenshot (OBS or ShareX).
         - Save as demo.png for the chapter outline.
       tools: [obs_studio, sharex]
@@ -43,7 +46,9 @@ steps:
     commonMistakes: Script without timestamps or a live-demo beat.
     open_source:
       microSteps:
-        - Open outline.md; write spoken lines for each chapter.
+        - "Open outline.md; write spoken lines from the story: {{whatHappened}}"
+        - "Open with why it matters: {{whyItMatters}}"
+        - "Weave in {{fact_1}}; {{fact_2}}; {{fact_3}}."
         - Target 900–1500 words; mark [mm:ss] before each chapter.
         - "Keep the hook grounded in {{hook}} and cite {{publisherUrl}} once."
         - Save as script.md.
@@ -51,7 +56,8 @@ steps:
       minutes: 60
     paid:
       microSteps:
-        - "Ask a paid AI for a 900–1500 word demo script from outline.md for {{headline}}."
+        - "Ask a paid AI for a 900–1500 word demo script from outline.md about: {{whatHappened}}"
+        - "Require these facts in the draft: {{fact_1}}; {{fact_2}}; {{fact_3}}."
         - Add [mm:ss] chapter markers; cut fluff; verify product claims.
         - Save as script.md.
       tools: [chatgpt_plus]
@@ -64,6 +70,7 @@ steps:
     open_source:
       microSteps:
         - Set OBS to 1080p; mic check in a quiet room.
+        - "Before record, say the story in one line: {{whatHappened}}"
         - Record screen + voice in takes under 12 minutes.
         - Prefer demo first, then voice-over if you stumble.
         - Save the best take as raw_demo.mkv.
@@ -85,6 +92,7 @@ steps:
       microSteps:
         - Import raw_demo.mkv into Shotcut (or Kdenlive); cut dead air.
         - Add chapter markers matching outline.md.
+        - "Spot-check captions mention {{entity}} and {{fact_1}}."
         - Transcribe locally with Whisper.cpp; burn or soft-sub captions.
         - Export 1080p H.264 as final.mp4 (≤10 min).
       tools: [shotcut, kdenlive, whisper_cpp]
@@ -92,7 +100,7 @@ steps:
     paid:
       microSteps:
         - Import → auto-caption → trim silences → set chapters → export 1080p.
-        - Spot-check captions against the product UI on screen.
+        - "Spot-check captions against the product UI and {{entity}}."
       tools: [descript]
       minutes: 60
       giveUp: Subscription; verify auto-captions on technical terms.
@@ -103,14 +111,14 @@ steps:
     open_source:
       microSteps:
         - Make a 1280×720 canvas in GIMP; big text + product UI crop.
-        - "Draft a title ≤70 chars with the entity first (from {{headline}})."
+        - "Draft a title ≤70 chars with {{entity}} first (story: {{whatHappened}})."
         - Export thumb.png; check readability on a phone.
       tools: [gimp]
       minutes: 40
     paid:
       microSteps:
         - Pick a YouTube thumbnail template → paste text → export 1280×720.
-        - "Keep title ≤70 chars with entity first for {{headline}}."
+        - "Keep title ≤70 chars with {{entity}} first."
       tools: [canva_pro]
       minutes: 20
       giveUp: Subscription; template look-alike risk.
@@ -121,8 +129,9 @@ steps:
     open_source:
       microSteps:
         - Upload final.mp4 + thumb.png to YouTube; paste description with chapter timestamps.
+        - "First description line: {{whyItMatters}} Source: {{publisherUrl}}"
         - "Title from the thumb step; set not made for kids; schedule or publish."
-        - "Calendar reminder +48 h titled with the test metric for {{headline}}."
+        - "Calendar reminder +48 h titled with the test metric for {{entity}}."
       tools: [youtube_app, calendar_app]
       minutes: 30
     paid:

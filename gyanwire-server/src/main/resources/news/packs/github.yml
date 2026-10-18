@@ -1,0 +1,17 @@
+industry: GitHub
+allow_domains:
+  - github.com
+require_keywords: []
+require_signal_match: true
+deny:
+  domains: []
+  keywords:
+    - awesome-list
+    - homework
+    - interview questions
+    - leetcode
+signals:
+  stars: [stars, starred, popular, famous]
+  tool: [open-source, open source, library, framework, SDK, CLI, tool, platform, engine]
+  launch: [ships, released, release, launched]
+  tech: [API, model, database, mobile, web, devops, AI, ML]

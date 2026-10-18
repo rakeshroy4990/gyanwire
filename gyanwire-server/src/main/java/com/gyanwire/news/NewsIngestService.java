@@ -1,5 +1,8 @@
 package com.gyanwire.news;
 
+import com.gyanwire.news.github.GitHubRepo;
+import com.gyanwire.news.github.GitHubRepoMapper;
+import com.gyanwire.news.github.GitHubSearchClient;
 import com.gyanwire.research.engine.PublishedDates;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,19 +26,22 @@ public class NewsIngestService {
     private final RedirectResolver redirects;
     private final NewsClassifier classifier;
     private final NewsProperties properties;
+    private final GitHubSearchClient github;
 
     public NewsIngestService(
             NewsStore store,
             FeedFetcher fetcher,
             RedirectResolver redirects,
             NewsClassifier classifier,
-            NewsProperties properties
+            NewsProperties properties,
+            GitHubSearchClient github
     ) {
         this.store = store;
         this.fetcher = fetcher;
         this.redirects = redirects;
         this.classifier = classifier;
         this.properties = properties;
+        this.github = github;
     }
 
     public boolean fresh(String industry, Instant now) {
@@ -60,6 +66,10 @@ public class NewsIngestService {
     }
 
     private void ingestSource(NewsStore.SourceRow source, String industry, String sub, Instant now) {
+        if ("github_search".equals(source.kind())) {
+            ingestGithub(source, industry, sub, now);
+            return;
+        }
         String url = source.urlTemplate();
         String itemSub = source.sub();
         if ("search_feed".equals(source.kind())) {
@@ -168,6 +178,42 @@ public class NewsIngestService {
         store.logRun(source.id(), industry, fetch.items().size(), inserted, deduped, dropped, reasonText(reasons), null);
         log.info("News {} {}: fetched={} new={} deduped={} dropped={}",
                 industry, source.name(), fetch.items().size(), inserted, deduped, dropped);
+    }
+
+    private void ingestGithub(NewsStore.SourceRow source, String industry, String sub, Instant now) {
+        NewsStore.PackRow pack = store.claimPack(industry, sub, source.region());
+        if (pack == null) {
+            store.logRun(source.id(), industry, 0, 0, 0, 1, "no_pack", null);
+            return;
+        }
+        String itemSub = pack.sub() != null ? pack.sub() : sub;
+        List<GitHubRepo> repos = github.search(pack.query(), itemSub);
+        if (repos.isEmpty()) {
+            store.markSourceError(source.id(), "empty_or_rate_limited");
+            store.logRun(source.id(), industry, 0, 0, 0, 0, null, "empty_or_rate_limited");
+            return;
+        }
+        store.markSourceOk(source.id(), null, null);
+        int inserted = 0;
+        int refreshed = 0;
+        int dropped = 0;
+        for (GitHubRepo repo : repos) {
+            NewsRow row = GitHubRepoMapper.toNewsRow(
+                    repo, industry, itemSub, source.id(), source.name(), source.weight(), now);
+            if (row == null) {
+                dropped++;
+                continue;
+            }
+            if (store.insert(row)) {
+                inserted++;
+            } else {
+                store.refreshListing(row);
+                refreshed++;
+            }
+        }
+        store.logRun(source.id(), industry, repos.size(), inserted, refreshed, dropped, null, null);
+        log.info("GitHub {} {}: fetched={} new={} refreshed={} dropped={}",
+                industry, source.name(), repos.size(), inserted, refreshed, dropped);
     }
 
     private static NewsRow nearOf(List<NewsRow> recent, String title) {

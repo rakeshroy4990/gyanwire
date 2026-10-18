@@ -220,6 +220,35 @@ public class NewsStore {
                 row.whyIdea(), row.summary(), row.scoredBy(), row.id());
     }
 
+    /**
+     * Refresh a GitHub listing so famous repos stay inside the browse lookback
+     * and star/summary fields stay current.
+     */
+    public void refreshListing(NewsRow row) {
+        if (row == null || row.url() == null || row.url().isBlank()) {
+            return;
+        }
+        jdbc.update("""
+                UPDATE news_items
+                SET title = ?, summary = ?, signal_type = ?, india_relevance = ?, specificity = ?,
+                    opportunity_score = ?, why_idea = ?, scored_by = ?, published_at = ?,
+                    date_estimated = FALSE, sub = COALESCE(?, sub), source_id = COALESCE(?, source_id)
+                WHERE url = ?
+                """,
+                row.title(),
+                row.summary(),
+                row.signalType(),
+                row.indiaRelevance(),
+                row.specificity(),
+                row.opportunityScore(),
+                row.whyIdea(),
+                row.scoredBy(),
+                Timestamp.from(row.publishedAt() == null ? Instant.now() : row.publishedAt()),
+                row.sub(),
+                row.sourceId(),
+                row.url());
+    }
+
     public void appendCoveredBy(String url, String sourceName) {
         if (url == null || sourceName == null || sourceName.isBlank()) {
             return;

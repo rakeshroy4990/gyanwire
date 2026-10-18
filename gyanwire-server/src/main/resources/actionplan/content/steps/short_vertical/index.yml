@@ -5,15 +5,18 @@ steps:
     commonMistakes: Using aggregator blurbs instead of the publisher article.
     open_source:
       microSteps:
+        - "Story summary: {{whatHappened}}"
+        - "Why it matters: {{whyItMatters}}"
         - "Open the publisher article, not the aggregator link: {{publisherUrl}}"
-        - Copy 3 sentences that contain a name, number or date.
+        - "Confirm or copy these facts: {{fact_1}}; {{fact_2}}; {{fact_3}}."
         - "Paste into facts.md, one line each with the article URL ({{publisherUrl}})."
         - Mark the single most surprising one as the hook fact.
       tools: [notes_app, text_editor]
       minutes: 15
     paid:
       microSteps:
-        - "Paste the article ({{publisherUrl}}) into a paid AI chat and ask for claims with quotes."
+        - "Paste the story summary ({{whatHappened}}) and article ({{publisherUrl}}) into a paid AI chat; ask for claims with quotes."
+        - "Prefer these grounded lines: {{fact_1}}; {{fact_2}}; {{fact_3}}."
         - Check each quote against the page.
         - Keep three verified lines in facts.md.
       tools: [chatgpt_plus]
@@ -84,7 +87,7 @@ steps:
     commonMistakes: Tiny text; logo without brand permission.
     open_source:
       microSteps:
-        - Create 4 frames at 1080×1920: hook + 3 points.
+        - "Create 4 frames at 1080×1920: hook + 3 points."
         - Big text (≥64 px), 5–8 words per card, high contrast.
         - Export PNGs. Optional OBS screen demo of the product.
       tools: [gimp, inkscape, obs_studio]
@@ -171,9 +174,9 @@ steps:
     commonMistakes: Reminder without the three links.
     open_source:
       microSteps:
-        - "Calendar event at +48 h titled with the test metric for {{headline}}."
+        - "Calendar event at +48 h titled with the test metric for {{entity}}."
         - Paste the three video links.
-        - At the reminder: record views / AVD / profile visits; mark worked or not.
+        - "At the reminder: record views / AVD / profile visits; mark worked or not."
       tools: [calendar_app]
       minutes: 10
     paid:
