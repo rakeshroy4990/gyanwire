@@ -84,6 +84,8 @@ const code = ref('');
 const redeemCode = ref('');
 const editing = ref(false);
 const confirmDelete = ref(false);
+const deletePassword = ref('');
+const deleteConfirmWord = ref('');
 const copied = ref(false);
 const form = reactive(blankForm());
 
@@ -214,10 +216,15 @@ async function onDelete() {
   }
   setNotice('');
   try {
-    await remove();
+    await remove({
+      password: deletePassword.value,
+      confirm: deleteConfirmWord.value,
+    });
     Object.assign(form, blankForm());
     editing.value = true;
     confirmDelete.value = false;
+    deletePassword.value = '';
+    deleteConfirmWord.value = '';
     setNotice('Profile data deleted. Your account is still here.');
   } catch (err) {
     setNotice(err.message, true);
@@ -356,8 +363,18 @@ async function onDelete() {
       <section v-if="hasProfile" class="account-card">
         <h2>Delete profile data</h2>
         <p>This removes your persona, goals, and skills. Your sign-in stays.</p>
+        <template v-if="confirmDelete">
+          <label class="auth-field">
+            <span class="auth-field__label">Password</span>
+            <input v-model="deletePassword" type="password" autocomplete="current-password" placeholder="Account password">
+          </label>
+          <label class="auth-field">
+            <span class="auth-field__label">Or type DELETE (Google accounts)</span>
+            <input v-model="deleteConfirmWord" type="text" autocomplete="off" placeholder="DELETE">
+          </label>
+        </template>
         <button type="button" class="btn btn--ghost" @click="onDelete">
-          {{ confirmDelete ? 'Click again to delete' : 'Delete profile data' }}
+          {{ confirmDelete ? 'Confirm delete' : 'Delete profile data' }}
         </button>
       </section>
       </template>

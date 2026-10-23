@@ -6,6 +6,7 @@ alwaysApply: true
 - JWTs only in httpOnly cookies. Never use localStorage for tokens.
 - All secrets from root .env. Never hardcode keys. Update .env.example for every new variable.
 - Every new API endpoint gets validation and a basic Spring test.
+- Every new or edited `@Component`/`@Service`/`@RestController` gets a Spring context smoke test in the same change (mocked unit tests alone are not enough). Prefer one Spring constructor; never add a second constructor only for tests. See `.cursor/rules/spring-wiring.mdc`.
 - Every new DB change is a Flyway migration in gyanwire-server/src/main/resources/db/migration/.
 - Active sequence is CURSOR_PLAN_FLOW_FIRST.md (S0–S16). Keep each change scoped to the named step. CURSOR_PLAN.md Steps 0–14 are history.
 - LLM_MODEL is the rollback model while llm.router.enabled is false. The tiered catalog is gpt-6-luna (LIGHT) and gpt-6.1-sol (MAIN and DEEP). Stage flags default false. Do not change temperature or response_format on the flag-off path.

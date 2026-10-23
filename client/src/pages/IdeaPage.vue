@@ -221,7 +221,7 @@ watch(
         <a v-if="newsUrl" :href="newsUrl" target="_blank" rel="noopener noreferrer">{{ newsTitle }}</a>
         <template v-else>{{ newsTitle }}</template>
       </p>
-      <p v-else>Open a finding in research, then choose Get an idea.</p>
+      <p v-else>Open a story, then choose Get an idea.</p>
     </header>
 
     <template v-if="sourceMissing">
@@ -289,7 +289,7 @@ watch(
                 <template v-if="moneyLine(row)">{{ moneyLine(row) }} · </template>
                 ₹{{ row.capitalNeededInr ?? 0 }} to start
               </p>
-              <RouterLink class="btn btn--primary" :to="planLink(row.id)">Choose this</RouterLink>
+              <RouterLink class="btn btn--ghost" :to="planLink(row.id)">Plan later</RouterLink>
             </article>
           </li>
         </ul>

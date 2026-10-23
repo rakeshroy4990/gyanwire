@@ -36,9 +36,13 @@ class GitHubRepoMapperTest {
         assertEquals("github.com", row.domain());
         assertEquals(now, row.publishedAt());
         assertFalse(row.dateEstimated());
-        assertTrue(row.title().contains("vercel/next.js"));
+        assertEquals("vercel/next.js", row.title());
+        assertTrue(row.summary().contains("The React Framework"));
         assertTrue(row.summary().toLowerCase().contains("stars"));
         assertTrue(row.summary().toLowerCase().contains("open-source"));
+        assertFalse(row.summary().toLowerCase().contains("india"));
+        assertEquals(row.summary(), GitHubRepoMapper.projectDetail(row.summary()
+                + " Famous library/framework/tool developers build products on."));
         assertEquals("stars", row.signalType());
         assertTrue(row.opportunityScore() >= 88);
         assertTrue(row.summary().length() >= 120);

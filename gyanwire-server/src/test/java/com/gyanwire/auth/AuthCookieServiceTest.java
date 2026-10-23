@@ -30,4 +30,13 @@ class AuthCookieServiceTest {
         assertFalse(header.contains("Partitioned"), header);
         assertTrue(header.contains("SameSite=Lax"), header);
     }
+
+    @Test
+    void secureFlagHonoredOnLax() {
+        AuthCookieService cookies = new AuthCookieService(
+                "access_token", "refresh_token", "/api/auth",
+                true, "Lax", true, "");
+        ResponseCookie cookie = cookies.build("access_token", "tok", "/", 60);
+        assertTrue(cookie.toString().contains("Secure"), cookie.toString());
+    }
 }

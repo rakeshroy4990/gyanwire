@@ -24,8 +24,11 @@ export function saveProfile(body) {
   return send('/api/me/profile', { method: 'PUT', body: JSON.stringify(body) });
 }
 
-export function deleteProfile() {
-  return send('/api/me/profile/data', { method: 'DELETE' });
+export function deleteProfile({ password = '', confirm = '' } = {}) {
+  return send('/api/me/profile/data', {
+    method: 'DELETE',
+    body: JSON.stringify({ password, confirm }),
+  });
 }
 
 export function fetchReferral() {

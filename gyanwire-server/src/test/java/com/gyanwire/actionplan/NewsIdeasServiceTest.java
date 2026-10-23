@@ -60,6 +60,8 @@ class NewsIdeasServiceTest {
         service = new NewsIdeasService(
                 newsStore, briefs, resolve, angles, formats, usage, jdbc, videoResearch, store);
         lenient().when(usage.resolveUserPlan(any())).thenReturn(Map.of("dailyIdeaLimit", 99));
+        lenient().when(usage.reserveOrThrow(any(), any(), anyString(), anyInt(), anyString()))
+                .thenReturn(Map.of("used", 1, "limit", 99));
         lenient().when(usage.countToday(any(), any(), eq("idea"))).thenReturn(0L);
     }
 
@@ -189,7 +191,7 @@ class NewsIdeasServiceTest {
         verify(angles, never()).pick(any(), any(), any());
         verify(briefs, never()).localBrief(any(), any(), any(), any(), any());
         verify(resolve, never()).resolve(anyString(), anyString(), anyString(), anyInt());
-        verify(usage).recordUsage(eq(userId), eq("ip"), eq("idea"), any());
+        verify(usage).reserveOrThrow(eq(userId), eq("ip"), eq("idea"), anyInt(), anyString());
     }
 
     @Test

@@ -1,0 +1,14 @@
+---
+description: When the user asks to break, pen-test, security-test, or audit a live site with credentials, follow the break-audit skill.
+alwaysApply: true
+---
+
+When the user supplies a website URL plus username/password and asks to break the site, find vulnerabilities, security issues, functional breaks, or UX problems:
+
+1. Read `.cursor/skills/break-audit/SKILL.md` and follow it exactly before reporting.
+2. Discover the API with `python3 .cursor/skills/break-audit/scripts/discover_api.py --site <url>`.
+3. Run `python3 .cursor/skills/break-audit/scripts/probe_api.py` with `--site`, `--api`, `--email`, `--password`, and `--out probe-findings.json`. Add `--destructive` only if the user explicitly opted in.
+4. Complete browser phases (auth, XSS/`javascript:` URLs, functional, UX) using the checklist in `.cursor/skills/break-audit/CHECKLIST.md`.
+5. Write `break-audit-run.json` (never include the password) and execute:
+   `python3 .cursor/skills/break-audit/scripts/validate_run.py break-audit-run.json`
+6. Show findings only after that command prints `OK`. `FAIL` means the skill was skipped or incomplete.

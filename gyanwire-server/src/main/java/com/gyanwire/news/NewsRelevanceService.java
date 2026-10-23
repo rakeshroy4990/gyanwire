@@ -64,13 +64,18 @@ public class NewsRelevanceService {
                 if (scored.score() < MIN_SIGNAL_SCORE) {
                     continue;
                 }
+                String signal = buyerSignal(row, scored.signals());
+                if (row.signalType() == null || row.signalType().isBlank()
+                        || "other".equalsIgnoreCase(row.signalType())) {
+                    row.signalType(signal);
+                }
                 row.relevanceScore(scored.score());
                 row.relevanceReason(scored.reason());
                 row.signals(scored.signals());
-                if (row.whyIdea() == null || row.whyIdea().isBlank()) {
+                if (row.whyIdea() == null || row.whyIdea().isBlank()
+                        || row.whyIdea().contains("opportunity to build or cover")
+                        || row.whyIdea().startsWith("Why it's here:")) {
                     row.whyIdea(scored.reason());
-                } else if (!row.whyIdea().startsWith("Why it's here:")) {
-                    row.whyIdea("Why it's here: " + scored.reason());
                 }
                 if (row.opportunityScore() <= 0) {
                     row.opportunityScore(scored.score());
@@ -133,13 +138,25 @@ public class NewsRelevanceService {
         }
         points += freshnessPoints(row.publishedAt(), now);
         points = Math.min(100, Math.max(0, points));
-        String reason;
-        if (hit.isEmpty()) {
-            reason = "Industry source with a product or market angle.";
-        } else {
-            reason = "Signals: " + String.join(" · ", hit) + " — opportunity to build or cover.";
-        }
+        String signal = buyerSignal(row, hit);
+        String reason = SignalRules.whyIdea(signal, row.industry(), row.title());
         return new Scored(points, reason, hit);
+    }
+
+    /** Prefer a classified signal, then the headline, then the first pack hit. */
+    static String buyerSignal(NewsRow row, List<String> hit) {
+        String signal = row == null ? "" : row.signalType();
+        if (signal == null || signal.isBlank() || "other".equalsIgnoreCase(signal)) {
+            String detected = SignalRules.detect(row == null ? "" : row.title());
+            if (detected != null && !"other".equals(detected)) {
+                signal = detected;
+            }
+        }
+        if ((signal == null || signal.isBlank() || "other".equalsIgnoreCase(signal))
+                && hit != null && !hit.isEmpty()) {
+            signal = hit.get(0);
+        }
+        return signal == null ? "other" : signal;
     }
 
     static int freshnessPoints(Instant published, Instant now) {

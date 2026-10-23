@@ -41,8 +41,7 @@ class NewsRelevanceServiceTest {
         List<NewsRow> gated = service.gate("Social Media", List.of(gossip, ok, off), now, Set.of());
         assertEquals(1, gated.size());
         assertEquals(ok.title(), gated.get(0).title());
-        assertTrue(gated.get(0).relevanceReason().toLowerCase().contains("signal")
-                || gated.get(0).relevanceReason().toLowerCase().contains("opportunity"));
+        assertTrue(gated.get(0).relevanceReason().toLowerCase().contains("could pay"));
         assertFalse(gated.get(0).signals().isEmpty());
     }
 

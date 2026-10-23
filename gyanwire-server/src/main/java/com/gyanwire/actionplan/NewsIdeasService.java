@@ -140,7 +140,7 @@ public class NewsIdeasService {
     ) {
         IdeaSink out = sink == null ? IdeaSink.noop() : sink;
         long started = System.nanoTime();
-        assertIdeaQuota(userId, ipHash);
+        consumeIdeaQuota(userId, ipHash);
 
         String urlHash = NewsBriefService.urlHash(url);
         Map<String, Object> cached = store.findIdeaCache(urlHash);
@@ -148,7 +148,6 @@ public class NewsIdeasService {
             emitCached(out, cached, newsId, industry);
             // Keep video-research warm on cache hits; emit ready+summary when already available.
             emitResearchStatus(out, newsId, url, briefFromCache(cached, title, url), userId);
-            usage.recordUsage(userId, ipHash, "idea", java.math.BigDecimal.ZERO);
             int ideaCount = ideaCount(cached.get("ideas"));
             log.info(
                     "news.ideas path=cache totalMs={} ideas={} newsId={}",
@@ -222,7 +221,6 @@ public class NewsIdeasService {
         store.saveIdeaCache(urlHash, payload);
 
         emitResearchStatus(out, newsId, url, brief, userId);
-        usage.recordUsage(userId, ipHash, "idea", java.math.BigDecimal.ZERO);
         log.info(
                 "news.ideas path=fresh totalMs={} firstItemMs={} resolveMs={} briefMs={} anglesMs={} ideas={} newsId={}",
                 msSince(started), firstItemMs, resolveMs, briefMs, anglesMs, ideas.size(), newsId);
@@ -457,16 +455,10 @@ public class NewsIdeasService {
         return Map.of("value", Math.max(0, Math.min(100, value)), "label", "estimate");
     }
 
-    private void assertIdeaQuota(UUID userId, String ipHash) {
+    private void consumeIdeaQuota(UUID userId, String ipHash) {
         Map<String, Object> plan = usage.resolveUserPlan(userId);
         int limit = ((Number) plan.getOrDefault("dailyIdeaLimit", 3)).intValue();
-        long used = usage.countToday(userId, ipHash, "idea");
-        if (limit > 0 && limit < UsageService.UNLIMITED && used >= limit) {
-            throw new PlanLimitException(
-                    "Daily idea limit reached.",
-                    "LIMIT_REACHED",
-                    Map.of("upgradeUrl", "/pricing", "used", used, "limit", limit));
-        }
+        usage.reserveOrThrow(userId, ipHash, "idea", limit, "Daily idea limit reached.");
     }
 
     private static String str(Object v) {

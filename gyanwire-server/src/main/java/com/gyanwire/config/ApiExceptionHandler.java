@@ -6,11 +6,16 @@ import com.gyanwire.billing.BillingException;
 import com.gyanwire.controller.dto.StandardApiResponse;
 import com.gyanwire.research.ResearchException;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Map;
 
@@ -33,6 +38,30 @@ public class ApiExceptionHandler {
     public ResponseEntity<StandardApiResponse<Object>> invalid(MethodArgumentNotValidException e) {
         return ResponseEntity.badRequest()
                 .body(StandardApiResponse.error("Check the form and try again.", "VALIDATION_ERROR"));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<StandardApiResponse<Object>> typeMismatch(MethodArgumentTypeMismatchException e) {
+        return ResponseEntity.badRequest()
+                .body(StandardApiResponse.error("Send a valid id.", "VALIDATION_ERROR"));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<StandardApiResponse<Object>> notFound(NoResourceFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(StandardApiResponse.error("That path was not found.", "NOT_FOUND"));
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<StandardApiResponse<Object>> methodNotAllowed(HttpRequestMethodNotSupportedException e) {
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(StandardApiResponse.error("That HTTP method is not allowed.", "METHOD_NOT_ALLOWED"));
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<StandardApiResponse<Object>> mediaType(HttpMediaTypeNotSupportedException e) {
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                .body(StandardApiResponse.error("Use application/json.", "UNSUPPORTED_MEDIA_TYPE"));
     }
 
     @ExceptionHandler(ResearchException.class)
@@ -73,7 +102,7 @@ public class ApiExceptionHandler {
         e.printStackTrace();
         return ResponseEntity.status(500)
                 .body(StandardApiResponse.error(
-                        e.getMessage() == null ? "Something went wrong. Try again in a moment." : e.getMessage(),
+                        "Something went wrong. Try again in a moment.",
                         "INTERNAL_ERROR"));
     }
 }

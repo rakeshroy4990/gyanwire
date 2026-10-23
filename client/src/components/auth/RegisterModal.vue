@@ -53,7 +53,7 @@ watch(isRegisterOpen, async (open) => {
       <header class="auth-modal__intro">
         <h2 id="registerTitle">Create your account</h2>
         <p id="registerLede" class="auth-modal__lede">
-          One account for saved research across sessions.
+          One account so the idea from a story stays with you.
         </p>
       </header>
 

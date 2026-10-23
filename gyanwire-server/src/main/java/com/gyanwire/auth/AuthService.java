@@ -40,6 +40,29 @@ public class AuthService {
         this.googleAuthClient = googleAuthClient;
     }
 
+    @Transactional(readOnly = true)
+    public void requirePassword(UUID userId, String password) {
+        UserEntity user = userRepository.findActiveById(userId)
+                .orElseThrow(() -> new AuthException("Invalid email or password", "AUTH_INVALID_CREDENTIALS", 401));
+        if (user.getPasswordHash() == null || user.getPasswordHash().isBlank()) {
+            throw new AuthException(
+                    "This account has no password. Type DELETE in the confirm field instead.",
+                    "AUTH_PASSWORDLESS",
+                    400);
+        }
+        String raw = password == null ? "" : password;
+        if (raw.isBlank() || !passwordEncoder.matches(raw, user.getPasswordHash())) {
+            throw new AuthException("Invalid email or password", "AUTH_INVALID_CREDENTIALS", 401);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasPassword(UUID userId) {
+        return userRepository.findActiveById(userId)
+                .map(user -> user.getPasswordHash() != null && !user.getPasswordHash().isBlank())
+                .orElse(false);
+    }
+
     @Transactional
     public Map<String, Object> loginWithPassword(String emailId, String password) {
         String identity = emailId == null ? "" : emailId.trim().toLowerCase();

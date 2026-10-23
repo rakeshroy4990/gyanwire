@@ -89,6 +89,12 @@ class SignalRulesTest {
     void fyiHasNoActionability() {
         assertThat(SignalRules.isFyi("fyi")).isTrue();
         assertThat(SignalRules.actionability("fyi")).isZero();
-        assertThat(SignalRules.whyIdea("fyi", "Share Market")).contains("FYI only");
+        assertThat(SignalRules.whyIdea("fyi", "Share Market")).contains("News only");
+        assertThat(SignalRules.whyIdea("funding", "AI", "Karta AI Raises $3 Mn"))
+                .contains("Karta AI Raises $3")
+                .doesNotContain("the funded company");
+        assertThat(SignalRules.worthIdea("funding")).isTrue();
+        assertThat(SignalRules.worthIdea("fyi")).isFalse();
+        assertThat(SignalRules.worthIdea("research")).isFalse();
     }
 }

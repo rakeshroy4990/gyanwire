@@ -15,7 +15,7 @@ function loadGoogleIdentityScript() {
     return Promise.resolve();
   }
   const existing = document.querySelector(GIS_SCRIPT_SELECTOR);
-  if (existing instanceof HTMLScriptElement) {
+  if (existing) {
     return new Promise((resolve, reject) => {
       if (window.google?.accounts?.oauth2) {
         resolve();

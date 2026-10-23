@@ -84,8 +84,8 @@ const hasDetails = computed(() => Boolean(
     </details>
 
     <div class="idea-card__actions">
-      <button type="button" class="btn btn--primary" :disabled="building" @click="$emit('build')">
-        {{ building ? 'Building…' : social ? 'Open social plan' : 'Build this plan' }}
+      <button type="button" class="btn btn--ghost" :disabled="building" @click="$emit('build')">
+        {{ building ? 'Building…' : 'Plan later' }}
       </button>
       <button type="button" class="btn btn--ghost" :disabled="saving || saved" @click="$emit('save')">
         {{ saved ? 'Saved' : saving ? 'Saving…' : 'Save' }}

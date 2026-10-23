@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import { useUiStore } from '../stores/ui.store.js';
 import { useProfileStore } from '../stores/profile.store.js';
 import { apiUrl } from '../services/apiBase.js';
+import { isGitHubFinding, presentGitHubFinding } from '../services/githubFinding.js';
 import { loadResearchIndustries } from '../services/industries.service.js';
 import { withoutFyiNews } from '../services/newsFyi.js';
 import { fetchDefaultNews, fetchIndustryNewsChunks, PAGE_SIZE } from '../services/news.service.js';
@@ -102,12 +103,17 @@ function mapResults(payload) {
       : Array.isArray(payload)
         ? payload
         : [];
-  const mapped = withoutFyiNews(list).map((item) => ({
-    ...item,
-    host: item.source || hostname(item.url),
-    score: item.opportunityScore ?? item.score,
-    why: item.whyIdea || item.why || item.description,
-  }));
+  const mapped = withoutFyiNews(list).map((item) => {
+    const presented = presentGitHubFinding(item);
+    return {
+      ...presented,
+      host: isGitHubFinding(item) ? presented.host : (item.source || hostname(item.url)),
+      score: item.opportunityScore ?? item.score,
+      why: isGitHubFinding(item)
+        ? presented.why
+        : (item.whyIdea || item.why || item.description),
+    };
+  });
   if (payload && typeof payload === 'object' && payload.freshness) {
     return mapped;
   }
@@ -137,12 +143,17 @@ function mapBrowseResults(payload) {
       : Array.isArray(payload)
         ? payload
         : [];
-  return list.map((item) => ({
-    ...item,
-    host: item.source || hostname(item.url),
-    score: item.relevanceScore ?? item.opportunityScore ?? item.score,
-    why: item.relevanceReason || item.whyIdea || item.why || item.description,
-  }));
+  return list.map((item) => {
+    const presented = presentGitHubFinding(item);
+    return {
+      ...presented,
+      host: isGitHubFinding(item) ? presented.host : (item.source || hostname(item.url)),
+      score: item.relevanceScore ?? item.opportunityScore ?? item.score,
+      why: isGitHubFinding(item)
+        ? presented.why
+        : (item.relevanceReason || item.whyIdea || item.why || item.description),
+    };
+  });
 }
 
 function mapStreamItem(item) {
@@ -234,12 +245,14 @@ export function useResearch() {
   const browseTotal = ref(0);
   const browseTotalPages = ref(0);
   const browseHasMore = ref(false);
+  const browseFailed = ref(false);
   /** Null means worldwide, with India still ranked first. */
   const country = ref(savedWorkspace?.country || null);
   const emptyMessage = ref(
-    savedWorkspace?.emptyMessage || 'Pick an industry for product news, or start a research chat.',
+    savedWorkspace?.emptyMessage || 'Pick an industry. Stories worth an idea show up here.',
   );
-  const showEmpty = ref(savedWorkspace ? savedWorkspace.showEmpty : true);
+  // Stay false until the first feed settles so we do not flash "Nothing here yet".
+  const showEmpty = ref(savedWorkspace ? Boolean(savedWorkspace.showEmpty) : false);
   let newsRequestId = 0;
   let newsAbort = null;
   let persistReady = false;
@@ -290,6 +303,26 @@ export function useResearch() {
     { immediate: true },
   );
 
+  function industryFromQuery() {
+    const raw = typeof route.query.industry === 'string' ? route.query.industry.trim() : '';
+    if (!raw) return '';
+    const names = catalog.value.map((item) => item.name);
+    return names.find((name) => name.toLowerCase() === raw.toLowerCase()) || '';
+  }
+
+  watch(
+    () => (typeof route.query.industry === 'string' ? route.query.industry : ''),
+    () => {
+      const matched = industryFromQuery();
+      if (!matched) return;
+      followProfile.value = false;
+      if (industry.value === matched) return;
+      industry.value = matched;
+      subcategory.value = null;
+      if (!hasThread.value) loadNewsFeed({ industryName: matched, page: 1 });
+    },
+  );
+
   function scrollTurnIntoView(turnId) {
     nextTick(() => {
       document.getElementById(`turn-${turnId}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -311,7 +344,16 @@ export function useResearch() {
   }
 
   async function applyHomeFeed() {
-    if (!followProfile.value || hasThread.value) return;
+    if (hasThread.value) return;
+    const fromQuery = industryFromQuery();
+    if (fromQuery) {
+      followProfile.value = false;
+      industry.value = fromQuery;
+      subcategory.value = null;
+      await loadNewsFeed({ industryName: fromQuery, page: 1 });
+      return;
+    }
+    if (!followProfile.value) return;
     const homeIndustry = await resolveHomeIndustry();
     if (!followProfile.value || hasThread.value) return;
     industry.value = homeIndustry;
@@ -358,12 +400,12 @@ export function useResearch() {
     showEmpty.value = browseResults.value.length === 0 && !warming;
     const chip = sub || scoped;
     emptyMessage.value = browseResults.value.length
-      ? 'Pick an industry for product news, or start a research chat.'
+      ? 'Pick an industry. Stories worth an idea show up here.'
       : place
-        ? `No findings for ${place} yet.`
+        ? `No stories for ${place} yet.`
         : chip
-          ? `No product news for ${chip} yet.`
-          : 'No product news yet.';
+          ? `No stories for ${chip} yet.`
+          : 'No stories yet.';
   }
 
   async function loadNewsFeed({ industryName = null, sub = null, page = 1 } = {}) {
@@ -375,6 +417,8 @@ export function useResearch() {
     newsAbort?.abort();
     const controller = new AbortController();
     newsAbort = controller;
+    showEmpty.value = false;
+    browseFailed.value = false;
     isLoading.value = true;
     browseResults.value = [];
     browsePage.value = Math.max(1, page);
@@ -382,6 +426,10 @@ export function useResearch() {
     browseFreshness.value = '';
     browseNote.value = '';
     showEmpty.value = false;
+    // GitHub has no country — drop India (or any chip) so the empty state never fires on it.
+    if (scoped === 'GitHub') {
+      country.value = null;
+    }
 
     try {
       let data;
@@ -389,7 +437,7 @@ export function useResearch() {
         data = await fetchIndustryNewsChunks({
           industry: scoped,
           sub,
-          country: country.value,
+          country: scoped === 'GitHub' ? null : country.value,
           page: browsePage.value,
           limit: PAGE_SIZE,
           signal: controller.signal,
@@ -459,12 +507,22 @@ export function useResearch() {
       browseTotalPages.value = 0;
       browseHasMore.value = false;
       showEmpty.value = true;
-      emptyMessage.value = error.message || 'Product news will appear here.';
+      browseFailed.value = true;
+      emptyMessage.value = 'The news feed did not respond. Try again in a moment.';
     } finally {
       if (requestId === newsRequestId) {
         isLoading.value = false;
       }
     }
+  }
+
+  function reloadFeed() {
+    const name = industry.value || ALL_INDUSTRY;
+    return loadNewsFeed({
+      industryName: name,
+      sub: name === ALL_INDUSTRY ? null : subcategory.value,
+      page: browsePage.value || 1,
+    });
   }
 
   function goBrowsePage(nextPage) {
@@ -526,6 +584,10 @@ export function useResearch() {
     }
     industry.value = name;
     subcategory.value = null;
+    // GitHub projects are worldwide — drop any country chip (e.g. India).
+    if (name === 'GitHub') {
+      country.value = null;
+    }
     formError.value = '';
     if (!hasThread.value) loadNewsFeed({ industryName: name, page: 1 });
   }
@@ -773,6 +835,7 @@ export function useResearch() {
     browseTotal,
     browseTotalPages,
     browseHasMore,
+    browseFailed,
     country,
     showBrowseResults,
     emptyMessage,
@@ -783,11 +846,14 @@ export function useResearch() {
     selectSub,
     selectCountry,
     goBrowsePage,
+    reloadFeed,
     dismissBrowseItem,
     hideBrowseSource,
     runSearch,
     clearForm,
     searchesLeftLabel: usage.searchesLeftLabel,
+    ideaLimitReached: usage.ideaLimitReached,
+    ideaButtonLabel: usage.ideaButtonLabel,
     limitReached: usage.limitReached,
     limitMessage: usage.limitMessage,
     upgradeUrl: usage.upgradeUrl,

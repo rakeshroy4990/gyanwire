@@ -40,7 +40,7 @@ public class NewsClassifier {
         String signal = SignalRules.detect(blob);
         int specificity = Math.max(SignalRules.specificity(row.title()), SignalRules.specificity(snippet));
         int india = Math.max(SignalRules.indiaRelevance(row.title()), SignalRules.indiaRelevance(snippet));
-        fill(row, signal, specificity, india, SignalRules.actionability(signal), now, true, SignalRules.whyIdea(signal, row.industry()));
+        fill(row, signal, specificity, india, SignalRules.actionability(signal), now, true, SignalRules.whyIdea(signal, row.industry(), row.title()));
     }
 
     public void enrich(List<NewsRow> rows, Map<UUID, String> snippets, Instant now) {

@@ -8,11 +8,16 @@ const props = defineProps({
 
 const emit = defineEmits(['toggle']);
 
-const label = computed(() => props.fact?.id || 'fact');
 const explanation = computed(() => {
   const text = String(props.fact?.text || '').trim();
   const span = String(props.fact?.sourceSpan || '').trim();
   return text || span;
+});
+const label = computed(() => {
+  const text = explanation.value;
+  if (!text) return props.fact?.id || 'Fact';
+  const short = text.length > 28 ? `${text.slice(0, 28).trim()}…` : text;
+  return short;
 });
 const quote = computed(() => {
   const text = String(props.fact?.text || '').trim();
@@ -20,7 +25,7 @@ const quote = computed(() => {
   if (!span || !text || span === text) return '';
   return span;
 });
-const tip = computed(() => explanation.value || label.value);
+const tip = computed(() => explanation.value || String(props.fact?.id || 'Fact'));
 </script>
 
 <template>

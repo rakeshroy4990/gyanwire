@@ -75,10 +75,7 @@ public class IdeaService {
         IdeaSink out = sink == null ? IdeaSink.noop() : sink;
         Map<String, Object> plan = usage.resolveUserPlan(userId);
         int limit = ((Number) plan.getOrDefault("dailyIdeaLimit", 3)).intValue();
-        long used = usage.countToday(userId, null, "idea");
-        if (limit > 0 && limit < UsageService.UNLIMITED && used >= limit) {
-            throw new PlanLimitException("Daily idea limit reached.", "LIMIT_REACHED", Map.of("upgradeUrl", "/pricing", "used", used, "limit", limit));
-        }
+        usage.reserveOrThrow(userId, null, "idea", limit, "Daily idea limit reached.");
         String url = String.valueOf(body.getOrDefault("url", "")).trim();
         String title = String.valueOf(body.getOrDefault("title", "News")).trim();
         String description = String.valueOf(body.getOrDefault("description", "")).trim();
@@ -201,7 +198,6 @@ public class IdeaService {
             saved.add(row);
             out.item(row);
         }
-        usage.recordUsage(userId, null, "idea", java.math.BigDecimal.ZERO);
         saved.sort((a, b) -> Integer.compare(ideaScore(b), ideaScore(a)));
         log.info(
                 "ideas.fromNews path=classic cached=false runId={} ideas={} formats={} title={}",

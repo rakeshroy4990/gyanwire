@@ -1,14 +1,11 @@
 import { nextTick, ref } from 'vue';
-import { fetchNewsIdeas, fetchVideoResearch, rateIdea } from '../services/newsIdeas.service.js';
+import { fetchNewsIdeas, rateIdea } from '../services/newsIdeas.service.js';
 import { startClickTiming } from '../utils/clickTiming.js';
 
 const STAGE_LABELS = {
   brief: 'Reading the article',
   angles: 'Picking ideas',
 };
-
-const POLL_MS = 2000;
-const POLL_MAX = 45;
 
 /** Merge a streamed idea item; real cards replace any preview. */
 export function applyIdeaItem(list, next) {
@@ -39,79 +36,6 @@ export function useNewsIdeas() {
   const selected = ref(null);
   const ratingId = ref('');
   const stageLabel = ref('Loading ideas');
-  const researchStatus = ref('');
-  const researchSummary = ref(null);
-  let pollTimer = null;
-  let pollCount = 0;
-  let pollNewsId = '';
-
-  function stopPoll() {
-    if (pollTimer) {
-      clearTimeout(pollTimer);
-      pollTimer = null;
-    }
-    pollCount = 0;
-    pollNewsId = '';
-  }
-
-  async function pollResearch(newsId) {
-    if (!newsId || newsId !== pollNewsId) return;
-    try {
-      const data = await fetchVideoResearch(newsId);
-      if (newsId !== pollNewsId) return;
-      const status = data?.status || '';
-      researchStatus.value = status;
-      if (status === 'ready' && data?.summary) {
-        researchSummary.value = data.summary;
-        stopPoll();
-        return;
-      }
-      if (status === 'failed') {
-        researchSummary.value = null;
-        stopPoll();
-        return;
-      }
-    } catch {
-      // Keep ideas usable if the poll fails.
-      if (pollCount >= 3) {
-        if (researchStatus.value === 'running' || researchStatus.value === 'started') {
-          researchStatus.value = 'failed';
-        }
-        stopPoll();
-        return;
-      }
-    }
-    pollCount += 1;
-    if (pollCount >= POLL_MAX) {
-      if (researchStatus.value === 'running' || researchStatus.value === 'started') {
-        researchStatus.value = 'failed';
-      }
-      stopPoll();
-      return;
-    }
-    pollTimer = setTimeout(() => pollResearch(newsId), POLL_MS);
-  }
-
-  function startPoll(newsId) {
-    stopPoll();
-    if (!newsId) return;
-    pollNewsId = newsId;
-    researchStatus.value = researchStatus.value || 'running';
-    // First fetch immediately — stream may omit summary when research is still running.
-    pollTimer = setTimeout(() => pollResearch(newsId), 0);
-  }
-
-  function applyResearchEvent(event, newsId) {
-    const status = event?.status || 'running';
-    researchStatus.value = status;
-    const summary = event?.summary || event?.data?.summary;
-    if (summary && typeof summary === 'object' && !Array.isArray(summary)) {
-      researchSummary.value = summary;
-    }
-    if (!researchSummary.value && (status === 'started' || status === 'running' || status === 'ready')) {
-      startPoll(newsId || item.value?.id || '');
-    }
-  }
 
   async function openForItem(newsItem) {
     const timing = startClickTiming('ideas');
@@ -120,7 +44,6 @@ export function useNewsIdeas() {
       timing.fail(new Error('missing news id'));
       return;
     }
-    stopPoll();
     open.value = true;
     loading.value = true;
     error.value = '';
@@ -129,8 +52,6 @@ export function useNewsIdeas() {
     brief.value = null;
     headline.value = newsItem.title || '';
     selected.value = null;
-    researchStatus.value = '';
-    researchSummary.value = null;
     stageLabel.value = 'Loading ideas';
     timing.mark('panelOpen');
     timing.debug('panelOpen');
@@ -155,10 +76,6 @@ export function useNewsIdeas() {
           timing.firstUi(kind);
           return;
         }
-        if (event?.type === 'research') {
-          applyResearchEvent(event, newsItem.id);
-          timing.debug(`research:${event.status || ''}`);
-        }
       });
       if (Array.isArray(data?.ideas) && data.ideas.length && !ideas.value.length) {
         ideas.value = data.ideas;
@@ -173,10 +90,6 @@ export function useNewsIdeas() {
       } else {
         timing.done(`${ideas.value.length} ideas`);
       }
-      // Poll until ready when the stream did not already include a summary.
-      if (!researchSummary.value && researchStatus.value !== 'failed') {
-        startPoll(newsItem.id);
-      }
     } catch (err) {
       error.value = err.message || 'Could not build ideas.';
       timing.fail(err);
@@ -186,7 +99,6 @@ export function useNewsIdeas() {
   }
 
   function close() {
-    stopPoll();
     open.value = false;
     loading.value = false;
     error.value = '';
@@ -196,8 +108,6 @@ export function useNewsIdeas() {
     headline.value = '';
     selected.value = null;
     ratingId.value = '';
-    researchStatus.value = '';
-    researchSummary.value = null;
     stageLabel.value = 'Loading ideas';
   }
 
@@ -232,8 +142,6 @@ export function useNewsIdeas() {
     selected,
     ratingId,
     stageLabel,
-    researchStatus,
-    researchSummary,
     openForItem,
     close,
     rate,

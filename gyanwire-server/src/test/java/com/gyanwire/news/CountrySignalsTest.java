@@ -29,6 +29,17 @@ class CountrySignalsTest {
     }
 
     @Test
+    void githubProjectsAreNotTaggedFromOurOwnCopy() {
+        NewsRow repo = new NewsRow()
+                .title("deepseek-ai/deepseek-harness")
+                .domain("github.com")
+                .summary("DeepSeek Harness. Open-source GitHub project. use it as a seed for India-first business ideas.")
+                .country("IN");
+        CountrySignals.assignMissing(List.of(repo));
+        assertThat(repo.country()).isNull();
+    }
+
+    @Test
     void blankAndAllMeanWorldwide() {
         assertThat(CountrySignals.normalize(null)).isNull();
         assertThat(CountrySignals.normalize(" all ")).isNull();

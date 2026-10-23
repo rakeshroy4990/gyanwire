@@ -127,7 +127,7 @@ public class RazorpayBillingService {
 
     public void verifyWebhookSignature(byte[] rawBody, String signature) {
         if (webhookSecret.isBlank()) {
-            throw new BillingException("RAZORPAY_WEBHOOK_SECRET is not set.", "BILLING_WEBHOOK_UNCONFIGURED", 503);
+            throw new BillingException("Billing webhook is not configured.", "BILLING_WEBHOOK_UNCONFIGURED", 503);
         }
         try {
             Mac mac = Mac.getInstance("HmacSHA256");

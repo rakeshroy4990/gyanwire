@@ -28,8 +28,8 @@ export function useProfile() {
     }
   }
 
-  async function remove() {
-    await deleteProfile();
+  async function remove(credentials = {}) {
+    await deleteProfile(credentials);
     store.setProfile(null);
   }
 

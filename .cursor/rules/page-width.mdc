@@ -1,0 +1,21 @@
+---
+description: Every app page uses the shared --page content width
+alwaysApply: true
+---
+
+# Page width
+
+Every app page uses one content width: `--page` in `client/src/styles.css`.
+
+- `--page` is `min(1200px, calc(100% - 4rem))`. It tightens to `100% - 2.5rem` under 1024px and `100% - 1.5rem` under 768px.
+- Page shells (`.page`, `.account-page`, `.plan-page`, `.pricing-page`, `.billing-success`, and any new page) set `width: var(--page)` and `margin-inline: auto`. The header inner row uses the same token so content lines up with the header.
+- Do not set a smaller `max-width` on a page shell, hero, main column, card list, or skeleton. New pages reuse an existing shell class.
+- Modals, drawers, popovers, and chips may stay narrower. A `ch` limit on one paragraph is line length, not a second page width.
+
+```css
+/* ✅ page shell */
+.account-page { width: var(--page); margin-inline: auto; }
+
+/* ❌ a second page width */
+.step-detail-page { max-width: 44rem; }
+```

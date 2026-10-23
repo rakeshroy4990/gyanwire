@@ -12,8 +12,6 @@ const {
   isSubmitting,
   isGoogleSubmitting,
   canSubmitLogin,
-  setIdentity,
-  setPassword,
   closePopup,
   openRegisterPopup,
   loginWithPassword,
@@ -58,7 +56,7 @@ watch(isLoginOpen, async (open) => {
       <header class="auth-modal__intro">
         <h2 id="loginTitle">Welcome back</h2>
         <p id="loginLede" class="auth-modal__lede">
-          Sign in to keep your research tied to your account.
+          Sign in to turn this story into an idea.
         </p>
       </header>
 
@@ -89,7 +87,7 @@ watch(isLoginOpen, async (open) => {
             ref="emailInput"
             id="login-email"
             name="email"
-            :value="identity"
+            v-model="identity"
             type="email"
             inputmode="email"
             autocomplete="username"
@@ -97,7 +95,6 @@ watch(isLoginOpen, async (open) => {
             required
             :aria-invalid="Boolean(emailError)"
             :aria-describedby="emailError ? 'login-email-error' : undefined"
-            @input="setIdentity($event.target.value)"
           >
         </label>
         <p v-if="emailError" id="login-email-error" class="auth-form__error">{{ emailError }}</p>
@@ -108,14 +105,13 @@ watch(isLoginOpen, async (open) => {
             <input
               id="current-password"
               name="password"
-              :value="password"
+              v-model="password"
               :type="showPassword ? 'text' : 'password'"
               autocomplete="current-password"
               placeholder="Enter your password"
               required
               :aria-invalid="Boolean(authError)"
               :aria-describedby="authError ? 'login-auth-error' : undefined"
-              @input="setPassword($event.target.value)"
             >
             <button
               type="button"

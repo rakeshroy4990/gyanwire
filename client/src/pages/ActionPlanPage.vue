@@ -84,7 +84,7 @@ function goBack() {
         {{ stageText }}…
       </p>
       <p v-else-if="buildStopped || plan.buildStatus === 'failed'" class="action-plan-page__stage">
-        This build stopped. Go back to ideas and try Make plan again — we search related articles when the original page is blocked.
+        This build stopped. Go back to the idea and choose Plan later — we search related articles when the original page is blocked.
       </p>
       <PathSwitch :model-value="path" @update:model-value="onPath" />
       <PlanProgress :progress="progress" :path-totals="pathTotals" />

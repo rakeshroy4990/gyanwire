@@ -1,17 +1,20 @@
 <script setup>
-import { reactive } from 'vue';
+import { computed, reactive } from 'vue';
+import { isGitHubFinding } from '../../services/githubFinding.js';
+import { safeHttpUrl } from '../../utils/safeUrl.js';
 import FindingsSkeleton from './FindingsSkeleton.vue';
 
 const props = defineProps({
   results: { type: Array, default: () => [] },
   resultsSub: { type: String, default: '' },
-  emptyMessage: { type: String, default: 'Findings will settle here after you research.' },
+  emptyMessage: { type: String, default: 'Stories worth an idea show up here.' },
+  failed: { type: Boolean, default: false },
   showEmpty: { type: Boolean, default: true },
   showResults: { type: Boolean, default: false },
   isLoading: { type: Boolean, default: false },
   /** Compact findings block used inside a chat turn. */
   embedded: { type: Boolean, default: false },
-  heading: { type: String, default: 'Findings' },
+  heading: { type: String, default: "Today's news" },
   showIdeas: { type: Boolean, default: false },
   allowDismiss: { type: Boolean, default: false },
   freshness: { type: String, default: '' },
@@ -23,9 +26,21 @@ const props = defineProps({
   totalPages: { type: Number, default: 0 },
   total: { type: Number, default: 0 },
   hasMore: { type: Boolean, default: false },
+  ideaLimitReached: { type: Boolean, default: false },
+  ideaButtonLabel: { type: String, default: 'Get an idea' },
+  upgradeUrl: { type: String, default: '/pricing' },
 });
 
-const emit = defineEmits(['idea', 'feedback', 'dismiss', 'hide-source', 'select-country', 'page']);
+const emit = defineEmits(['idea', 'feedback', 'dismiss', 'hide-source', 'select-country', 'page', 'retry']);
+
+const feedFailed = computed(() => props.failed || /fail|fetch|network|unable|timed out|unavailable/i.test(String(props.emptyMessage || '')));
+const emptyCopy = computed(() => {
+  const message = String(props.emptyMessage || '');
+  if (/failed to fetch/i.test(message)) {
+    return 'The news feed did not respond. Try again in a moment.';
+  }
+  return message;
+});
 const votes = reactive({});
 
 function vote(item, value, reason) {
@@ -59,25 +74,31 @@ function signalLabel(signal) {
   return labels[signal] || '';
 }
 
-function potential(item) {
-  const value = Number(item?.opportunityScore ?? item?.score);
-  if (!Number.isFinite(value)) return 0;
-  return Math.max(0, Math.min(100, Math.round(value)));
+const WORTH_SIGNALS = new Set([
+  'launch',
+  'funding',
+  'approval',
+  'regulation',
+  'pricing',
+  'shortage',
+  'stars',
+  'tool',
+  'tech',
+]);
+
+function worthIdea(item) {
+  if (typeof item?.worthIdea === 'boolean') return item.worthIdea;
+  if (isGitHubFinding(item)) return true;
+  return WORTH_SIGNALS.has(String(item?.signalType || '').toLowerCase());
 }
 
 function freshnessText(value) {
-  if (value === 'warming_up') return 'Fetching the latest news...';
+  if (value === 'warming_up') return 'Fetching the latest news…';
   if (value === 'fresh') return "Showing today's news first, then widening the window.";
   if (value === 'last 30 days') return 'Showing news from the last 30 days, newest first.';
   if (value === 'last 7 days') return 'Showing the last 7 days; older coverage loads next.';
   if (value === 'older — few recent items') return 'Few recent items — showing older coverage.';
   return '';
-}
-
-function itemRank(item, index) {
-  const ranked = Number(item?.rank);
-  if (Number.isFinite(ranked) && ranked > 0) return ranked;
-  return index + 1;
 }
 
 function goPage(next) {
@@ -96,14 +117,6 @@ function hideSource(item) {
 
 function whyLine(item) {
   return item.relevanceReason || item.whyIdea || item.why || item.description || '';
-}
-
-function signalChips(item) {
-  if (Array.isArray(item.signals) && item.signals.length) {
-    return item.signals.map((s) => signalLabel(s) || s).filter(Boolean);
-  }
-  const one = signalLabel(item.signalType);
-  return one ? [one] : [];
 }
 
 function articleDate(item) {
@@ -134,39 +147,47 @@ function isReturned(item) {
     :aria-labelledby="embedded ? undefined : 'resultsTitle'"
   >
     <div v-if="!embedded || !isLoading || results.length" class="results-section__head">
-      <h2 :id="embedded ? undefined : 'resultsTitle'" class="results-section__h">
-        {{ heading }}
-      </h2>
-      <p class="results-sub">{{ resultsSub || (embedded ? '' : 'Waiting for a search') }}</p>
-      <div
-        v-if="!embedded"
-        class="topics topics--subs findings-countries"
-        role="group"
-        aria-label="Country"
-      >
-        <button
-          type="button"
-          class="category"
-          :class="{ 'is-active': !country }"
-          :aria-pressed="!country"
-          @click="emit('select-country', null)"
-        >
-          All
-        </button>
-        <button
-          v-for="item in countries"
-          :key="item.code"
-          type="button"
-          class="category"
-          :class="{ 'is-active': country === item.code }"
-          :aria-pressed="country === item.code"
-          @click="emit('select-country', item.code)"
-        >
-          {{ item.name }}
-        </button>
+      <div class="results-section__titleline">
+        <h2 :id="embedded ? undefined : 'resultsTitle'" class="results-section__h">
+          {{ heading }}
+        </h2>
+        <p v-if="resultsSub" class="results-sub">{{ resultsSub }}</p>
+        <p v-if="ideaLimitReached && showIdeas" class="results-limit">
+          Daily idea limit reached.
+          <a :href="upgradeUrl">See plans</a>
+        </p>
       </div>
-      <p v-if="freshnessText(freshness)" class="results-banner">{{ freshnessText(freshness) }}</p>
-      <p v-else-if="note" class="results-banner">{{ note }}</p>
+      <div v-if="!embedded && countries.length" class="findings-countries">
+        <div class="industry-label" id="country-filters-label">Country</div>
+        <div
+          class="topics topics--subs"
+          role="group"
+          aria-labelledby="country-filters-label"
+        >
+          <button
+            type="button"
+            class="category"
+            :class="{ 'is-active': !country }"
+            :aria-pressed="!country"
+            @click="emit('select-country', null)"
+          >
+            All
+          </button>
+          <button
+            v-for="item in countries"
+            :key="item.code"
+            type="button"
+            class="category"
+            :class="{ 'is-active': country === item.code }"
+            :aria-pressed="country === item.code"
+            @click="emit('select-country', item.code)"
+          >
+            {{ item.name }}
+          </button>
+        </div>
+      </div>
+      <p v-if="freshnessText(freshness) && !resultsSub" class="results-banner">{{ freshnessText(freshness) }}</p>
+      <p v-else-if="note && !resultsSub" class="results-banner">{{ note }}</p>
     </div>
 
     <FindingsSkeleton
@@ -180,10 +201,18 @@ function isReturned(item) {
     <div
       v-else-if="showEmpty && freshness !== 'warming_up'"
       class="empty"
-      :class="{ 'empty--embedded': embedded }"
+      :class="{ 'empty--embedded': embedded, 'empty--error': feedFailed }"
     >
-      <p v-if="!embedded" class="empty__title">Nothing here yet</p>
-      <p>{{ emptyMessage }}</p>
+      <p v-if="!embedded" class="empty__title">{{ feedFailed ? 'Stories did not load' : 'Nothing in this view' }}</p>
+      <p>{{ emptyCopy }}</p>
+      <button
+        v-if="feedFailed && !embedded"
+        type="button"
+        class="btn btn--primary empty__retry"
+        @click="emit('retry')"
+      >
+        Try again
+      </button>
     </div>
 
     <ol v-else v-show="showResults || results.length" class="results">
@@ -197,15 +226,16 @@ function isReturned(item) {
         :data-finding-url="item.url || undefined"
         :style="{ animationDelay: `${index * 45}ms` }"
       >
-        <div class="result__rank" aria-hidden="true">{{ itemRank(item, index) }}</div>
         <div class="result__body">
-          <div class="result__headline">
-            <h3 class="result__title">
-              <time v-if="item.ageLabel || articleDate(item)" class="result__date" :datetime="item.publishedAt || undefined">{{ item.ageLabel || articleDate(item) }}</time>
-              <span v-if="signalLabel(item.signalType)" class="signal-chip">{{ signalLabel(item.signalType) }}</span>
-              <span v-if="item.countryName" class="country-chip">{{ item.countryName }}</span>
-              <a :href="item.url" target="_blank" rel="noopener noreferrer">{{ item.title }}</a>
-            </h3>
+          <div class="result__meta">
+            <time v-if="item.ageLabel || articleDate(item)" class="result__date" :datetime="item.publishedAt || undefined">{{ item.ageLabel || articleDate(item) }}</time>
+            <span v-if="signalLabel(item.signalType)" class="signal-chip">{{ signalLabel(item.signalType) }}</span>
+            <span v-if="item.countryName" class="country-chip">{{ item.countryName }}</span>
+            <span v-if="item.host" class="result__host">{{ item.host }}</span>
+            <span
+              class="result__worth"
+              :class="{ 'result__worth--quiet': !worthIdea(item) }"
+            >{{ worthIdea(item) ? 'Worth an idea' : 'News only' }}</span>
             <button
               v-if="allowDismiss"
               type="button"
@@ -225,11 +255,11 @@ function isReturned(item) {
               </svg>
             </button>
           </div>
-          <p class="result__url">{{ item.host }}</p>
-          <p v-if="signalChips(item).length" class="result__signals">
-            Signals: {{ signalChips(item).join(' · ') }}
-          </p>
-          <p class="result__why">{{ whyLine(item) }}</p>
+          <h3 class="result__title">
+            <a v-if="safeHttpUrl(item.url)" :href="safeHttpUrl(item.url)" target="_blank" rel="noopener noreferrer">{{ item.title }}</a>
+            <span v-else>{{ item.title }}</span>
+          </h3>
+          <p v-if="whyLine(item)" class="result__why">{{ whyLine(item) }}</p>
           <p v-if="item.sample" class="result__flag">Sample data</p>
           <p v-if="item.weakSignal" class="result__flag">Weak signal</p>
           <p v-if="item.trust" class="trust-badge">
@@ -238,14 +268,19 @@ function isReturned(item) {
             <span v-if="item.trust.primarySource"> · primary</span>
           </p>
           <div class="result__actions">
-            <button v-if="showIdeas" type="button" class="btn btn--ghost" @click="emit('idea', item)">Get an idea</button>
-            <a v-if="item.url" class="btn btn--ghost" :href="item.url" target="_blank" rel="noopener noreferrer">Open</a>
+            <button
+              v-if="showIdeas && worthIdea(item) && !ideaLimitReached"
+              type="button"
+              class="btn btn--primary"
+              @click="emit('idea', item)"
+            >{{ ideaButtonLabel }}</button>
+            <a v-if="safeHttpUrl(item.url)" class="btn btn--ghost" :href="safeHttpUrl(item.url)" target="_blank" rel="noopener noreferrer">Open</a>
             <button
               v-if="allowDismiss && (item.sourceId || item.id)"
               type="button"
-              class="btn btn--ghost"
+              class="result__textbtn"
               @click="hideSource(item)"
-            >Hide this source</button>
+            >Hide source</button>
             <span v-if="showIdeas && ideaCount(item)" class="result__idea-count">{{ ideaCount(item) }} {{ ideaCount(item) === 1 ? 'idea' : 'ideas' }}</span>
             <div class="result__votes" role="group" aria-label="Was this finding useful?">
               <span class="result__votes-label">Was this useful?</span>
@@ -274,14 +309,6 @@ function isReturned(item) {
             </div>
           </div>
         </div>
-        <div v-if="item.signalType" class="result__potential">
-          <span class="result__potential-label">Idea potential</span>
-          <span class="result__meter" :style="{ '--fill': `${potential(item)}%` }" />
-          <span class="result__potential-value">{{ potential(item) }}</span>
-        </div>
-        <span v-else-if="item.score != null && item.score !== ''" class="result__score">
-          {{ item.score }}%
-        </span>
       </li>
     </ol>
     <FindingsSkeleton

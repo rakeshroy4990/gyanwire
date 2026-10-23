@@ -1,5 +1,6 @@
 package com.gyanwire.profile;
 
+import com.gyanwire.auth.AuthService;
 import com.gyanwire.persistence.FlowStore;
 import com.gyanwire.research.ResearchException;
 import org.springframework.stereotype.Service;
@@ -12,9 +13,11 @@ import java.util.UUID;
 public class ProfileService {
 
     private final FlowStore store;
+    private final AuthService authService;
 
-    public ProfileService(FlowStore store) {
+    public ProfileService(FlowStore store, AuthService authService) {
         this.store = store;
+        this.authService = authService;
     }
 
     public Map<String, Object> get(UUID userId) {
@@ -36,6 +39,35 @@ public class ProfileService {
     }
 
     public void delete(UUID userId) {
+        store.deleteProfile(userId);
+    }
+
+    /**
+     * Requires the account password (or typed DELETE for passwordless Google accounts)
+     * so a single click or CSRF cannot wipe the profile.
+     */
+    public void deleteWithPassword(UUID userId, String password) {
+        deleteWithPassword(userId, password, null);
+    }
+
+    public void deleteWithPassword(UUID userId, String password, String confirm) {
+        if (!authService.hasPassword(userId)) {
+            if (!"DELETE".equals(confirm == null ? "" : confirm.trim())) {
+                throw new ResearchException(
+                        "Type DELETE to confirm profile deletion.",
+                        "CONFIRM_REQUIRED",
+                        400);
+            }
+            store.deleteProfile(userId);
+            return;
+        }
+        if (password == null || password.isBlank()) {
+            throw new ResearchException(
+                    "Enter your password to delete profile data.",
+                    "CONFIRM_REQUIRED",
+                    400);
+        }
+        authService.requirePassword(userId, password);
         store.deleteProfile(userId);
     }
 

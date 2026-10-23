@@ -192,6 +192,14 @@ class NewsEngineTest {
     }
 
     @Test
+    void githubBrowseIgnoresCountryFilter() {
+        assertThat(NewsQueryService.resolveBrowseCountry("GitHub", "IN")).isNull();
+        assertThat(NewsQueryService.resolveBrowseCountry("GitHub", "US")).isNull();
+        assertThat(NewsQueryService.resolveBrowseCountry("Medical", "IN")).isEqualTo("IN");
+        assertThat(NewsQueryService.resolveBrowseCountry("Medical", null)).isNull();
+    }
+
+    @Test
     void anthropicChipKeepsClaudeLaunchesOnly() {
         NewsRow gpt = new NewsRow().title("OpenAI rolls out GPT-6 Intelligent UI");
         NewsRow claude = new NewsRow().title("Anthropic launches Claude Haiku 5.5");

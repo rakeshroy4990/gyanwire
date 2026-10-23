@@ -115,47 +115,42 @@ public final class SocialMediaIdea {
 
     public static BusinessIdea fromHeadline(String title, String description) {
         String subject = subject(title, description);
-        String hook = firstWords(subject, 5);
+        String hook = firstWords(subject, 6);
         return new BusinessIdea(
                 "comparison_content",
-                "Quick short on " + hook,
+                "Buyer brief for operators reacting to " + hook,
                 oneLiner(hook),
-                new Customer("Viewers who follow this headline on YouTube", "YouTube"),
+                new Customer("Operators and builders who must act on this headline", "LinkedIn and email"),
                 trigger(subject),
-                "Viewers want a plain read of what this headline changes before it goes stale.",
-                "\"" + hook + "\" is current, so the post has to go out today or tomorrow.",
-                "Record one short that quotes \"" + hook + "\" and says who should care. "
-                        + "Publish that cut on YouTube, Instagram, and LinkedIn the same day.",
+                "They pay for a clear buyer, wedge, and first test — not a restated headline.",
+                "\"" + hook + "\" is current, so the window to help that buyer is this week.",
+                "Ship a one-page brief: who buys, what changes, and a 48-hour test they can run.",
                 new RevenueModel(
-                        "ads",
+                        "paid_brief",
                         "",
-                        "Shorts can earn ad revenue share only after YouTube Partner Program eligibility. This is not instant income."),
+                        "Charge for a short actionable brief or checklist tied to this news, not for ad views alone."),
                 List.of(
-                        "Write a 90–130 word script with the entity and three facts.",
-                        "Record and cut a ≤60 s vertical short.",
-                        "Upload to YouTube Shorts, Instagram Reels, and LinkedIn."),
-                new ValidationTest("Post the short today", "100 views in two days"),
-                List.of("The hook is vague if the headline fact is left out."),
+                        "Name the buyer and the buying moment from the story.",
+                        "Write a one-page brief with wedge and first test.",
+                        "DM or email 10 people in that buyer group today."),
+                new ValidationTest("Send the brief to 10 buyers", "3 replies asking for the next step"),
+                List.of("A social rewrite of the headline is not an idea."),
                 "hours",
                 false);
     }
 
     private static String oneLiner(String hook) {
-        String line = "One short for YouTube, Instagram, and LinkedIn on " + hook + ".";
+        String line = "A buyer brief and first test for people who must react to " + hook + ".";
         String[] words = line.trim().split("\\s+");
-        if (words.length <= 18) {
+        if (words.length <= 22) {
             return line;
         }
-        return "One short for YouTube, Instagram, and LinkedIn on " + firstWords(hook, 4) + ".";
+        return "A buyer brief for people reacting to " + firstWords(hook, 5) + ".";
     }
 
     private static String trigger(String subject) {
         String fact = subject.length() > 140 ? subject.substring(0, 140).trim() : subject;
-        String line = "The headline says " + fact + ", and that fact is the hook.";
-        if (line.length() >= 24) {
-            return line;
-        }
-        return line + " Viewers need that fact in the first line.";
+        return "The story says " + fact + " — that is the buying moment, not the content hook.";
     }
 
     private static String subject(String title, String description) {

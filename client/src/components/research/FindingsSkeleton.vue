@@ -10,6 +10,7 @@ defineProps({
   <div
     class="skeleton-findings"
     :class="{ 'skeleton-findings--embedded': embedded }"
+    role="status"
     aria-busy="true"
     aria-live="polite"
     aria-label="Loading findings"
@@ -23,13 +24,11 @@ defineProps({
       :key="n"
       class="skeleton-row"
     >
-      <span class="skeleton-line skeleton-line--rank" />
       <div class="skeleton-row__body">
-        <span class="skeleton-line skeleton-line--heading" />
         <span class="skeleton-line skeleton-line--host" />
+        <span class="skeleton-line skeleton-line--heading" />
         <span class="skeleton-line skeleton-line--why" />
       </div>
-      <span class="skeleton-line skeleton-line--score" />
     </div>
   </div>
 </template>

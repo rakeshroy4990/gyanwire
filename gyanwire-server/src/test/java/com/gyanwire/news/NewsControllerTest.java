@@ -340,7 +340,20 @@ class NewsControllerTest {
     }
 
     @Test
+    void dismissRequiresSignIn() throws Exception {
+        mvc.perform(post("/api/news/dismiss")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"itemId\":\"" + UUID.randomUUID() + "\"}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.errorCode").value("AUTH_REQUIRED"));
+    }
+
+    @Test
     void dismissRequiresItemIdOrUrl() throws Exception {
+        UUID userId = UUID.randomUUID();
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(new AuthUserPrincipal(userId, "u@example.com", "user"), null)
+        );
         mvc.perform(post("/api/news/dismiss")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
@@ -350,14 +363,18 @@ class NewsControllerTest {
 
     @Test
     void dismissSavesAndInvalidatesViewerCache() throws Exception {
+        UUID userId = UUID.randomUUID();
         UUID itemId = UUID.randomUUID();
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(new AuthUserPrincipal(userId, "u@example.com", "user"), null)
+        );
         mvc.perform(post("/api/news/dismiss")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"itemId\":\"" + itemId + "\",\"url\":\"https://a.example/1\",\"industry\":\"AI\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.dismissed").value(true))
                 .andExpect(jsonPath("$.data.itemId").value(itemId.toString()));
-        verify(store).saveDismissal(eq(itemId), eq("https://a.example/1"), isNull(), any(), eq("AI"));
+        verify(store).saveDismissal(eq(itemId), eq("https://a.example/1"), eq(userId), any(), eq("AI"));
         verify(news).invalidateViewer(any(NewsViewer.class));
     }
 

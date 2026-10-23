@@ -5,6 +5,7 @@ import { useNewsIdeas } from '../composables/useNewsIdeas.js';
 import { startCreate } from '../composables/actionPlanSession.js';
 import NewsIdeasView from '../components/ideas/NewsIdeasView.vue';
 import PlanSheet from '../components/ideas/PlanSheet.vue';
+import { safeHttpUrl } from '../utils/safeUrl.js';
 
 const route = useRoute();
 const router = useRouter();
@@ -21,21 +22,24 @@ const {
   selected,
   ratingId,
   stageLabel,
-  researchStatus,
-  researchSummary,
   openForItem,
   close,
   rate,
   selectIdea,
 } = useNewsIdeas();
 
-const routeNews = computed(() => ({
-  id: String(route.params.id || ''),
-  title: typeof route.query.title === 'string' ? route.query.title : '',
-  url: typeof route.query.url === 'string' ? route.query.url : '',
-}));
+const routeNews = computed(() => {
+  const rawUrl = typeof route.query.url === 'string' ? route.query.url : '';
+  const fromItem = item.value?.url ? safeHttpUrl(item.value.url) : '';
+  return {
+    id: String(route.params.id || ''),
+    title: typeof route.query.title === 'string' ? route.query.title : '',
+    url: fromItem || safeHttpUrl(rawUrl),
+  };
+});
 
 const pageTitle = computed(() => headline.value || routeNews.value.title || 'Ideas');
+const limitReached = computed(() => /daily idea limit/i.test(error.value || ''));
 
 async function loadFromRoute() {
   const newsItem = routeNews.value;
@@ -110,7 +114,7 @@ onBeforeUnmount(close);
 
 <template>
   <main class="account-page news-ideas-page">
-    <button type="button" class="page-back" @click="goBack">← Back to research</button>
+    <button type="button" class="page-back" @click="goBack">← Back</button>
 
     <header class="account-page__hero">
       <p class="account-page__kicker">Ideas from this news</p>
@@ -124,14 +128,17 @@ onBeforeUnmount(close);
       </p>
     </header>
 
+    <div v-if="limitReached && !ideas.length" class="news-ideas-page__limit" role="status">
+      <p>{{ error }}</p>
+      <a class="btn btn--primary" href="/pricing">See plans</a>
+    </div>
     <NewsIdeasView
+      v-else
       :loading="loading"
       :error="error"
       :ideas="ideas"
       :rating-id="ratingId"
       :stage-label="stageLabel"
-      :research-status="researchStatus"
-      :research-summary="researchSummary"
       @make-plan="onMakePlan"
       @not-useful="onNotUseful"
     />

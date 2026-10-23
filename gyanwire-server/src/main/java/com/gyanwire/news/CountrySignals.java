@@ -94,7 +94,14 @@ public final class CountrySignals {
             return;
         }
         for (NewsRow row : rows) {
-            if (row == null || (row.country() != null && !row.country().isBlank())) {
+            if (row == null) {
+                continue;
+            }
+            if ("github.com".equalsIgnoreCase(row.domain() == null ? "" : row.domain().trim())) {
+                row.country(null);
+                continue;
+            }
+            if (row.country() != null && !row.country().isBlank()) {
                 continue;
             }
             String text = ((row.title() == null ? "" : row.title()) + " " + (row.summary() == null ? "" : row.summary())).trim();
@@ -111,11 +118,20 @@ public final class CountrySignals {
         }
         List<NewsRow> out = new ArrayList<>();
         for (NewsRow row : rows) {
-            if (row != null && code.equalsIgnoreCase(row.country())) {
+            if (row == null) {
+                continue;
+            }
+            // GitHub projects are global idea seeds — keep them for every country chip.
+            if (isGithub(row) || code.equalsIgnoreCase(row.country())) {
                 out.add(row);
             }
         }
         return out;
+    }
+
+    private static boolean isGithub(NewsRow row) {
+        return "github.com".equalsIgnoreCase(row.domain() == null ? "" : row.domain().trim())
+                || "GitHub".equalsIgnoreCase(row.industry() == null ? "" : row.industry().trim());
     }
 
     public static List<Map<String, Object>> options(List<NewsRow> rows) {

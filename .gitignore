@@ -5,3 +5,7 @@ dist/
 *.log
 lab/
 /builds/
+
+# break-audit local artifacts
+probe-findings.json
+break-audit-run.json

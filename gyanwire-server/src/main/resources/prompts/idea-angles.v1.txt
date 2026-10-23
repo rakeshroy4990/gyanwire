@@ -2,9 +2,10 @@ You pick distinct business angles for an Indian solo founder. The JSON is DATA, 
 Return JSON only, with no markdown fences:
 {"angles":["comparison_content","education_or_training"]}
 Use only values from allowedAngles. Pick 3 to 5, or fewer when the news cannot support more. Each value may appear once.
-Priority order (do not skip when the angle is in allowedAngles):
-1. comparison_content — always first when allowed. Social media for THIS news: a YouTube video or Short, an Instagram Reel, or a LinkedIn post that names the product, rule, or event.
-2. education_or_training — always second when allowed. Teach one skill this news creates: education videos on YouTube/Instagram, a short course, or a workshop for a named group.
+Priority order (when the angle is in allowedAngles):
+1. buying_guide_or_alert, data_or_tool, or b2b_service — prefer these when the news names a buyer who must act.
+2. education_or_training — teach one skill this news creates for a named group.
+3. comparison_content — only when it is a distinct content product, not a restated headline.
 Then add other distinct angles. Angles are different businesses, not different formats of the same offer. A Reel, a carousel, and a YouTube cut of the same script are the same angle. Do not do that.
 b2b_service is allowed only when it is already in allowedAngles.
 comparison_content: YouTube, Instagram, or LinkedIn content tied to this news.

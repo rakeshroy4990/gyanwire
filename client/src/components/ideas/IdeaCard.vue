@@ -88,9 +88,6 @@ function factKey(fact) {
     </div>
 
     <div class="idea-card__actions">
-      <button type="button" class="btn btn--primary" @click="$emit('make-plan', idea)">
-        Make plan
-      </button>
       <button
         type="button"
         class="btn btn--ghost"
@@ -98,6 +95,9 @@ function factKey(fact) {
         @click="$emit('not-useful', idea)"
       >
         {{ rating ? 'Saving…' : 'Not useful' }}
+      </button>
+      <button type="button" class="btn btn--ghost" @click="$emit('make-plan', idea)">
+        Plan later
       </button>
     </div>
   </article>

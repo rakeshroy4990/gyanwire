@@ -34,12 +34,9 @@ public final class GitHubRepoMapper {
         String pushDay = repo.pushedAt() == null ? "unknown" : DAY.format(repo.pushedAt());
         String licence = blankTo(repo.licence(), "unknown");
         String language = blankTo(repo.language(), "unknown");
-        String title = repo.fullName() + " — " + truncate(description, 120);
         String summary = String.format(Locale.ROOT,
                 "%s Open-source GitHub project with %s stars and %s forks. "
-                        + "Language: %s. Licence: %s. Last push: %s. "
-                        + "Famous library/framework/tool developers build products on — "
-                        + "use it as a seed for India-first business ideas.",
+                        + "Language: %s. Licence: %s. Last push: %s.",
                 description,
                 formatCount(repo.stars()),
                 formatCount(repo.forks()),
@@ -47,10 +44,11 @@ public final class GitHubRepoMapper {
                 licence,
                 pushDay);
         int score = opportunityScore(repo.stars());
+        String title = repo.fullName().trim();
         return new NewsRow()
                 .industry(industry)
                 .sub(sub)
-                .title(NewsTexts.cleanTitle(title))
+                .title(title)
                 .url(repo.htmlUrl())
                 .domain("github.com")
                 .resolved(true)
@@ -64,8 +62,7 @@ public final class GitHubRepoMapper {
                 .indiaRelevance(40)
                 .specificity(Math.min(90, 40 + (int) Math.min(50, repo.stars() / 5000)))
                 .opportunityScore(score)
-                .whyIdea("Why it's here: Famous open-source project ("
-                        + formatCount(repo.stars()) + " stars) — strong base for a product idea.")
+                .whyIdea(summary)
                 .titleHash(NewsTexts.titleHash(title))
                 .simhash(NewsTexts.simhash(title))
                 .language("en")
@@ -104,18 +101,27 @@ public final class GitHubRepoMapper {
         return String.valueOf(value);
     }
 
-    private static String blankTo(String value, String fallback) {
-        return value == null || value.isBlank() ? fallback : value.trim();
-    }
-
-    private static String truncate(String value, int max) {
-        if (value == null) {
+    /**
+     * Facts already stored on older rows, without the stock closer that
+     * only repeated "famous library" and "India-first".
+     */
+    public static String projectDetail(String summary) {
+        if (summary == null || summary.isBlank()) {
             return "";
         }
-        String cleaned = value.replaceAll("\\s+", " ").trim();
-        if (cleaned.length() <= max) {
-            return cleaned;
+        String text = summary.replaceAll("\\s+", " ").trim();
+        int cut = indexOfIgnoreCase(text, "Famous library/framework/tool");
+        if (cut > 0) {
+            text = text.substring(0, cut).trim();
         }
-        return cleaned.substring(0, Math.max(0, max - 1)).trim() + "…";
+        return text;
+    }
+
+    private static int indexOfIgnoreCase(String text, String needle) {
+        return text.toLowerCase(Locale.ROOT).indexOf(needle.toLowerCase(Locale.ROOT));
+    }
+
+    private static String blankTo(String value, String fallback) {
+        return value == null || value.isBlank() ? fallback : value.trim();
     }
 }

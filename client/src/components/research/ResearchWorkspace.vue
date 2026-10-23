@@ -38,6 +38,7 @@ const {
   browseTotal,
   browseTotalPages,
   browseHasMore,
+  browseFailed,
   country,
   showBrowseResults,
   emptyMessage,
@@ -48,11 +49,14 @@ const {
   selectSub,
   selectCountry,
   goBrowsePage,
+  reloadFeed,
   dismissBrowseItem,
   hideBrowseSource,
   runSearch,
   clearForm,
   searchesLeftLabel,
+  ideaLimitReached,
+  ideaButtonLabel,
   limitReached,
   limitMessage,
   upgradeUrl,
@@ -163,6 +167,8 @@ async function onClaim(sentence) {
       :thread="thread"
       :has-thread="hasThread"
       :searches-left-label="searchesLeftLabel"
+      :idea-limit-reached="ideaLimitReached"
+      :idea-button-label="ideaButtonLabel"
       :limit-reached="limitReached"
       :limit-message="limitMessage"
       :upgrade-url="upgradeUrl"
@@ -170,13 +176,12 @@ async function onClaim(sentence) {
       @update:thoughts="thoughts = $event"
       @select-industry="selectIndustry"
       @select-sub="selectSub"
-      @select-country="selectCountry"
       @search="runSearch"
       @clear="clearForm"
       @idea="onIdea"
       @feedback="onFeedback"
       @claim="onClaim"
-    />
+    >
     <ResultsPanel
       v-if="!hasThread"
       :results="browseResults"
@@ -190,10 +195,14 @@ async function onClaim(sentence) {
       :total-pages="browseTotalPages"
       :has-more="browseHasMore"
       :empty-message="emptyMessage"
+      :failed="browseFailed"
       :show-empty="showEmpty && !isLoading"
       :show-results="showBrowseResults"
       :is-loading="isLoading && !hasThread"
       :return-key="returnKey"
+      :idea-limit-reached="ideaLimitReached"
+      :idea-button-label="ideaButtonLabel"
+      :upgrade-url="upgradeUrl"
       show-ideas
       allow-dismiss
       @idea="onIdea"
@@ -202,7 +211,9 @@ async function onClaim(sentence) {
       @hide-source="hideBrowseSource"
       @select-country="selectCountry"
       @page="goBrowsePage"
+      @retry="reloadFeed"
     />
+    </ResearchPanel>
     <p v-if="claim" class="disclaimer">Claim check: {{ claim }}</p>
   </main>
 </template>

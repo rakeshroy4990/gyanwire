@@ -1,5 +1,6 @@
 package com.gyanwire.news;
 
+import com.gyanwire.news.github.GitHubRepoMapper;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
@@ -63,7 +64,7 @@ public class NewsQueryService {
         // windowDays stays on the API; browse always reads the month and picks
         // 1d → 7d → 30d in memory so the first card is not blocked on ingest.
         int lookback = BROWSE_LOOKBACK_DAYS;
-        String code = country == null || country.isBlank() ? null : country;
+        String code = resolveBrowseCountry(industry, country);
         NewsViewer who = viewer == null ? NewsViewer.of(null, null) : viewer;
         String key = who.cacheKey() + "|" + industry + "|" + (sub == null ? "" : sub) + "|" + pageSize + "|" + pageNo
                 + "|" + intent + "|" + lookback + "|" + (code == null ? "" : code);
@@ -193,7 +194,7 @@ public class NewsQueryService {
             if (SignalRules.isFyi(detected) || "other".equals(row.signalType()) || row.signalType() == null) {
                 row.signalType(detected);
                 if (SignalRules.isFyi(detected)) {
-                    row.whyIdea(SignalRules.whyIdea(detected, row.industry()));
+                    row.whyIdea(SignalRules.whyIdea(detected, row.industry(), row.title()));
                 }
             }
             OpportunityScorer.Parts parts = OpportunityScorer.score(
@@ -288,6 +289,14 @@ public class NewsQueryService {
             return DEFAULT_PAGE_SIZE;
         }
         return Math.min(Math.max(limit, 1), MAX_PAGE_SIZE);
+    }
+
+    /** GitHub projects are worldwide — never scope them to India or any country. */
+    static String resolveBrowseCountry(String industry, String country) {
+        if ("GitHub".equals(industry) || country == null || country.isBlank()) {
+            return null;
+        }
+        return country;
     }
 
     /**
@@ -414,9 +423,14 @@ public class NewsQueryService {
             String industry
     ) {
         CountrySignals.assignMissing(rows);
-        List<Map<String, Object>> countries = new ArrayList<>(CountrySignals.options(rows));
-        CountrySignals.ensureOption(countries, country);
-        List<NewsRow> scoped = CountrySignals.matching(rows, country);
+        boolean github = "GitHub".equals(industry);
+        List<Map<String, Object>> countries = github
+                ? List.of()
+                : new ArrayList<>(CountrySignals.options(rows));
+        if (!github) {
+            CountrySignals.ensureOption(countries, country);
+        }
+        List<NewsRow> scoped = github ? rows : CountrySignals.matching(rows, country);
         List<NewsRow> ordered = chronological(scoped);
         int pageNo = Math.max(1, page);
         if (pageNo == 1) {
@@ -496,21 +510,25 @@ public class NewsQueryService {
             item.put("opportunityScore", row.opportunityScore());
             item.put("score", row.relevanceScore() > 0 ? row.relevanceScore() : row.opportunityScore());
             item.put("relevanceScore", row.relevanceScore() > 0 ? row.relevanceScore() : row.opportunityScore());
-            String whyHere = row.relevanceReason() != null && !row.relevanceReason().isBlank()
-                    ? row.relevanceReason()
-                    : row.whyIdea();
+            boolean github = "github.com".equalsIgnoreCase(row.domain() == null ? "" : row.domain().trim());
+            String detail = github ? GitHubRepoMapper.projectDetail(row.summary()) : "";
+            String whyHere = !detail.isBlank()
+                    ? detail
+                    : buyerLine(row);
             item.put("relevanceReason", whyHere);
             item.put("whyIdea", whyHere);
             item.put("why", whyHere);
-            item.put("description", row.summary());
-            item.put("signals", row.signals() == null ? List.of() : row.signals());
+            item.put("worthIdea", github || SignalRules.worthIdea(
+                    NewsRelevanceService.buyerSignal(row, row.signals())));
+            item.put("description", !detail.isBlank() ? detail : row.summary());
+            item.put("signals", github || row.signals() == null ? List.of() : row.signals());
             item.put("alsoCoveredBy", row.alsoCoveredBy());
             item.put("weakSignal", row.weakSignal());
             item.put("sample", row.sample());
             item.put("industry", row.industry());
             item.put("sub", row.sub());
-            item.put("country", row.country());
-            item.put("countryName", CountrySignals.name(row.country()));
+            item.put("country", github ? null : row.country());
+            item.put("countryName", github ? null : CountrySignals.name(row.country()));
             item.put("sourceId", row.sourceId() == null ? null : row.sourceId().toString());
             items.add(item);
             index++;
@@ -544,6 +562,14 @@ public class NewsQueryService {
             body.put("message", "No findings for " + CountrySignals.name(country) + " right now.");
         }
         return body;
+    }
+
+    /** Current buyer sentence for this signal, not a stored template. */
+    private static String buyerLine(NewsRow row) {
+        return SignalRules.whyIdea(
+                NewsRelevanceService.buyerSignal(row, row.signals()),
+                row.industry(),
+                row.title());
     }
 
     private record Prepared(

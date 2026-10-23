@@ -3,13 +3,10 @@ package com.gyanwire.news.github;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GitHubSearchClientTest {
 
@@ -17,16 +14,10 @@ class GitHubSearchClientTest {
             new GitHubProperties(), new ObjectMapper(), null);
 
     @Test
-    void prepareQueryAppendsPushedWindowForTrending() {
-        String q = GitHubSearchClient.prepareQuery("stars:>1000", "Trending");
-        String day = LocalDate.now(ZoneOffset.UTC).minusDays(30).toString();
-        assertTrue(q.contains("stars:>1000"));
-        assertTrue(q.contains("pushed:>" + day));
-    }
-
-    @Test
-    void prepareQueryLeavesStarsUntouched() {
-        assertEquals("stars:>50000", GitHubSearchClient.prepareQuery("stars:>50000", "Stars"));
+    void prepareQueryDoesNotAddDayWindow() {
+        assertEquals("stars:>1000", GitHubSearchClient.prepareQuery("stars:>1000", "Trending"));
+        assertEquals("stars:>1000", GitHubSearchClient.prepareQuery("stars:>1000", "Stars"));
+        assertEquals("", GitHubSearchClient.prepareQuery("  ", null));
     }
 
     @Test

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { onBeforeUnmount, ref, watch } from 'vue';
 import PageSkeleton from '../ui/PageSkeleton.vue';
 import IdeaCard from './IdeaCard.vue';
 
@@ -9,18 +9,11 @@ const props = defineProps({
   ideas: { type: Array, default: () => [] },
   ratingId: { type: String, default: '' },
   stageLabel: { type: String, default: 'Loading ideas' },
-  researchStatus: { type: String, default: '' },
-  researchSummary: { type: Object, default: null },
 });
 
 const emit = defineEmits(['make-plan', 'not-useful']);
 
 const openFactKey = ref('');
-
-const researchFacts = computed(() => {
-  const facts = props.researchSummary?.facts;
-  return Array.isArray(facts) ? facts.slice(0, 5) : [];
-});
 
 function toggleFact(key) {
   openFactKey.value = openFactKey.value === key ? '' : key;
@@ -54,39 +47,6 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="news-ideas-view">
-    <section
-      v-if="researchSummary || researchStatus === 'running' || researchStatus === 'started' || researchStatus === 'ready'"
-      class="news-ideas-view__research"
-      aria-live="polite"
-    >
-      <details v-if="researchSummary" class="news-ideas-view__research-details" open>
-        <summary class="news-ideas-view__research-kicker">Ready for the video</summary>
-        <p v-if="researchSummary.whatHappened" class="news-ideas-view__research-body">
-          {{ researchSummary.whatHappened }}
-        </p>
-        <p v-if="researchSummary.whyItMatters" class="news-ideas-view__research-why">
-          {{ researchSummary.whyItMatters }}
-        </p>
-        <ul v-if="researchFacts.length" class="news-ideas-view__research-facts">
-          <li v-for="fact in researchFacts" :key="fact.id || fact.text">
-            <span>{{ fact.text }}</span>
-            <a
-              v-if="fact.sourceUrl"
-              :href="fact.sourceUrl"
-              target="_blank"
-              rel="noopener noreferrer"
-            >Source</a>
-          </li>
-        </ul>
-      </details>
-      <p v-else-if="researchStatus === 'ready'" class="news-ideas-view__research-status">
-        Ready for the video
-      </p>
-      <p v-else class="news-ideas-view__research-status">
-        Gathering sources for the video…
-      </p>
-    </section>
-
     <PageSkeleton
       v-if="loading && !ideas.length"
       variant="ideas"

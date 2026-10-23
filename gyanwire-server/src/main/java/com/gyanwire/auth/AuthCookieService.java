@@ -34,6 +34,7 @@ public class AuthCookieService {
         this.refreshPath = refreshPath;
         this.sameSite = sameSite == null ? "Lax" : sameSite;
         boolean sameSiteNone = this.sameSite.equalsIgnoreCase("None");
+        // SameSite=None requires Secure. Production should set AUTH_COOKIE_SECURE=true (HTTPS).
         this.secure = sameSiteNone || secure;
         // CHIPS: cross-site UI (Firebase web.app) → API (Cloud Run) needs Partitioned + SameSite=None.
         this.partitioned = sameSiteNone && partitioned;

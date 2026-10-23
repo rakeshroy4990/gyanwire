@@ -154,19 +154,54 @@ public final class SignalRules {
         };
     }
 
-    public static String whyIdea(String signal, String industry) {
-        String lane = lane(industry);
-        return switch (signal == null ? "other" : signal) {
-            case "launch" -> "A clinic, shop, or team that must adopt the new offer could pay for a setup checklist. " + lane;
-            case "funding" -> "Operators near the funded company could pay for a short watchlist of who is buying. " + lane;
-            case "approval" -> "Teams waiting on the approval could pay for a plain-language checklist of what changed. " + lane;
-            case "regulation" -> "Compliance leads could pay for a one-page brief of the new rule. " + lane;
-            case "pricing" -> "Buyers comparing cost could pay for a simple price tracker. " + lane;
-            case "shortage" -> "Ops leads could pay for a substitute and stock alert. " + lane;
-            case "research" -> "Trainers could turn the finding into a short lesson. " + lane;
-            case "fyi" -> "FYI only — no specific buyer or buying moment for a small team.";
-            default -> "A narrow service could help people act on this headline. " + lane;
+    /** True when the story names a buyer a small team can serve. */
+    public static boolean worthIdea(String signal) {
+        return switch (signal == null ? "" : signal.toLowerCase(Locale.ROOT)) {
+            case "launch", "funding", "approval", "regulation", "pricing", "shortage",
+                    "stars", "tool", "tech" -> true;
+            default -> false;
         };
+    }
+
+    public static String whyIdea(String signal, String industry) {
+        return whyIdea(signal, industry, null);
+    }
+
+    public static String whyIdea(String signal, String industry, String title) {
+        String lane = lane(industry);
+        String tip = entityTip(title);
+        return switch (signal == null ? "other" : signal) {
+            case "launch" -> "Someone adopting " + tip + " could pay for a setup checklist. " + lane;
+            case "funding" -> "Operators near " + tip + " could pay for a short watchlist of who is buying. " + lane;
+            case "approval" -> "Teams waiting on " + tip + " could pay for a plain-language checklist of what changed. " + lane;
+            case "regulation" -> "Compliance leads covering " + tip + " could pay for a one-page brief of the new rule. " + lane;
+            case "pricing" -> "Buyers comparing cost around " + tip + " could pay for a simple price tracker. " + lane;
+            case "shortage" -> "Ops leads hit by " + tip + " could pay for a substitute and stock alert. " + lane;
+            case "stars", "tool", "tech" -> "Builders could use " + tip + " as the base for a product. " + lane;
+            case "research" -> "News only — a study about " + tip + ", with no buyer who has to act today.";
+            case "opinion" -> "News only — commentary on " + tip + ", with no buyer who has to act.";
+            case "fyi" -> "News only — no specific buyer or buying moment around " + tip + ".";
+            default -> "News only — no specific buyer or buying moment around " + tip + ".";
+        };
+    }
+
+    /** Short entity/topic from the headline so blurbs are not identical across cards. */
+    static String entityTip(String title) {
+        if (title == null || title.isBlank()) {
+            return "this story";
+        }
+        String cleaned = title.replaceAll("\\s+", " ").trim();
+        String[] parts = cleaned.split("\\s+");
+        int n = Math.min(4, parts.length);
+        StringBuilder out = new StringBuilder();
+        for (int i = 0; i < n; i++) {
+            if (i > 0) {
+                out.append(' ');
+            }
+            out.append(parts[i].replaceAll("[,:;]+$", ""));
+        }
+        String tip = out.toString().trim();
+        return tip.isEmpty() ? "this story" : tip;
     }
 
     private static String lane(String industry) {

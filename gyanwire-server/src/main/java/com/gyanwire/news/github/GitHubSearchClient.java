@@ -15,8 +15,6 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -83,16 +81,10 @@ public class GitHubSearchClient {
         }
     }
 
+    /** Pass through the pack query as-is — no day/pushed window. */
     static String prepareQuery(String query, String sub) {
         String q = query == null ? "" : query.trim();
-        if (q.isBlank()) {
-            return "";
-        }
-        if ("Trending".equalsIgnoreCase(sub == null ? "" : sub.trim()) && !q.contains("pushed:")) {
-            LocalDate since = LocalDate.now(ZoneOffset.UTC).minusDays(30);
-            q = q + " pushed:>" + since;
-        }
-        return q;
+        return q.isBlank() ? "" : q;
     }
 
     List<GitHubRepo> parse(String body) throws Exception {

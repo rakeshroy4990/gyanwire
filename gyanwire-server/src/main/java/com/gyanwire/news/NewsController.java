@@ -113,21 +113,35 @@ public class NewsController {
             HttpServletResponse response
     ) throws IOException {
         String decoded = URLDecoder.decode(industry, StandardCharsets.UTF_8);
-        List<String> names = industries.listCatalog().stream().map(item -> item.getName()).toList();
-        if (!names.contains(decoded)) {
+        String canonical = industries.listCatalog().stream()
+                .map(item -> item.getName())
+                .filter(name -> name.equalsIgnoreCase(decoded))
+                .findFirst()
+                .orElse(null);
+        if (canonical == null) {
             throw new ResearchException("Pick a valid research industry.", "UNKNOWN_INDUSTRY", 400);
         }
         List<String> subs = industries.listCatalog().stream()
-                .filter(item -> item.getName().equals(decoded))
+                .filter(item -> item.getName().equals(canonical))
                 .findFirst()
                 .map(item -> item.getSubs())
                 .orElse(List.of());
-        String subTrim = sub == null || sub.isBlank() ? null : sub.trim();
-        if (subTrim != null && !subs.contains(subTrim)) {
-            throw new ResearchException("Pick a valid sub-combination for this industry.", "UNKNOWN_SUB", 400);
+        String requestedSub = sub == null || sub.isBlank() ? null : sub.trim();
+        final String subTrim;
+        if (requestedSub == null) {
+            subTrim = null;
+        } else {
+            String canonicalSub = subs.stream()
+                    .filter(name -> name.equalsIgnoreCase(requestedSub))
+                    .findFirst()
+                    .orElse(null);
+            if (canonicalSub == null) {
+                throw new ResearchException("Pick a valid sub-combination for this industry.", "UNKNOWN_SUB", 400);
+            }
+            subTrim = canonicalSub;
         }
         if (page < 1) {
-            throw new ResearchException("Page must be 1 or greater.", "VALIDATION_ERROR", 400);
+            throw new ResearchException("Pick a page of 1 or greater.", "VALIDATION_ERROR", 400);
         }
         int days = NewsTexts.windowToken(window, NewsQueryService.BROWSE_LOOKBACK_DAYS);
         String code = countryCode(country);
@@ -135,7 +149,7 @@ public class NewsController {
         String accept = request.getHeader("Accept");
         boolean wantStream = page == 1 && accept != null && accept.contains("application/x-ndjson");
         if (!wantStream) {
-            Map<String, Object> data = industryBody(decoded, subTrim, limit, page, intent, days, code, who, subs);
+            Map<String, Object> data = industryBody(canonical, subTrim, limit, page, intent, days, code, who, subs);
             response.setStatus(HttpServletResponse.SC_OK);
             response.setContentType("application/json");
             response.setCharacterEncoding(StandardCharsets.UTF_8.name());
@@ -152,7 +166,7 @@ public class NewsController {
         response.setHeader("X-Content-Type-Options", "nosniff");
         List<String> subList = subs;
         NewsNdjson.writeDefault(response.getOutputStream(), mapper, () -> industryBody(
-                decoded, subTrim, limit, page, intent, days, code, who, subList), () -> {
+                canonical, subTrim, limit, page, intent, days, code, who, subList), () -> {
             try {
                 response.flushBuffer();
             } catch (IOException ex) {
@@ -272,12 +286,14 @@ public class NewsController {
         if (reason != null && !"not_relevant".equals(reason)) {
             throw new ResearchException("Reason must be not_relevant.", "VALIDATION_ERROR", 400);
         }
+        UUID userId = currentUser();
+        if (userId == null) {
+            throw new ResearchException("Sign in to send feedback.", "AUTH_REQUIRED", 401);
+        }
         UUID itemId = parseItemId(body.get("itemId"));
         String industry = text(body.get("industry"));
         String signal = text(body.get("signalType"));
-        UUID userId = currentUser();
-        String anon = userId == null ? UsageService.hashIp(request.getRemoteAddr()) : null;
-        store.saveFeedback(itemId, userId, anon, vote, reason, industry, signal);
+        store.saveFeedback(itemId, userId, null, vote, reason, industry, signal);
         return ResponseEntity.ok(StandardApiResponse.success("Thanks.", Map.of("vote", vote)));
     }
 
@@ -286,6 +302,10 @@ public class NewsController {
             @RequestBody Map<String, Object> body,
             HttpServletRequest request
     ) {
+        UUID userId = currentUser();
+        if (userId == null) {
+            throw new ResearchException("Sign in to remove a story.", "AUTH_REQUIRED", 401);
+        }
         UUID itemId = parseItemId(body.get("itemId"));
         String url = text(body.get("url"));
         if (itemId == null && url == null) {

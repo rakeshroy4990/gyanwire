@@ -454,14 +454,52 @@ public class FlowStore {
         return count != null && count > 0;
     }
 
-    public UUID referrerForCode(String code) {
-        List<UUID> rows = jdbc.query("SELECT id FROM users", (rs, i) -> rs.getObject("id", UUID.class));
-        for (UUID id : rows) {
-            if (com.gyanwire.referrals.ReferralCodes.codeFor(id).equals(code)) {
-                return id;
+    public String referralCode(UUID userId) {
+        if (userId == null) {
+            return null;
+        }
+        List<String> rows = jdbc.query(
+                "SELECT referral_code FROM users WHERE id = ?",
+                (rs, i) -> rs.getString(1),
+                userId);
+        if (rows.isEmpty()) {
+            return null;
+        }
+        String code = rows.get(0);
+        return code == null || code.isBlank() ? null : code.trim();
+    }
+
+    public String ensureReferralCode(UUID userId) {
+        String existing = referralCode(userId);
+        if (existing != null) {
+            return existing;
+        }
+        for (int attempt = 0; attempt < 12; attempt++) {
+            String candidate = com.gyanwire.referrals.ReferralCodes.generate();
+            int updated = jdbc.update(
+                    "UPDATE users SET referral_code = ? WHERE id = ? AND (referral_code IS NULL OR referral_code = '')",
+                    candidate, userId);
+            if (updated > 0) {
+                return candidate;
+            }
+            existing = referralCode(userId);
+            if (existing != null) {
+                return existing;
             }
         }
-        return null;
+        throw new IllegalStateException("Could not assign a referral code.");
+    }
+
+    public UUID referrerForCode(String code) {
+        String normalized = com.gyanwire.referrals.ReferralCodes.normalize(code);
+        if (normalized.isBlank()) {
+            return null;
+        }
+        List<UUID> byCode = jdbc.query(
+                "SELECT id FROM users WHERE upper(referral_code) = ?",
+                (rs, i) -> rs.getObject("id", UUID.class),
+                normalized);
+        return byCode.isEmpty() ? null : byCode.get(0);
     }
 
     public void redeem(UUID referrerId, UUID userId, String code, int bonus) {

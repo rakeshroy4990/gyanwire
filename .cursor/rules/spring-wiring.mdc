@@ -1,0 +1,23 @@
+---
+description: Spring bean wiring and startup smoke tests for gyanwire-server
+globs: gyanwire-server/**/*.java
+alwaysApply: true
+---
+
+# Spring wiring (startup must stay green)
+
+Unit tests with mocks do **not** prove the app starts. A constructor that Spring cannot pick will pass Mockito tests and still kill `bootRun`.
+
+## When you change server beans
+
+If you add or edit a `@Component` / `@Service` / `@RestController` / `@Configuration` (or its constructor):
+
+1. Prefer **exactly one** constructor on the class. Do not add a second constructor (public, package, or private) for tests — Spring still sees it and can fail startup with `No default constructor found`.
+2. For test doubles, use mocks of collaborators, a `@TestConfiguration` `@Bean`, a package-visible setter/hook (e.g. `useFetcherForTest`), or extract an interface — **not** an extra constructor.
+3. If multiple constructors are unavoidable, put `@Autowired` on the Spring one — then still add a context smoke test.
+4. Add or update a **Spring context smoke test** in the same change that `@Import`s / loads the bean and asserts it constructs. Auth example: `AuthWiringSpringContextTest`.
+5. Run that context test (or the module’s wiring tests) before claiming the fix works. Do not stop at mocked unit tests alone.
+
+## Auth / Google login
+
+Changes under `com.gyanwire.auth` must keep `*SpringContextTest` (or equivalent wiring test) green. Startup failures like `No default constructor found` on `GoogleAuthClient` are wiring bugs — fix the bean, then prove it with a context test.

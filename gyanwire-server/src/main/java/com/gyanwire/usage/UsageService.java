@@ -8,6 +8,8 @@ import com.gyanwire.persistence.postgres.repository.PlanRepository;
 import com.gyanwire.persistence.postgres.repository.SubscriptionRepository;
 import com.gyanwire.persistence.postgres.repository.UsageEventRepository;
 import com.gyanwire.persistence.postgres.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +37,9 @@ public class UsageService {
     private final UsageEventRepository usageEventRepository;
     private final UserRepository userRepository;
     private final FlowStore flowStore;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public UsageService(
             PlanRepository planRepository,
@@ -143,11 +148,22 @@ public class UsageService {
         Map<String, Object> plan = resolveUserPlan(userId);
         long used = countTodaySearches(userId, ipHash);
         Map<String, Object> evaluation = evaluateSearchLimit(used, ((Number) plan.get("dailySearchLimit")).intValue());
+        int ideaLimit = ((Number) plan.get("dailyIdeaLimit")).intValue();
+        long ideasUsed = countToday(userId, ipHash, "idea");
         Map<String, Object> out = new HashMap<>();
         out.put("plan", plan);
         out.put("searchesToday", evaluation.get("used"));
         out.put("searchesRemaining", evaluation.get("remaining"));
         out.put("searchLimit", evaluation.get("limit"));
+        out.put("ideasToday", ideasUsed);
+        if (ideaLimit >= UNLIMITED) {
+            out.put("ideasRemaining", null);
+            out.put("ideaLimit", null);
+        } else {
+            Map<String, Object> ideas = evaluateSearchLimit(ideasUsed, ideaLimit);
+            out.put("ideasRemaining", ideas.get("remaining"));
+            out.put("ideaLimit", ideas.get("limit"));
+        }
         return out;
     }
 
@@ -164,6 +180,43 @@ public class UsageService {
         event.setKind(kind);
         event.setCostInrEstimate(cost == null ? BigDecimal.ZERO : cost);
         usageEventRepository.save(event);
+    }
+
+    /**
+     * Atomically check daily quota and consume one unit. Prevents parallel
+     * requests from racing past the limit (row lock for users, advisory lock for anon).
+     */
+    @Transactional
+    public Map<String, Object> reserveOrThrow(UUID userId, String ipHash, String kind, int limit, String message) {
+        lockQuotaSubject(userId, ipHash, kind);
+        if (limit <= 0 || limit >= UNLIMITED) {
+            recordUsage(userId, ipHash, kind, BigDecimal.ZERO);
+            return Map.of("used", countToday(userId, ipHash, kind), "limit", limit);
+        }
+        long used = countToday(userId, ipHash, kind);
+        if (used >= limit) {
+            throw new com.gyanwire.config.PlanLimitException(
+                    message == null || message.isBlank() ? "Daily limit reached." : message,
+                    "LIMIT_REACHED",
+                    Map.of("upgradeUrl", "/pricing", "used", used, "limit", limit));
+        }
+        recordUsage(userId, ipHash, kind, BigDecimal.ZERO);
+        return Map.of("used", used + 1, "limit", limit);
+    }
+
+    private void lockQuotaSubject(UUID userId, String ipHash, String kind) {
+        if (userId != null) {
+            userRepository.findByIdForUpdate(userId);
+            return;
+        }
+        if (entityManager == null || ipHash == null || ipHash.isBlank()) {
+            return;
+        }
+        String key = ipHash + ":" + (kind == null ? "" : kind);
+        long lockKey = key.hashCode();
+        entityManager.createNativeQuery("SELECT pg_advisory_xact_lock(:k)")
+                .setParameter("k", lockKey)
+                .getSingleResult();
     }
 
     private Map<String, Object> toPlanMap(PlanEntity plan) {

@@ -90,8 +90,14 @@ public class ProductController {
     }
 
     @DeleteMapping("/api/me/profile/data")
-    public ResponseEntity<StandardApiResponse<Map<String, Object>>> deleteProfile() {
-        profiles.delete(requireUser().id());
+    public ResponseEntity<StandardApiResponse<Map<String, Object>>> deleteProfile(
+            @RequestBody(required = false) Map<String, Object> body
+    ) {
+        Object rawPassword = body == null ? null : body.get("password");
+        Object rawConfirm = body == null ? null : body.get("confirm");
+        String password = rawPassword == null ? "" : String.valueOf(rawPassword);
+        String confirm = rawConfirm == null ? "" : String.valueOf(rawConfirm);
+        profiles.deleteWithPassword(requireUser().id(), password, confirm);
         return ResponseEntity.ok(StandardApiResponse.success("Profile deleted.", Map.of("deleted", true)));
     }
 
